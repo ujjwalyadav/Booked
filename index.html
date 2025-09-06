@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" id="top" data-theme="dark">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -7,44 +7,50 @@
 <meta name="description" content="Booked: our book club's reads since 2023." />
 <meta name="theme-color" content="#101012" />
 <style>
+  /* ============== THEME TOKENS ============== */
   :root{
+    --radius: 18px;
+    --blur: 12px;
+    --shadow: 0 10px 30px rgba(0,0,0,.35);
+    --accent: 262 83% 62%;
+  }
+  /* light palette (default) */
+  :root[data-theme="light"]{
+    color-scheme: light;
+    --bg: #faf9ff;
+    --fg: #101012;
+    --muted:#4a4a57;
+    --card:#ffffff;
+    --glass: rgba(0,0,0,.06);
+    --shadow: 0 10px 30px rgba(26,26,44,.12);
+  }
+  /* dark palette */
+  :root[data-theme="dark"]{
+    color-scheme: dark;
     --bg: #0b0c10;
     --fg: #e7e7ec;
     --muted:#b7b7c7;
     --card:#12131a;
     --glass: rgba(255,255,255,.06);
-    --accent: 262 83% 62%; /* default accent (purple) */
-    --shadow: 0 10px 30px rgba(0,0,0,.35);
-    --radius: 18px;
-    --blur: 12px;
-    --speed: 1s;
   }
-  @media (prefers-color-scheme: light){
-    :root{
-      --bg: #faf9ff;
-      --fg: #101012;
-      --muted:#4a4a57;
-      --card:#ffffff;
-      --glass: rgba(0,0,0,.06);
-      --shadow: 0 10px 30px rgba(26,26,44,.12);
-    }
-  }
+
   *{box-sizing:border-box}
   html,body{height:100%}
   body{
     margin:0;
     font: 16px/1.6 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Apple Color Emoji","Segoe UI Emoji";
-    background: radial-gradient(1400px 900px at 10% -10%, hsl(210 80% 55%/.1), transparent 55%),
+    background: radial-gradient(1400px 900px at 10% -10%, hsl(210 80% 55%/.10), transparent 55%),
                 radial-gradient(1200px 800px at 110% -10%, hsl(300 80% 55%/.08), transparent 50%),
                 radial-gradient(800px 600px at 50% 120%, hsl(160 90% 50%/.09), transparent 50%),
                 var(--bg);
     color:var(--fg);
     overflow-x:hidden;
   }
-  /* Hero */
+
+  /* ============== HERO ============== */
   header.hero{
     position:relative;
-    min-height:74svh;
+    min-height:70svh;
     display:grid;
     place-items:center;
     padding: clamp(24px,4vw,48px);
@@ -55,16 +61,15 @@
     position:absolute; inset:-20vmax;
     filter: blur(110px);
     background:
-      radial-gradient(closest-side, hsl(260 80% 60%/.5), transparent) 15% 25%/40% 40% no-repeat,
+      radial-gradient(closest-side, hsl(260 80% 60%/.50), transparent) 15% 25%/40% 40% no-repeat,
       radial-gradient(closest-side, hsl(190 90% 55%/.55), transparent) 80% 30%/30% 30% no-repeat,
       radial-gradient(closest-side, hsl(120 75% 55%/.45), transparent) 60% 80%/35% 35% no-repeat;
     z-index:-1;
     opacity:.75;
-    animation: floaty 16s linear infinite alternate;
+    animation: floaty 18s linear infinite alternate;
   }
-  @keyframes floaty{
-    to{ transform: translate3d(0,-2%,0) rotate(0.5deg); filter: blur(120px); }
-  }
+  @keyframes floaty{ to{ transform: translate3d(0,-2%,0) rotate(.5deg); filter: blur(120px); } }
+
   .badge{
     display:inline-block;
     padding:.35rem .7rem;
@@ -88,6 +93,7 @@
     color:var(--muted);
     font-size: clamp(16px, 2.2vw, 20px);
   }
+
   .controls{
     display:flex; gap:10px; justify-content:center; flex-wrap:wrap;
     margin-top: 1rem;
@@ -99,9 +105,7 @@
     backdrop-filter: blur(8px);
     box-shadow: var(--shadow);
   }
-  input[type="search"]{
-    all: unset; padding:.25rem; min-width: min(60vw, 320px);
-  }
+  input[type="search"]{ all:unset; padding:.25rem; min-width: min(60vw, 320px); }
   button, .chip{
     all: unset; cursor:pointer;
     display:inline-flex; align-items:center; gap:.5rem;
@@ -113,7 +117,7 @@
   .theme-toggle{ transition: transform .2s ease; }
   .theme-toggle:active{ transform: scale(.96); }
 
-  /* Sticky year headers */
+  /* sticky year headers */
   .year{
     position:sticky; top:0; z-index:5;
     backdrop-filter: blur(10px);
@@ -123,33 +127,43 @@
     border-bottom:1px solid color-mix(in oklab, var(--fg) 12%, transparent);
   }
 
-  /* Grid */
   main{ padding: 32px clamp(18px, 5vw, 56px) 120px; }
   .grid{
     display:grid; gap: clamp(14px, 2vw, 24px);
     grid-template-columns: repeat(auto-fill, minmax(min(230px, 100%), 1fr));
   }
 
-  /* Book card */
+  /* ============== BOOK CARD ============== */
+  a.book{
+    color:inherit; text-decoration:none;
+  }
   .book{
     position:relative; overflow:hidden; border-radius: var(--radius);
     background: linear-gradient(180deg, color-mix(in oklab, var(--card), transparent 8%), color-mix(in oklab, var(--card), transparent 0%));
     border: 1px solid color-mix(in oklab, var(--fg) 10%, transparent);
     box-shadow: var(--shadow);
     transform-style: preserve-3d;
-    transition: transform .25s ease, border-color .25s ease;
+    transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease;
   }
-  .book:hover{ transform: translateY(-4px) rotateX(.6deg) rotateY(.6deg); border-color: hsl(var(--accent)/.35); }
+  .book:hover{ transform: translateY(-4px) rotateX(.6deg) rotateY(.6deg); border-color: hsl(var(--accent)/.35); box-shadow: 0 16px 40px rgba(0,0,0,.25); }
+
+  /* cover: unique, subtly animated gradient + optional real image */
   .cover{
     height: 260px; border-bottom:1px solid color-mix(in oklab, var(--fg) 12%, transparent);
     position:relative; overflow:hidden;
     background:
-      radial-gradient(110px 110px at 12% 18%, hsl(calc(var(--h)) 82% 62% / .75), transparent 70%),
+      radial-gradient(110px 110px at 12% 18%, hsl(var(--h) 82% 62% / .75), transparent 70%),
       radial-gradient(150px 120px at 88% 22%, hsl(calc(var(--h) + 40) 82% 62% / .7), transparent 70%),
       radial-gradient(140px 140px at 30% 88%, hsl(calc(var(--h) + 80) 80% 60% /.65), transparent 70%),
       linear-gradient(135deg, hsl(calc(var(--h) + 12) 42% 16%), hsl(calc(var(--h) - 8) 42% 10%));
-    animation: hueShift 18s linear infinite;
+    animation: hueWander 18s linear infinite;
+    background-size: cover;
+    background-blend-mode: normal;
   }
+  @keyframes hueWander{ 50%{ filter: hue-rotate(18deg) saturate(1.05);} }
+
+  /* real cover overlay (fades in) */
+  .cover.has-img{ background-size: cover; background-position: center; }
   .cover::after{
     content:""; position:absolute; inset:-20%;
     background:
@@ -157,48 +171,47 @@
       radial-gradient(closest-side, #fff3, transparent) 80% 25%/26% 26% no-repeat,
       radial-gradient(closest-side, #fff1, transparent) 50% 75%/50% 40% no-repeat;
     mix-blend-mode: overlay; filter: blur(4px); transform: rotate(8deg);
+    pointer-events:none;
   }
-  @keyframes hueShift{ to{ filter: hue-rotate(20deg) } }
-
-  .info{ padding: 14px 16px 16px; }
-  .title{
-    margin:0 0 .35rem; font-weight:700; letter-spacing:.01em; font-size: 18px;
+  /* skeleton shimmer while fetching */
+  .cover.skeleton::before{
+    content:""; position:absolute; inset:0;
+    background: linear-gradient(90deg, #fff0, #fff3, #fff0);
+    animation: shimmer 1.6s infinite;
+    mix-blend-mode: soft-light;
   }
-  .meta{
-    display:flex; align-items:center; justify-content:space-between; gap:8px; color:var(--muted); font-size:13px;
-  }
-  .tag{
-    border:1px solid color-mix(in oklab, var(--fg) 10%, transparent);
-    padding:.25rem .5rem; border-radius:999px; backdrop-filter: blur(6px); background:var(--glass);
-  }
+  @keyframes shimmer{ 0%{transform:translateX(-100%)} 100%{transform:translateX(100%)} }
 
-  /* Reveal on scroll */
-  .reveal{ opacity:0; transform: translateY(10px) scale(.98); }
-  .reveal.in{ opacity:1; transform:none; transition: transform .6s cubic-bezier(.2,.8,.2,1), opacity .6s ease; }
-
-  /* Floating top button */
-  .top{
-    position:fixed; right:16px; bottom:16px; z-index:50;
-    border-radius: 999px; padding:.75rem 1rem; border:1px solid color-mix(in oklab, var(--fg) 10%, transparent);
-    background: var(--glass); backdrop-filter: blur(10px); box-shadow: var(--shadow);
-  }
-
-  /* Footer */
-  footer{
-    padding: 48px 24px 72px; text-align:center; color:var(--muted);
-  }
-
-  /* Focus styles */
-  :focus-visible{ outline: 2px solid hsl(var(--accent)); outline-offset:3px; border-radius:6px; }
-
-  /* Small helper badge inside card */
   .corner{
     position:absolute; top:10px; left:10px; font-size: 12px; font-weight:700;
     padding:.25rem .5rem; border-radius: 999px; background: hsl(var(--accent)/.2); color:hsl(var(--accent));
     border:1px solid hsl(var(--accent)/.35);
   }
 
-  /* Nice selection */
+  .info{ padding: 14px 16px 16px; }
+  .title{ margin:0 0 .15rem; font-weight:700; letter-spacing:.01em; font-size: 18px; }
+  .author{ margin:0 0 .6rem; color:var(--muted); font-size: 13px; }
+  .meta{ display:flex; align-items:center; justify-content:space-between; gap:8px; color:var(--muted); font-size:13px; }
+  .tag{
+    border:1px solid color-mix(in oklab, var(--fg) 10%, transparent);
+    padding:.25rem .5rem; border-radius:999px; backdrop-filter: blur(6px); background:var(--glass);
+  }
+
+  /* reveal on scroll */
+  .reveal{ opacity:0; transform: translateY(10px) scale(.98); }
+  .reveal.in{ opacity:1; transform:none; transition: transform .6s cubic-bezier(.2,.8,.2,1), opacity .6s ease; }
+
+  /* top button */
+  .top{
+    position:fixed; right:16px; bottom:16px; z-index:50;
+    border-radius: 999px; padding:.75rem 1rem; border:1px solid color-mix(in oklab, var(--fg) 10%, transparent);
+    background: var(--glass); backdrop-filter: blur(10px); box-shadow: var(--shadow);
+    text-decoration:none; color:inherit;
+  }
+
+  footer{ padding: 48px 24px 72px; text-align:center; color:var(--muted); }
+
+  :focus-visible{ outline: 2px solid hsl(var(--accent)); outline-offset:3px; border-radius:6px; }
   ::selection{ background:hsl(var(--accent)/.3); color:var(--fg); }
 </style>
 </head>
@@ -208,12 +221,12 @@
   <div>
     <span class="badge">Booked · book club</span>
     <h1>Our Reading Journey</h1>
-    <p class="sub">A living archive of every book our club has read since we began. Scroll through the years, search, and enjoy the animated “covers.”</p>
+    <p class="sub">Every book we’ve read since we began — now with author names and real covers (via Open Library) when available. Filter, search, and toggle themes.</p>
 
     <div class="controls" role="group" aria-label="Filters">
       <label class="pill" title="Search books">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21 21l-4.3-4.3m2.1-5.2a7 7 0 11-14 0 7 7 0 0114 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-        <input id="search" type="search" placeholder="Search title or month…" />
+        <input id="search" type="search" placeholder="Search title, author, or month…" />
       </label>
 
       <div class="pill" style="gap:6px;" title="Filter by year">
@@ -225,8 +238,8 @@
       </div>
 
       <button class="pill theme-toggle" id="themeBtn" title="Toggle light/dark">
-        <svg id="sun" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 4V2m0 20v-2M4 12H2m20 0h-2M5 5L3.5 3.5M20.5 20.5L19 19M19 5l1.5-1.5M3.5 20.5L5 19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2"/></svg>
-        <svg id="moon" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="display:none;"><path d="M20 15.5A8.5 8.5 0 119.5 4a7 7 0 0010.5 11.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <svg id="sun" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="display:none;"><path d="M12 4V2m0 20v-2M4 12H2m20 0h-2M5 5L3.5 3.5M20.5 20.5L19 19M19 5l1.5-1.5M3.5 20.5L5 19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2"/></svg>
+        <svg id="moon" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 15.5A8.5 8.5 0 119.5 4a7 7 0 0010.5 11.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
         <span>Theme</span>
       </button>
     </div>
@@ -235,122 +248,92 @@
 
 <main id="content" aria-live="polite"></main>
 
-<a class="top" href="#top" id="toTop" title="Back to top" style="display:none">
-  ↑ Top
-</a>
+<a class="top" href="#top" id="toTop" title="Back to top" style="display:none">↑ Top</a>
 
 <footer>
-  Built with ♥ for <strong>Booked</strong>.
+  Built with ♥ for <strong>Booked</strong>. Single-file, no external libraries. Covers are fetched from Open Library when possible.
 </footer>
 
 <script>
-/* ========= Data: keep exactly as provided ========= */
+/* ====================== DATA (added authors) ====================== */
 const BOOKS = [
   // 2023
-  {year:2023, month:"November", title:"The Wall"},
-  {year:2023, month:"December", title:"Giovanni's room"},
+  {year:2023, month:"November", title:"The Wall", author:"John Lanchester"}, // if you meant another “The Wall”, just change the author
+  {year:2023, month:"December", title:"Giovanni's Room", author:"James Baldwin"},
   // 2024
-  {year:2024, month:"January", title:"After dark"},
-  {year:2024, month:"February", title:"Orlando"},
-  {year:2024, month:"March", title:"The lathe of Heaven"},
-  {year:2024, month:"April", title:"Death with interruptions"},
-  {year:2024, month:"May", title:"An apprenticeship or the book of pleasures"},
-  {year:2024, month:"June", title:"Lolita"},
-  {year:2024, month:"July", title:"Love and other demons"},
-  {year:2024, month:"August", title:"Notes from underground"},
-  {year:2024, month:"September", title:"Lapvona"},
-  {year:2024, month:"October", title:"Picture of Dorian Gray"},
-  {year:2024, month:"November", title:"Dracula"},
-  {year:2024, month:"December", title:"White nights"},
+  {year:2024, month:"January", title:"After Dark", author:"Haruki Murakami"},
+  {year:2024, month:"February", title:"Orlando", author:"Virginia Woolf"},
+  {year:2024, month:"March", title:"The Lathe of Heaven", author:"Ursula K. Le Guin"},
+  {year:2024, month:"April", title:"Death with Interruptions", author:"José Saramago"},
+  {year:2024, month:"May", title:"An Apprenticeship or The Book of Pleasures", author:"Clarice Lispector"},
+  {year:2024, month:"June", title:"Lolita", author:"Vladimir Nabokov"},
+  {year:2024, month:"July", title:"Of Love and Other Demons", author:"Gabriel García Márquez"},
+  {year:2024, month:"August", title:"Notes from Underground", author:"Fyodor Dostoevsky"},
+  {year:2024, month:"September", title:"Lapvona", author:"Ottessa Moshfegh"},
+  {year:2024, month:"October", title:"The Picture of Dorian Gray", author:"Oscar Wilde"},
+  {year:2024, month:"November", title:"Dracula", author:"Bram Stoker"},
+  {year:2024, month:"December", title:"White Nights", author:"Fyodor Dostoevsky"},
   // 2025
-  {year:2025, month:"January 1.0", title:"Moby Dick"},
-  {year:2025, month:"February", title:"One hundred years of solitude"},
-  {year:2025, month:"March", title:"Fahrenheit 451"},
-  {year:2025, month:"May", title:"Invisible cities"},
-  {year:2025, month:"June", title:"Room of one's own"},
-  {year:2025, month:"July", title:"Animal farm"},
-  {year:2025, month:"August", title:"Dr Jekyll and Mr Hyde"}
+  {year:2025, month:"January 1.0", title:"Moby-Dick", author:"Herman Melville"},
+  {year:2025, month:"February", title:"One Hundred Years of Solitude", author:"Gabriel García Márquez"},
+  {year:2025, month:"March", title:"Fahrenheit 451", author:"Ray Bradbury"},
+  {year:2025, month:"May", title:"Invisible Cities", author:"Italo Calvino"},
+  {year:2025, month:"June", title:"A Room of One's Own", author:"Virginia Woolf"},
+  {year:2025, month:"July", title:"Animal Farm", author:"George Orwell"},
+  {year:2025, month:"August", title:"Strange Case of Dr Jekyll and Mr Hyde", author:"Robert Louis Stevenson"}
 ];
 
-/* ========= Utilities ========= */
+/* ====================== HELPERS ====================== */
 const $ = (sel, ctx=document)=>ctx.querySelector(sel);
-const $$ = (sel, ctx=document)=>[...ctx.querySelectorAll(sel)];
+const $$ = (sel, ctx=document)=>Array.from(ctx.querySelectorAll(sel));
 
 function hashHue(str){
-  // simple deterministic hash -> 0..360
-  let h=0;
-  for (let i=0;i<str.length;i++){ h = (h*31 + str.charCodeAt(i)) >>> 0; }
-  return h % 360;
+  let h=0; for (let i=0;i<str.length;i++){ h = (h*31 + str.charCodeAt(i)) >>> 0; } return h % 360;
 }
 
-function createCard({year, month, title}, index){
-  const h = hashHue(title + month + year);
-  const el = document.createElement('article');
-  el.className = 'book reveal';
-  el.setAttribute('tabindex','0');
-  el.dataset.year = year;
-  el.dataset.month = month.toLowerCase();
-  el.dataset.title = title.toLowerCase();
-  el.style.setProperty('--h', h);
+/* ====================== RENDER ====================== */
+function createCard(item, index){
+  const h = hashHue(item.title + item.month + item.year + item.author);
+  const link = document.createElement('a');
+  link.className = 'book reveal';
+  link.setAttribute('tabindex','0');
+  link.dataset.year = item.year;
+  link.dataset.month = item.month.toLowerCase();
+  link.dataset.title = item.title.toLowerCase();
+  link.dataset.author = item.author.toLowerCase();
+  link.href = '#'; // temporary, will be upgraded to Open Library link if found
+  link.target = '_blank'; link.rel = 'noopener noreferrer';
 
-  el.innerHTML = `
-    <div class="cover" style="--h:${h}">
-      <span class="corner">${year}</span>
+  link.innerHTML = `
+    <div class="cover skeleton" style="--h:${h}">
+      <span class="corner">${item.year}</span>
     </div>
     <div class="info">
-      <h3 class="title">${title}</h3>
+      <h3 class="title">${item.title}</h3>
+      <p class="author">${item.author}</p>
       <div class="meta">
-        <span class="tag" title="Month">${month}</span>
+        <span class="tag" title="Month">${item.month}</span>
         <span class="tag" title="Index in list">#${index+1}</span>
       </div>
     </div>
   `;
-  // Tilt on pointer move
-  el.addEventListener('pointermove', (e)=>{
-    const r = el.getBoundingClientRect();
+
+  // tilt
+  link.addEventListener('pointermove', (e)=>{
+    const r = link.getBoundingClientRect();
     const x = (e.clientX - r.left) / r.width;
     const y = (e.clientY - r.top) / r.height;
     const rx = (y - .5) * -6;
     const ry = (x - .5) * 6;
-    el.style.transform = `perspective(800px) rotateX(${rx}deg) rotateY(${ry}deg) translateY(-2px)`;
+    link.style.transform = `perspective(800px) rotateX(${rx}deg) rotateY(${ry}deg) translateY(-2px)`;
   });
-  el.addEventListener('pointerleave', ()=>{
-    el.style.transform = '';
-  });
-  // Fun sparkle on click
-  el.addEventListener('click', (e)=> burst(el, e));
+  link.addEventListener('pointerleave', ()=>{ link.style.transform = ''; });
 
-  return el;
+  return link;
 }
 
-function burst(container, e){
-  const n = 10;
-  for(let i=0;i<n;i++){
-    const s = document.createElement('span');
-    s.style.position='absolute';
-    s.style.width=s.style.height= (6+Math.random()*6) + 'px';
-    s.style.borderRadius='50%';
-    s.style.left = (e.offsetX ?? container.clientWidth/2)+'px';
-    s.style.top = (e.offsetY ?? container.clientHeight/2)+'px';
-    s.style.background = `hsl(${(parseInt(getComputedStyle(container).getPropertyValue('--h')) + i*36)%360} 80% 60%)`;
-    s.style.pointerEvents='none';
-    s.style.filter='blur(.25px)';
-    s.style.transform='translate(-50%,-50%)';
-    s.style.transition='all .8s ease';
-    container.appendChild(s);
-    requestAnimationFrame(()=>{
-      const angle = Math.random()*2*Math.PI;
-      const dist = 60+Math.random()*60;
-      s.style.opacity='0';
-      s.style.transform=`translate(calc(-50% + ${Math.cos(angle)*dist}px), calc(-50% + ${Math.sin(angle)*dist}px)) scale(.6)`;
-    });
-    setTimeout(()=>s.remove(), 900);
-  }
-}
-
-/* ========= Render ========= */
 function render(){
-  const content = document.getElementById('content');
+  const content = $('#content');
   content.innerHTML = '';
 
   const years = [...new Set(BOOKS.map(b=>b.year))].sort((a,b)=>a-b);
@@ -371,16 +354,14 @@ function render(){
     content.appendChild(grid);
   });
 
-  // Reveal on scroll
-  const io = new IntersectionObserver((entries)=>{
-    entries.forEach(en=>{
-      if (en.isIntersecting) en.target.classList.add('in');
-    });
-  }, {threshold: .12});
+  // reveal on scroll
+  const io = new IntersectionObserver((entries)=>entries.forEach(en=>{
+    if (en.isIntersecting) en.target.classList.add('in');
+  }), {threshold: .12});
   $$('.reveal', content).forEach(el=> io.observe(el));
 }
 
-/* ========= Filters ========= */
+/* ====================== FILTERS ====================== */
 function applyFilters(){
   const q = $('#search').value.trim().toLowerCase();
   const activeChip = $('.chip[data-active="true"]');
@@ -388,40 +369,92 @@ function applyFilters(){
 
   $$('.grid .book').forEach(card=>{
     const okYear = (yearFilter==='all') || (String(card.dataset.year)===yearFilter);
-    const blob = (card.dataset.title + ' ' + card.dataset.month);
+    const blob = (card.dataset.title + ' ' + card.dataset.month + ' ' + card.dataset.author);
     const okText = q==='' || blob.includes(q);
     card.style.display = (okYear && okText) ? '' : 'none';
   });
 }
 
-/* ========= Theme ========= */
+/* ====================== THEME ====================== */
 function setTheme(mode){
-  const isDark = mode === 'dark';
-  document.documentElement.style.colorScheme = isDark ? 'dark':'light';
+  document.documentElement.dataset.theme = mode;
   localStorage.setItem('theme', mode);
-  // swap icons
-  document.getElementById('sun').style.display = isDark ? 'none':'block';
-  document.getElementById('moon').style.display = isDark ? 'block':'none';
+  // icon swap
+  const dark = mode==='dark';
+  $('#moon').style.display = dark ? 'block':'none';
+  $('#sun').style.display  = dark ? 'none' :'block';
 }
 function initTheme(){
   const saved = localStorage.getItem('theme');
   const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  setTheme(saved ?? (prefersDark ? 'dark':'light'));
+  setTheme(saved ?? (prefersDark ? 'dark' : 'light'));
 }
 
-/* ========= Back to top visibility ========= */
-function topButton(){
-  const btn = document.getElementById('toTop');
+/* ====================== BACK TO TOP ====================== */
+function setupTopButton(){
+  const btn = $('#toTop');
   const show = () => { btn.style.display = (window.scrollY>500) ? 'inline-flex' : 'none'; };
   window.addEventListener('scroll', show, {passive:true});
   show();
 }
 
-/* ========= Wire up ========= */
+/* ====================== COVERS (Open Library) ====================== */
+/*
+  We try to find each book via Open Library search, pick a doc with a cover,
+  set the card’s link to the Work page, and set the cover background image.
+  Graceful fallback: animated abstract cover if not found.
+*/
+async function fetchCover({title, author}){
+  const url = `https://openlibrary.org/search.json?title=${encodeURIComponent(title)}&author=${encodeURIComponent(author)}&limit=5`;
+  const r = await fetch(url);
+  if(!r.ok) throw new Error('search failed');
+  const data = await r.json();
+  // prefer docs that have cover_i and highest edition_count
+  const doc = (data.docs || [])
+    .filter(d => d.cover_i)
+    .sort((a,b)=>(b.edition_count||0)-(a.edition_count||0))[0];
+  if(!doc) return null;
+
+  const coverUrl = `https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg`;
+  const workKey = (doc.key && doc.key.startsWith('/works/')) ? doc.key : (doc.work_key && doc.work_key[0]);
+  const link = workKey ? `https://openlibrary.org${workKey}` :
+                         `https://openlibrary.org/search?q=${encodeURIComponent(title + ' ' + author)}`;
+  return {coverUrl, link};
+}
+
+async function hydrateCovers(){
+  const cards = $$('.grid .book');
+  // do a few at a time to be polite
+  const concurrency = 4;
+  let i = 0;
+  async function next(){
+    if (i >= cards.length) return;
+    const idx = i++;
+    const el = cards[idx];
+    const title = el.dataset.title;
+    const author = el.dataset.author;
+    try{
+      const res = await fetchCover({title, author});
+      if (res){
+        const cover = el.querySelector('.cover');
+        cover.style.backgroundImage = `url("${res.coverUrl}")`;
+        cover.classList.add('has-img');
+        el.href = res.link;
+      }
+    }catch(_){}
+    finally{
+      el.querySelector('.cover')?.classList.remove('skeleton');
+      next();
+    }
+  }
+  Array.from({length: Math.min(concurrency, cards.length)}).forEach(next);
+}
+
+/* ====================== BOOT ====================== */
 document.addEventListener('DOMContentLoaded', ()=>{
   initTheme();
   render();
-  topButton();
+  setupTopButton();
 
   // Search
   $('#search').addEventListener('input', applyFilters);
@@ -432,11 +465,9 @@ document.addEventListener('DOMContentLoaded', ()=>{
       $$('.chip').forEach(x=>x.dataset.active='false');
       ch.dataset.active='true';
       applyFilters();
-      // Smooth scroll to first matching year header
       const Y = ch.dataset.year;
       if (Y!=='all'){
-        const hdrs = $$('.year');
-        const target = hdrs.find(h=>h.textContent.trim()===Y);
+        const target = $$('.year').find(h=>h.textContent.trim()===Y);
         if (target) target.scrollIntoView({behavior:'smooth', block:'start'});
       }
     });
@@ -444,11 +475,11 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
   // Theme toggle
   $('#themeBtn').addEventListener('click', ()=>{
-    const cur = localStorage.getItem('theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark':'light');
+    const cur = document.documentElement.dataset.theme || 'light';
     setTheme(cur === 'dark' ? 'light' : 'dark');
   });
 
-  // Accent color shifts subtly with time
+  // animated accent hue
   const updateAccent = ()=>{
     const t = Date.now()/1000;
     const hue = Math.floor((t/20)%360);
@@ -456,6 +487,9 @@ document.addEventListener('DOMContentLoaded', ()=>{
     requestAnimationFrame(updateAccent);
   };
   updateAccent();
+
+  // Load real covers & links
+  hydrateCovers();
 });
 </script>
 </body>
