@@ -233,9 +233,6 @@
   border:1px solid color-mix(in oklab, var(--fg) 10%, transparent);
   background:var(--glass); margin:.125rem; font-size:12px;
 }
-
-
-  
 </style>
 </head>
 <body>
@@ -272,7 +269,8 @@
 </header>
 
 <main id="content" aria-live="polite"></main>
-  <section id="stats" hidden>
+
+<section id="stats" hidden>
   <h2 class="year" style="position:static">Stats</h2>
   <div class="stats-grid">
     <div class="stat-card">
@@ -319,7 +317,7 @@
 /* ====================== DATA (added authors) ====================== */
 const BOOKS = [
   // 2023
-  {year:2023, month:"November", title:"The Wall", author:"Marlen Haushofer"}, // if you meant another “The Wall”, just change the author
+  {year:2023, month:"November", title:"The Wall", author:"Marlen Haushofer"},
   {year:2023, month:"December", title:"Giovanni's Room", author:"James Baldwin"},
   // 2024
   {year:2024, month:"January", title:"After Dark", author:"Haruki Murakami"},
@@ -460,17 +458,11 @@ function setupTopButton(){
 }
 
 /* ====================== COVERS (Open Library) ====================== */
-/*
-  We try to find each book via Open Library search, pick a doc with a cover,
-  set the card’s link to the Work page, and set the cover background image.
-  Graceful fallback: animated abstract cover if not found.
-*/
 async function fetchCover({title, author}){
   const url = `https://openlibrary.org/search.json?title=${encodeURIComponent(title)}&author=${encodeURIComponent(author)}&limit=5`;
   const r = await fetch(url);
   if(!r.ok) throw new Error('search failed');
   const data = await r.json();
-  // prefer docs that have cover_i and highest edition_count
   const doc = (data.docs || [])
     .filter(d => d.cover_i)
     .sort((a,b)=>(b.edition_count||0)-(a.edition_count||0))[0];
@@ -485,7 +477,6 @@ async function fetchCover({title, author}){
 
 async function hydrateCovers(){
   const cards = $$('.grid .book');
-  // do a few at a time to be polite
   const concurrency = 4;
   let i = 0;
   async function next(){
@@ -553,6 +544,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   hydrateCovers();
 });
 </script>
+
 <script>
 /* ========= editable: author -> country/lang for nicer grouping ========= */
 const AUTHOR_INFO = {
@@ -637,67 +629,39 @@ function drawHistogram(canvas, nums, bins=8){
   drawBars(canvas, labels, counts, {maxY: Math.max(...counts)});
 }
 
-/* ========= Open Library page counts (cached) ========= */
 /* ========= Pages lookup via Google Books (primary) + Open Library (fallback) ========= */
-/* Optional: add your Google Books API key below (works without one, just lower quota). */
-const GOOGLE_BOOKS_API_KEY = ""; // e.g. "AIzaSy..."; can be left empty
-
+const GOOGLE_BOOKS_API_KEY = ""; // Optional: add your Google Books API key (works without one, just lower quota)
 const PAGES_CACHE_KEY = 'booked_pages_v2';
+const PAGES_OVERRIDE = { /* Manual overrides: "Title|||Author": pages */ };
 
-/* Manual overrides if you want guaranteed stats (format: "Title|||Author": pages) */
-const PAGES_OVERRIDE = {
-  // "Moby-Dick|||Herman Melville": 720,
-  // "Lolita|||Vladimir Nabokov": 336,
-};
-
-/* Primary: Google Books */
 async function fetchPagesFromGoogleBooks({title, author}){
   const q = `intitle:${title} inauthor:${author}`;
-  const params = new URLSearchParams({
-    q, maxResults: "10", printType: "books",
-    fields: "items(volumeInfo/title,volumeInfo/authors,volumeInfo/pageCount)"
-  });
+  const params = new URLSearchParams({q, maxResults: "10", printType: "books", fields: "items(volumeInfo/title,volumeInfo/authors,volumeInfo/pageCount)"});
   if (GOOGLE_BOOKS_API_KEY) params.set("key", GOOGLE_BOOKS_API_KEY);
-
   const r = await fetch(`https://www.googleapis.com/books/v1/volumes?`+params.toString());
   if(!r.ok) throw new Error('gbooks failed');
   const data = await r.json();
   const items = data.items || [];
-  const counts = items
-    .map(it => it?.volumeInfo?.pageCount)
-    .filter(n => Number.isFinite(n) && n >= 40 && n <= 1600)
-    .sort((a,b)=>a-b);
+  const counts = items.map(it => it?.volumeInfo?.pageCount).filter(n => Number.isFinite(n) && n >= 40 && n <= 1600).sort((a,b)=>a-b);
   if (!counts.length) return null;
-  // pick the median to avoid abridged/outlier editions
-  return counts[Math.floor((counts.length-1)/2)];
+  return counts[Math.floor((counts.length-1)/2)]; // median
 }
 
-/* Fallback: Open Library (search median) */
 async function fetchPagesFromOpenLibrary({title, author}){
   const url = `https://openlibrary.org/search.json?title=${encodeURIComponent(title)}&author=${encodeURIComponent(author)}&limit=5`;
   const r = await fetch(url);
   if(!r.ok) throw new Error('ol failed');
   const data = await r.json();
-  const doc = (data.docs||[])
-    .filter(d => d.number_of_pages_median)
-    .sort((a,b)=>(b.edition_count||0)-(a.edition_count||0))[0];
+  const doc = (data.docs||[]).filter(d => d.number_of_pages_median).sort((a,b)=>(b.edition_count||0)-(a.edition_count||0))[0];
   return doc?.number_of_pages_median ?? null;
 }
 
-/* Orchestrator with caching + overrides */
 async function getPagesMap(books){
   let cache = {};
   try{ cache = JSON.parse(localStorage.getItem(PAGES_CACHE_KEY) || '{}'); }catch(_){}
-
   const keys = b => `${b.title}|||${b.author}`;
+  for (const b of books){ if (PAGES_OVERRIDE[keys(b)] != null) cache[keys(b)] = PAGES_OVERRIDE[keys(b)]; }
   const pending = books.filter(b => cache[keys(b)] == null);
-
-  // seed overrides
-  for (const b of books){
-    const k = keys(b);
-    if (PAGES_OVERRIDE[k] != null) cache[k] = PAGES_OVERRIDE[k];
-  }
-
   const concurrency = 4;
   let i = 0;
   async function next(){
@@ -705,122 +669,104 @@ async function getPagesMap(books){
     const b = pending[i++];
     const k = keys(b);
     if (cache[k] != null) return next();
-
     try{
       let pages = await fetchPagesFromGoogleBooks(b);
       if (pages == null) pages = await fetchPagesFromOpenLibrary(b);
       cache[k] = Number.isFinite(pages) ? pages : null;
-    }catch(_){
-      cache[k] = null;
-    }finally{
-      localStorage.setItem(PAGES_CACHE_KEY, JSON.stringify(cache));
-    }
+    }catch(_){ cache[k] = null; }
+    finally{ localStorage.setItem(PAGES_CACHE_KEY, JSON.stringify(cache)); }
     return next();
   }
   await Promise.all(Array.from({length: Math.min(concurrency, pending.length)}).map(next));
   return cache;
 }
+
 /* ========= Stats builder ========= */
 function summarize(books, pagesMap){
-  const byYear = {};
-  const byCountry = {};
-  const byLang = {};
+  const byYear = {}, byCountry = {}, byLang = {};
   const pages = [];
-
   books.forEach(b=>{
     byYear[b.year] = (byYear[b.year]||0)+1;
-
     const info = AUTHOR_INFO[b.author] || {country:'Unknown', lang:'Unknown'};
     byCountry[info.country] = (byCountry[info.country]||0)+1;
     byLang[info.lang] = (byLang[info.lang]||0)+1;
-
     const pg = pagesMap[`${b.title}|||${b.author}`];
     if (Number.isFinite(pg)) pages.push({title:b.title, author:b.author, pages:pg});
   });
-
   const total = books.length;
   const pageNums = pages.map(p=>p.pages).sort((a,b)=>a-b);
   const totalPages = pageNums.reduce((a,b)=>a+b,0);
   const avgPages = pageNums.length ? Math.round(totalPages / pageNums.length) : 0;
-  const medianPages = pageNums.length
-    ? (pageNums.length%2 ? pageNums[(pageNums.length-1)/2] : Math.round((pageNums[pageNums.length/2-1]+pageNums[pageNums.length/2])/2))
-    : 0;
-
+  const medianPages = pageNums.length ? (pageNums.length%2 ? pageNums[(pageNums.length-1)/2] : Math.round((pageNums[pageNums.length/2-1]+pageNums[pageNums.length/2])/2)) : 0;
   const longest = [...pages].sort((a,b)=>b.pages-a.pages)[0];
   const shortest = [...pages].sort((a,b)=>a.pages-b.pages)[0];
-
   return {total, byYear, byCountry, byLang, pages:pageNums, totalPages, avgPages, medianPages, longest, shortest};
 }
 
 /* ========= UI wiring ========= */
 async function buildStats(){
-  // show totals immediately (without pages), then enrich
   $('#totalBooks').textContent = BOOKS.length;
-
-  // language pills from AUTHOR_INFO
   const langHost = document.getElementById('byLang');
-  const langCounts = BOOKS.reduce((acc,b)=>{
-    const lang = (AUTHOR_INFO[b.author]?.lang) || 'Unknown';
-    acc[lang] = (acc[lang]||0)+1; return acc;
-  }, {});
-  langHost.innerHTML = Object.entries(langCounts)
-    .sort((a,b)=>b[1]-a[1])
-    .map(([k,v])=>`<span class="stat-pill" title="Language">${k}: ${v}</span>`).join('');
-
-  // charts that don't need pages
+  const langCounts = BOOKS.reduce((acc,b)=>{ const lang = (AUTHOR_INFO[b.author]?.lang) || 'Unknown'; acc[lang] = (acc[lang]||0)+1; return acc; }, {});
+  langHost.innerHTML = Object.entries(langCounts).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<span class="stat-pill" title="Language">${k}: ${v}</span>`).join('');
+  
   const yearLabels = [...new Set(BOOKS.map(b=>b.year))].sort((a,b)=>a-b);
   const yearValues = yearLabels.map(y => BOOKS.filter(b=>b.year===y).length);
   drawBars(document.getElementById('chartByYear'), yearLabels, yearValues);
 
-  const countryCounts = BOOKS.reduce((acc,b)=>{
-    const c = (AUTHOR_INFO[b.author]?.country) || 'Unknown';
-    acc[c] = (acc[c]||0)+1; return acc;
-  }, {});
+  const countryCounts = BOOKS.reduce((acc,b)=>{ const c = (AUTHOR_INFO[b.author]?.country) || 'Unknown'; acc[c] = (acc[c]||0)+1; return acc; }, {});
   const cEntries = Object.entries(countryCounts).sort((a,b)=>b[1]-a[1]);
   drawBars(document.getElementById('chartByCountry'), cEntries.map(e=>e[0]), cEntries.map(e=>e[1]));
 
-  // pages-dependent stats
   const pagesMap = await getPagesMap(BOOKS);
   const S = summarize(BOOKS, pagesMap);
 
-  document.getElementById('pagesSummary').textContent =
-    S.pages.length
-      ? `Total: ${S.totalPages.toLocaleString()} · Avg: ${S.avgPages} · Median: ${S.medianPages} (from ${S.pages.length}/${BOOKS.length} books with page data)`
-      : 'No page data yet.';
-
+  document.getElementById('pagesSummary').textContent = S.pages.length ? `Total: ${S.totalPages.toLocaleString()} · Avg: ${S.avgPages} · Median: ${S.medianPages} (from ${S.pages.length}/${BOOKS.length} books)` : 'No page data yet.';
   drawHistogram(document.getElementById('chartPages'), S.pages, 8);
-
   const extremes = document.getElementById('extremes');
   extremes.innerHTML = '';
-  if (S.longest){
-    const li = document.createElement('li');
-    li.textContent = `Longest: ${S.longest.title} — ${S.longest.pages} pages (${S.longest.author})`;
-    extremes.appendChild(li);
-  }
-  if (S.shortest){
-    const li = document.createElement('li');
-    li.textContent = `Shortest: ${S.shortest.title} — ${S.shortest.pages} pages (${S.shortest.author})`;
-    extremes.appendChild(li);
-  }
+  if (S.longest) extremes.innerHTML += `<li>Longest: ${S.longest.title} — ${S.longest.pages} pages (${S.longest.author})</li>`;
+  if (S.shortest) extremes.innerHTML += `<li>Shortest: ${S.shortest.title} — ${S.shortest.pages} pages (${S.shortest.author})</li>`;
 }
 
-/* ========= Toggle between list and stats ========= */
+/* ========= Toggle between list and stats (REVISED) ========= */
 (function(){
   const statsEl = document.getElementById('stats');
   const contentEl = document.getElementById('content');
+  const statsToggleBtn = document.getElementById('statsToggle');
   let built = false;
 
-  document.getElementById('statsToggle')?.addEventListener('click', async ()=>{
+  statsToggleBtn?.addEventListener('click', async ()=>{
     const showingStats = !statsEl.hasAttribute('hidden');
+
     if (showingStats){
+      // Action: Hide stats, show the book list
       statsEl.setAttribute('hidden','');
       contentEl.removeAttribute('hidden');
+      statsToggleBtn.innerHTML = '📈 Stats';
+      statsToggleBtn.title = 'Show stats';
       window.scrollTo({top:0, behavior:'smooth'});
     } else {
+      // Action: Show stats, hide the book list
       contentEl.setAttribute('hidden','');
       statsEl.removeAttribute('hidden');
-      if (!built){ built = true; await buildStats(); }
-      window.location.hash = '#stats';
+      statsToggleBtn.innerHTML = '📚 Book list';
+      statsToggleBtn.title = 'Show book list';
+
+      if (!built){
+        built = true;
+        try {
+          // Wait for the next browser frame. This is crucial to ensure that
+          // the #stats section is visible and its canvas elements have dimensions
+          // before we attempt to draw on them.
+          await new Promise(resolve => requestAnimationFrame(resolve));
+          await buildStats();
+        } catch (error) {
+          console.error("Failed to build stats:", error);
+          statsEl.querySelector('.stats-grid').innerHTML = '<p class="sub" style="grid-column: 1 / -1; text-align:center;">Could not load statistics.</p>';
+        }
+      }
+      statsEl.scrollIntoView({ behavior: 'smooth' });
     }
   });
 })();
