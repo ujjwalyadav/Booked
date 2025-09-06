@@ -638,38 +638,88 @@ function drawHistogram(canvas, nums, bins=8){
 }
 
 /* ========= Open Library page counts (cached) ========= */
-const PAGES_CACHE_KEY = 'booked_pages_v1';
-async function fetchPages({title, author}){
+/* ========= Pages lookup via Google Books (primary) + Open Library (fallback) ========= */
+/* Optional: add your Google Books API key below (works without one, just lower quota). */
+const GOOGLE_BOOKS_API_KEY = ""; // e.g. "AIzaSy..."; can be left empty
+
+const PAGES_CACHE_KEY = 'booked_pages_v2';
+
+/* Manual overrides if you want guaranteed stats (format: "Title|||Author": pages) */
+const PAGES_OVERRIDE = {
+  // "Moby-Dick|||Herman Melville": 720,
+  // "Lolita|||Vladimir Nabokov": 336,
+};
+
+/* Primary: Google Books */
+async function fetchPagesFromGoogleBooks({title, author}){
+  const q = `intitle:${title} inauthor:${author}`;
+  const params = new URLSearchParams({
+    q, maxResults: "10", printType: "books",
+    fields: "items(volumeInfo/title,volumeInfo/authors,volumeInfo/pageCount)"
+  });
+  if (GOOGLE_BOOKS_API_KEY) params.set("key", GOOGLE_BOOKS_API_KEY);
+
+  const r = await fetch(`https://www.googleapis.com/books/v1/volumes?`+params.toString());
+  if(!r.ok) throw new Error('gbooks failed');
+  const data = await r.json();
+  const items = data.items || [];
+  const counts = items
+    .map(it => it?.volumeInfo?.pageCount)
+    .filter(n => Number.isFinite(n) && n >= 40 && n <= 1600)
+    .sort((a,b)=>a-b);
+  if (!counts.length) return null;
+  // pick the median to avoid abridged/outlier editions
+  return counts[Math.floor((counts.length-1)/2)];
+}
+
+/* Fallback: Open Library (search median) */
+async function fetchPagesFromOpenLibrary({title, author}){
   const url = `https://openlibrary.org/search.json?title=${encodeURIComponent(title)}&author=${encodeURIComponent(author)}&limit=5`;
   const r = await fetch(url);
-  if(!r.ok) throw new Error('search failed');
+  if(!r.ok) throw new Error('ol failed');
   const data = await r.json();
   const doc = (data.docs||[])
     .filter(d => d.number_of_pages_median)
     .sort((a,b)=>(b.edition_count||0)-(a.edition_count||0))[0];
   return doc?.number_of_pages_median ?? null;
 }
+
+/* Orchestrator with caching + overrides */
 async function getPagesMap(books){
   let cache = {};
   try{ cache = JSON.parse(localStorage.getItem(PAGES_CACHE_KEY) || '{}'); }catch(_){}
-  const missing = books.filter(b => cache[`${b.title}|||${b.author}`] == null);
+
+  const keys = b => `${b.title}|||${b.author}`;
+  const pending = books.filter(b => cache[keys(b)] == null);
+
+  // seed overrides
+  for (const b of books){
+    const k = keys(b);
+    if (PAGES_OVERRIDE[k] != null) cache[k] = PAGES_OVERRIDE[k];
+  }
 
   const concurrency = 4;
   let i = 0;
   async function next(){
-    if (i >= missing.length) return;
-    const b = missing[i++]; 
+    if (i >= pending.length) return;
+    const b = pending[i++];
+    const k = keys(b);
+    if (cache[k] != null) return next();
+
     try{
-      const pages = await fetchPages(b);
-      cache[`${b.title}|||${b.author}`] = pages;
+      let pages = await fetchPagesFromGoogleBooks(b);
+      if (pages == null) pages = await fetchPagesFromOpenLibrary(b);
+      cache[k] = Number.isFinite(pages) ? pages : null;
+    }catch(_){
+      cache[k] = null;
+    }finally{
       localStorage.setItem(PAGES_CACHE_KEY, JSON.stringify(cache));
-    }catch(_){ cache[`${b.title}|||${b.author}`] = null; }
+    }
     return next();
   }
-  await Promise.all(Array.from({length: Math.min(concurrency, missing.length)}).map(next));
+  await Promise.all(Array.from({length: Math.min(concurrency, pending.length)}).map(next));
   return cache;
 }
-
 /* ========= Stats builder ========= */
 function summarize(books, pagesMap){
   const byYear = {};
