@@ -1,505 +1,1342 @@
 <!DOCTYPE html>
 <html lang="en" id="top" data-theme="dark">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Booked — Our Reading Journey</title>
-<meta name="description" content="Booked: our book club's reads since 2023." />
-<meta name="theme-color" content="#101012" />
-<style>
-  /* ============== THEME TOKENS ============== */
-  :root{
-    --radius: 18px;
-    --blur: 12px;
-    --shadow: 0 10px 30px rgba(0,0,0,.35);
-    --accent: 262 83% 62%;
-  }
-  /* light palette (default) */
-  :root[data-theme="light"]{
-    color-scheme: light;
-    --bg: #faf9ff;
-    --fg: #101012;
-    --muted:#4a4a57;
-    --card:#ffffff;
-    --glass: rgba(0,0,0,.06);
-    --shadow: 0 10px 30px rgba(26,26,44,.12);
-  }
-  /* dark palette */
-  :root[data-theme="dark"]{
-    color-scheme: dark;
-    --bg: #0b0c10;
-    --fg: #e7e7ec;
-    --muted:#b7b7c7;
-    --card:#12131a;
-    --glass: rgba(255,255,255,.06);
-  }
 
-  *{box-sizing:border-box}
-  html,body{height:100%}
-  body{
-    margin:0;
-    font: 16px/1.6 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Apple Color Emoji","Segoe UI Emoji";
-    background: radial-gradient(1400px 900px at 10% -10%, hsl(210 80% 55%/.10), transparent 55%),
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Booked — Our Reading Journey</title>
+    <meta name="description" content="Booked: our book club's reads since 2023." />
+    <meta name="theme-color" content="#101012" />
+
+    <style>
+        /* ============== THEME TOKENS ============== */
+        :root {
+            --radius: 18px;
+            --blur: 12px;
+            --shadow: 0 10px 30px rgba(0, 0, 0, .35);
+            --accent: 262 83% 62%;
+            --shell-max: 1120px;
+            /* global content width */
+        }
+
+        /* light palette (default) */
+        :root[data-theme="light"] {
+            color-scheme: light;
+            --bg: #faf9ff;
+            --fg: #101012;
+            --muted: #4a4a57;
+            --card: #ffffff;
+            --glass: rgba(0, 0, 0, .06);
+            --shadow: 0 10px 30px rgba(26, 26, 44, .12);
+        }
+
+        /* dark palette */
+        :root[data-theme="dark"] {
+            color-scheme: dark;
+            --bg: #0b0c10;
+            --fg: #e7e7ec;
+            --muted: #b7b7c7;
+            --card: #12131a;
+            --glass: rgba(255, 255, 255, .06);
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        html,
+        body {
+            height: 100%
+        }
+
+        body {
+            margin: 0;
+            font: 16px/1.6 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
+            background:
+                radial-gradient(1400px 900px at 10% -10%, hsl(210 80% 55%/.10), transparent 55%),
                 radial-gradient(1200px 800px at 110% -10%, hsl(300 80% 55%/.08), transparent 50%),
                 radial-gradient(800px 600px at 50% 120%, hsl(160 90% 50%/.09), transparent 50%),
                 var(--bg);
-    color:var(--fg);
-    overflow-x:hidden;
-  }
+            color: var(--fg);
+            overflow-x: hidden;
+        }
 
-  /* ============== HERO ============== */
-  header.hero{
-    position:relative;
-    min-height:70svh;
-    display:grid;
-    place-items:center;
-    padding: clamp(24px,4vw,48px);
-    text-align:center;
-    isolation:isolate;
-  }
-  header.hero .back-blur{
-    position:absolute; inset:-20vmax;
-    filter: blur(110px);
-    background:
-      radial-gradient(closest-side, hsl(260 80% 60%/.50), transparent) 15% 25%/40% 40% no-repeat,
-      radial-gradient(closest-side, hsl(190 90% 55%/.55), transparent) 80% 30%/30% 30% no-repeat,
-      radial-gradient(closest-side, hsl(120 75% 55%/.45), transparent) 60% 80%/35% 35% no-repeat;
-    z-index:-1;
-    opacity:.75;
-    animation: floaty 18s linear infinite alternate;
-  }
-  @keyframes floaty{ to{ transform: translate3d(0,-2%,0) rotate(.5deg); filter: blur(120px); } }
+        /* ============== LAYOUT ============== */
+        .shell {
+            width: min(100% - 32px, var(--shell-max));
+            margin-inline: auto;
+        }
 
-  .badge{
-    display:inline-block;
-    padding:.35rem .7rem;
-    border-radius:999px;
-    background: hsl(var(--accent)/.15);
-    color: hsl(var(--accent));
-    font-weight:600;
-    letter-spacing:.03em;
-    border:1px solid hsl(var(--accent)/.25);
-    backdrop-filter: blur(6px);
-  }
-  h1{
-    font-size: clamp(38px, 6vw, 82px);
-    line-height:1.05;
-    margin:.7rem 0;
-    letter-spacing:-.015em;
-  }
-  .sub{
-    max-width: 64ch;
-    margin: 0 auto 1.25rem;
-    color:var(--muted);
-    font-size: clamp(16px, 2.2vw, 20px);
-  }
+        header.hero {
+            position: relative;
+            min-height: 70svh;
+            display: grid;
+            place-items: center;
+            padding: clamp(24px, 4vw, 48px) 0;
+            text-align: center;
+            isolation: isolate;
+        }
 
-  .controls{
-    display:flex; gap:10px; justify-content:center; flex-wrap:wrap;
-    margin-top: 1rem;
-  }
-  .pill{
-    display:inline-flex; align-items:center; gap:.55rem;
-    border:1px solid color-mix(in oklab, var(--fg) 10%, transparent);
-    border-radius:999px; padding:.55rem .9rem; background:var(--glass);
-    backdrop-filter: blur(8px);
-    box-shadow: var(--shadow);
-  }
-  input[type="search"]{ all:unset; padding:.25rem; min-width: min(60vw, 320px); }
-  button, .chip{
-    all: unset; cursor:pointer;
-    display:inline-flex; align-items:center; gap:.5rem;
-    padding:.55rem .9rem; border-radius:999px; font-weight:600;
-    border:1px solid color-mix(in oklab, var(--fg) 10%, transparent);
-    background: var(--glass);
-  }
-  .chip[data-active="true"]{ background:hsl(var(--accent)/.18); border-color:hsl(var(--accent)/.35); color:hsl(var(--accent)); }
-  .theme-toggle{ transition: transform .2s ease; }
-  .theme-toggle:active{ transform: scale(.96); }
+        header.hero .back-blur {
+            position: absolute;
+            inset: -20vmax;
+            filter: blur(110px);
+            background:
+                radial-gradient(closest-side, hsl(260 80% 60%/.50), transparent) 15% 25%/40% 40% no-repeat,
+                radial-gradient(closest-side, hsl(190 90% 55%/.55), transparent) 80% 30%/30% 30% no-repeat,
+                radial-gradient(closest-side, hsl(120 75% 55%/.45), transparent) 60% 80%/35% 35% no-repeat;
+            z-index: -1;
+            opacity: .75;
+            animation: floaty 18s linear infinite alternate;
+        }
 
-  /* sticky year headers */
-  .year{
-    position:sticky; top:0; z-index:5;
-    backdrop-filter: blur(10px);
-    background: color-mix(in oklab, var(--bg), transparent 25%);
-    margin: 0; padding: .45rem 1.25rem;
-    font-size: clamp(22px,3.4vw,34px); letter-spacing:.02em;
-    border-bottom:1px solid color-mix(in oklab, var(--fg) 12%, transparent);
-  }
+        @keyframes floaty {
+            to {
+                transform: translate3d(0, -2%, 0) rotate(.5deg);
+                filter: blur(120px);
+            }
+        }
 
-  main{ padding: 32px clamp(18px, 5vw, 56px) 120px; }
-  .grid{
-    display:grid; gap: clamp(14px, 2vw, 24px);
-    grid-template-columns: repeat(auto-fill, minmax(min(230px, 100%), 1fr));
-  }
+        .hero-inner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
 
-  /* ============== BOOK CARD ============== */
-  a.book{
-    color:inherit; text-decoration:none;
-  }
-  .book{
-    position:relative; overflow:hidden; border-radius: var(--radius);
-    background: linear-gradient(180deg, color-mix(in oklab, var(--card), transparent 8%), color-mix(in oklab, var(--card), transparent 0%));
-    border: 1px solid color-mix(in oklab, var(--fg) 10%, transparent);
-    box-shadow: var(--shadow);
-    transform-style: preserve-3d;
-    transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease;
-  }
-  .book:hover{ transform: translateY(-4px) rotateX(.6deg) rotateY(.6deg); border-color: hsl(var(--accent)/.35); box-shadow: 0 16px 40px rgba(0,0,0,.25); }
+        .badge {
+            display: inline-block;
+            padding: .35rem .7rem;
+            border-radius: 999px;
+            background: hsl(var(--accent)/.15);
+            color: hsl(var(--accent));
+            font-weight: 600;
+            letter-spacing: .03em;
+            border: 1px solid hsl(var(--accent)/.25);
+            backdrop-filter: blur(6px);
+        }
 
-  /* cover: unique, subtly animated gradient + optional real image */
-  .cover{
-    height: 260px; border-bottom:1px solid color-mix(in oklab, var(--fg) 12%, transparent);
-    position:relative; overflow:hidden;
-    background:
-      radial-gradient(110px 110px at 12% 18%, hsl(var(--h) 82% 62% / .75), transparent 70%),
-      radial-gradient(150px 120px at 88% 22%, hsl(calc(var(--h) + 40) 82% 62% / .7), transparent 70%),
-      radial-gradient(140px 140px at 30% 88%, hsl(calc(var(--h) + 80) 80% 60% /.65), transparent 70%),
-      linear-gradient(135deg, hsl(calc(var(--h) + 12) 42% 16%), hsl(calc(var(--h) - 8) 42% 10%));
-    animation: hueWander 18s linear infinite;
-    background-size: cover;
-    background-blend-mode: normal;
-  }
-  @keyframes hueWander{ 50%{ filter: hue-rotate(18deg) saturate(1.05);} }
+        h1 {
+            font-size: clamp(38px, 6vw, 82px);
+            line-height: 1.05;
+            margin: .7rem 0 .45rem;
+            letter-spacing: -.015em;
+        }
 
-  /* real cover overlay (fades in) */
-  .cover.has-img{ background-size: cover; background-position: center; }
-  .cover::after{
-    content:""; position:absolute; inset:-20%;
-    background:
-      radial-gradient(closest-side, #fff2, transparent) 20% 20%/30% 30% no-repeat,
-      radial-gradient(closest-side, #fff3, transparent) 80% 25%/26% 26% no-repeat,
-      radial-gradient(closest-side, #fff1, transparent) 50% 75%/50% 40% no-repeat;
-    mix-blend-mode: overlay; filter: blur(4px); transform: rotate(8deg);
-    pointer-events:none;
-  }
-  /* skeleton shimmer while fetching */
-  .cover.skeleton::before{
-    content:""; position:absolute; inset:0;
-    background: linear-gradient(90deg, #fff0, #fff3, #fff0);
-    animation: shimmer 1.6s infinite;
-    mix-blend-mode: soft-light;
-  }
-  @keyframes shimmer{ 0%{transform:translateX(-100%)} 100%{transform:translateX(100%)} }
+        .sub {
+            max-width: 52ch;
+            margin: 0 auto .35rem;
+            color: var(--muted);
+            font-size: clamp(16px, 2.2vw, 20px);
+        }
 
-  .corner{
-    position:absolute; top:10px; left:10px; font-size: 12px; font-weight:700;
-    padding:.25rem .5rem; border-radius: 999px; background: hsl(var(--accent)/.2); color:hsl(var(--accent));
-    border:1px solid hsl(var(--accent)/.35);
-  }
+        .meta-row {
+            margin-top: .25rem;
+            font-size: 13px;
+            color: var(--muted);
+        }
 
-  .info{ padding: 14px 16px 16px; }
-  .title{ margin:0 0 .15rem; font-weight:700; letter-spacing:.01em; font-size: 18px; }
-  .author{ margin:0 0 .6rem; color:var(--muted); font-size: 13px; }
-  .meta{ display:flex; align-items:center; justify-content:space-between; gap:8px; color:var(--muted); font-size:13px; }
-  .tag{
-    border:1px solid color-mix(in oklab, var(--fg) 10%, transparent);
-    padding:.25rem .5rem; border-radius:999px; backdrop-filter: blur(6px); background:var(--glass);
-  }
+        /* ============== CURRENTLY READING ============== */
+        .current {
+            margin-top: 1.5rem;
+            padding: 0.85rem 1rem;
+            border-radius: 18px;
+            border: 1px solid color-mix(in oklab, var(--fg) 10%, transparent);
+            background: var(--glass);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
 
-  /* reveal on scroll */
-  .reveal{ opacity:0; transform: translateY(10px) scale(.98); }
-  .reveal.in{ opacity:1; transform:none; transition: transform .6s cubic-bezier(.2,.8,.2,1), opacity .6s ease; }
+        .current-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: .12em;
+            color: var(--muted);
+        }
 
-  /* top button */
-  .top{
-    position:fixed; right:16px; bottom:16px; z-index:50;
-    border-radius: 999px; padding:.75rem 1rem; border:1px solid color-mix(in oklab, var(--fg) 10%, transparent);
-    background: var(--glass); backdrop-filter: blur(10px); box-shadow: var(--shadow);
-    text-decoration:none; color:inherit;
-  }
+        .current-main h2 {
+            margin: 0 0 .15rem;
+            font-size: 18px;
+        }
 
-  footer{ padding: 48px 24px 72px; text-align:center; color:var(--muted); }
+        .current-main p {
+            margin: 0;
+            font-size: 13px;
+            color: var(--muted);
+        }
 
-  :focus-visible{ outline: 2px solid hsl(var(--accent)); outline-offset:3px; border-radius:6px; }
-  ::selection{ background:hsl(var(--accent)/.3); color:var(--fg); }
-</style>
+        .current-btn {
+            all: unset;
+            cursor: pointer;
+            padding: .4rem .8rem;
+            border-radius: 999px;
+            border: 1px solid color-mix(in oklab, var(--fg) 15%, transparent);
+            font-size: 13px;
+            display: inline-flex;
+            align-items: center;
+            gap: .25rem;
+        }
+
+        @media (max-width:600px) {
+            .current {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        /* ============== CONTROLS & TAG FILTERS ============== */
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 1.25rem;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: .55rem;
+            border: 1px solid color-mix(in oklab, var(--fg) 10%, transparent);
+            border-radius: 999px;
+            padding: .55rem .9rem;
+            background: var(--glass);
+            backdrop-filter: blur(8px);
+            box-shadow: var(--shadow);
+        }
+
+        input[type="search"] {
+            all: unset;
+            padding: .25rem;
+            min-width: min(60vw, 320px);
+        }
+
+        button,
+        .chip {
+            all: unset;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: .5rem;
+            padding: .55rem .9rem;
+            border-radius: 999px;
+            font-weight: 600;
+            border: 1px solid color-mix(in oklab, var(--fg) 10%, transparent);
+            background: var(--glass);
+        }
+
+        .chip[data-active="true"] {
+            background: hsl(var(--accent)/.18);
+            border-color: hsl(var(--accent)/.35);
+            color: hsl(var(--accent));
+        }
+
+        .theme-toggle {
+            transition: transform .2s ease;
+        }
+
+        .theme-toggle:active {
+            transform: scale(.96);
+        }
+
+        .join-btn {
+            font-size: 14px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: .4rem;
+        }
+
+        .tag-filter-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: .75rem;
+            justify-content: center;
+        }
+
+        .tag-chip {
+            font-size: 13px;
+            padding: .35rem .75rem;
+        }
+
+        .result-count {
+            margin-top: .75rem;
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        /* sticky year headers */
+        .year {
+            position: sticky;
+            top: 0;
+            z-index: 5;
+            backdrop-filter: blur(10px);
+            background: color-mix(in oklab, var(--bg), transparent 25%);
+            margin: 0;
+            padding: .45rem 1.25rem;
+            font-size: clamp(22px, 3.4vw, 34px);
+            letter-spacing: .02em;
+            border-bottom: 1px solid color-mix(in oklab, var(--fg) 12%, transparent);
+        }
+
+        main {
+            padding: 32px 0 120px;
+        }
+
+        .grid {
+            display: grid;
+            gap: clamp(14px, 2vw, 24px);
+            grid-template-columns: repeat(auto-fill, minmax(min(230px, 100%), 1fr));
+        }
+
+        /* ============== BOOK CARD ============== */
+        a.book {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .book {
+            position: relative;
+            overflow: hidden;
+            border-radius: var(--radius);
+            background: linear-gradient(180deg,
+                    color-mix(in oklab, var(--card), transparent 8%),
+                    color-mix(in oklab, var(--card), transparent 0%));
+            border: 1px solid color-mix(in oklab, var(--fg) 10%, transparent);
+            box-shadow: var(--shadow);
+            transform-style: preserve-3d;
+            transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease;
+        }
+
+        @media (hover:hover) and (pointer:fine) {
+            .book:hover {
+                transform: translateY(-4px) rotateX(.6deg) rotateY(.6deg);
+                border-color: hsl(var(--accent)/.35);
+                box-shadow: 0 16px 40px rgba(0, 0, 0, .25);
+            }
+        }
+
+        .cover {
+            height: 260px;
+            border-bottom: 1px solid color-mix(in oklab, var(--fg) 12%, transparent);
+            position: relative;
+            overflow: hidden;
+            background:
+                radial-gradient(110px 110px at 12% 18%, hsl(var(--h) 82% 62% / .75), transparent 70%),
+                radial-gradient(150px 120px at 88% 22%, hsl(calc(var(--h) + 40) 82% 62% / .7), transparent 70%),
+                radial-gradient(140px 140px at 30% 88%, hsl(calc(var(--h) + 80) 80% 60% /.65), transparent 70%),
+                linear-gradient(135deg, hsl(calc(var(--h) + 12) 42% 16%), hsl(calc(var(--h) - 8) 42% 10%));
+            animation: hueWander 18s linear infinite;
+            background-size: cover;
+            background-blend-mode: normal;
+        }
+
+        @keyframes hueWander {
+            50% {
+                filter: hue-rotate(18deg) saturate(1.05);
+            }
+        }
+
+        .cover.has-img {
+            background-size: cover;
+            background-position: center;
+        }
+
+        .cover::after {
+            content: "";
+            position: absolute;
+            inset: -20%;
+            background:
+                radial-gradient(closest-side, #fff2, transparent) 20% 20%/30% 30% no-repeat,
+                radial-gradient(closest-side, #fff3, transparent) 80% 25%/26% 26% no-repeat,
+                radial-gradient(closest-side, #fff1, transparent) 50% 75%/50% 40% no-repeat;
+            mix-blend-mode: overlay;
+            filter: blur(4px);
+            transform: rotate(8deg);
+            pointer-events: none;
+        }
+
+        /* skeleton shimmer while fetching */
+        .cover.skeleton::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, #fff0, #fff3, #fff0);
+            animation: shimmer 1.6s infinite;
+            mix-blend-mode: soft-light;
+        }
+
+        @keyframes shimmer {
+            0% {
+                transform: translateX(-100%)
+            }
+
+            100% {
+                transform: translateX(100%)
+            }
+        }
+
+        .corner {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 12px;
+            font-weight: 700;
+            padding: .25rem .5rem;
+            border-radius: 999px;
+            background: hsl(var(--accent)/.2);
+            color: hsl(var(--accent));
+            border: 1px solid hsl(var(--accent)/.35);
+        }
+
+        .info {
+            padding: 14px 16px 16px;
+        }
+
+        .title {
+            margin: 0 0 .15rem;
+            font-weight: 700;
+            letter-spacing: .01em;
+            font-size: 18px;
+        }
+
+        .author {
+            margin: 0 0 .6rem;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .tag {
+            border: 1px solid color-mix(in oklab, var(--fg) 10%, transparent);
+            padding: .25rem .5rem;
+            border-radius: 999px;
+            backdrop-filter: blur(6px);
+            background: var(--glass);
+            font-size: 12px;
+        }
+
+        /* ============== OVERLAY ============== */
+        .overlay {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 60;
+        }
+
+        .overlay[data-open="true"] {
+            display: flex;
+        }
+
+        .overlay-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, .55);
+            backdrop-filter: blur(8px);
+        }
+
+        .overlay-panel {
+            position: relative;
+            max-width: 480px;
+            width: min(100% - 32px, 480px);
+            border-radius: 24px;
+            background: var(--card);
+            padding: 24px 20px 20px;
+            box-shadow: var(--shadow);
+            z-index: 1;
+            text-align: left;
+        }
+
+        .overlay-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 28px;
+            height: 28px;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            background: var(--glass);
+            border: 1px solid color-mix(in oklab, var(--fg) 12%, transparent);
+        }
+
+        .overlay-chip {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: .12em;
+            color: var(--muted);
+            margin: 0 0 .25rem;
+        }
+
+        .overlay-panel h2 {
+            margin: 0 0 .35rem;
+            font-size: 20px;
+        }
+
+        .overlay-author {
+            margin: 0 0 .85rem;
+            font-size: 14px;
+            color: var(--muted);
+        }
+
+        .overlay-note {
+            margin: 0 0 .75rem;
+            font-size: 14px;
+        }
+
+        .overlay-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: .85rem;
+        }
+
+        .overlay-local-hint {
+            font-size: 11px;
+            color: var(--muted);
+            margin: 0 0 .6rem;
+        }
+
+        .overlay-label {
+            display: block;
+            font-size: 12px;
+            margin-bottom: .55rem;
+            color: var(--muted);
+        }
+
+        .overlay-textarea {
+            width: 100%;
+            min-height: 72px;
+            resize: vertical;
+            border-radius: 12px;
+            border: 1px solid color-mix(in oklab, var(--fg) 15%, transparent);
+            padding: .5rem .6rem;
+            font-family: inherit;
+            font-size: 13px;
+            background: var(--glass);
+            color: var(--fg);
+            margin-top: .25rem;
+        }
+
+        .overlay-input {
+            width: 100%;
+            border-radius: 999px;
+            border: 1px solid color-mix(in oklab, var(--fg) 15%, transparent);
+            padding: .4rem .6rem;
+            font-family: inherit;
+            font-size: 13px;
+            background: var(--glass);
+            color: var(--fg);
+            margin-top: .25rem;
+        }
+
+        .overlay-footer {
+            margin-top: .85rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            font-size: 13px;
+        }
+
+        .overlay-link {
+            text-decoration: none;
+            border-radius: 999px;
+            padding: .35rem .75rem;
+            border: 1px solid color-mix(in oklab, var(--fg) 12%, transparent);
+            display: inline-flex;
+            align-items: center;
+            gap: .25rem;
+        }
+
+        /* top button */
+        .top {
+            position: fixed;
+            right: 16px;
+            bottom: 16px;
+            z-index: 50;
+            border-radius: 999px;
+            padding: .75rem 1rem;
+            border: 1px solid color-mix(in oklab, var(--fg) 10%, transparent);
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow);
+            text-decoration: none;
+            color: inherit;
+        }
+
+        footer {
+            padding: 0 0 72px;
+            text-align: center;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        :focus-visible {
+            outline: 2px solid hsl(var(--accent));
+            outline-offset: 3px;
+            border-radius: 6px;
+        }
+
+        ::selection {
+            background: hsl(var(--accent)/.3);
+            color: var(--fg);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                scroll-behavior: auto !important;
+                animation-duration: 0.001ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.001ms !important;
+            }
+        }
+    </style>
 </head>
+
 <body>
-<header class="hero">
-  <div class="back-blur" aria-hidden="true"></div>
-  <div>
-    <span class="badge">Booked · book club</span>
-    <h1>Our Reading Journey</h1>
-    <p class="sub">Every book we’ve read since we began. Filter, search, and toggle themes.</p>
+    <header class="hero">
+        <div class="back-blur" aria-hidden="true"></div>
+        <div class="hero-inner shell">
+            <span class="badge">Booked · book club</span>
+            <h1>Our Reading Journey</h1>
+            <p class="sub">Every book we’ve read since we began. Filter, search, and toggle themes.</p>
+            <p class="meta-row" id="metaSummary" aria-live="polite"></p>
 
-    <div class="controls" role="group" aria-label="Filters">
-      <label class="pill" title="Search books">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21 21l-4.3-4.3m2.1-5.2a7 7 0 11-14 0 7 7 0 0114 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-        <input id="search" type="search" placeholder="Search title, author, or month…" />
-      </label>
+            <!-- CURRENTLY READING -->
+            <section class="current" id="current" aria-label="Currently reading">
+                <div class="current-main">
+                    <div class="current-label">Currently reading</div>
+                    <h2 id="currentTitle"></h2>
+                    <p id="currentMeta"></p>
+                </div>
+                <button class="current-btn" id="currentBtn">
+                    Jump to book ↓
+                </button>
+            </section>
 
-      <div class="pill" style="gap:6px;" title="Filter by year">
-        <span>Year:</span>
-        <button class="chip" data-year="all" data-active="true">All</button>
-        <button class="chip" data-year="2023">2023</button>
-        <button class="chip" data-year="2024">2024</button>
-        <button class="chip" data-year="2025">2025</button>
-      </div>
+            <!-- CONTROLS -->
+            <div class="controls" role="group" aria-label="Filters and actions">
+                <label class="pill" title="Search books">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M21 21l-4.3-4.3m2.1-5.2a7 7 0 11-14 0 7 7 0 0114 0z" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                    <input id="search" type="search" placeholder="Search title, author, or month…" />
+                </label>
 
-      <button class="pill theme-toggle" id="themeBtn" title="Toggle light/dark">
-        <svg id="sun" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="display:none;"><path d="M12 4V2m0 20v-2M4 12H2m20 0h-2M5 5L3.5 3.5M20.5 20.5L19 19M19 5l1.5-1.5M3.5 20.5L5 19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2"/></svg>
-        <svg id="moon" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 15.5A8.5 8.5 0 119.5 4a7 7 0 0010.5 11.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-        <span>Theme</span>
-      </button>
+                <div class="pill" style="gap:6px;" title="Filter by year">
+                    <span>Year:</span>
+                    <button class="chip" data-year="all" data-active="true">All</button>
+                    <button class="chip" data-year="2023">2023</button>
+                    <button class="chip" data-year="2024">2024</button>
+                    <button class="chip" data-year="2025">2025</button>
+                </div>
+
+                <button class="pill theme-toggle" id="themeBtn" title="Toggle light/dark">
+                    <svg id="sun" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"
+                        style="display:none;">
+                        <path d="M12 4V2m0 20v-2M4 12H2m20 0h-2M5 5L3.5 3.5M20.5 20.5L19 19M19 5l1.5-1.5M3.5 20.5L5 19"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                        <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2" />
+                    </svg>
+                    <svg id="moon" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M20 15.5A8.5 8.5 0 119.5 4a7 7 0 0010.5 11.5z" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" />
+                    </svg>
+                    <span>Theme</span>
+                </button>
+
+                <!-- WHATSAPP JOIN BUTTON (replace href with your actual invite link) -->
+                <a class="pill join-btn" href="https://chat.whatsapp.com/EStsFPtmF2PJy6HX54eLat" target="_blank"
+                    rel="noopener noreferrer" title="Join our WhatsApp group">
+                    <!-- simple WhatsApp-like icon -->
+                    <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 3a9 9 0 00-7.8 13.5L3 21l4.7-1.2A9 9 0 1012 3z" fill="none" stroke="currentColor"
+                            stroke-width="1.6" stroke-linecap="round" />
+                        <path
+                            d="M9.5 8.8c-.2-.5-.4-.5-.7-.5h-.6c-.2 0-.5.1-.7.3-.2.3-.9.9-.9 2.2 0 1.3.9 2.6 1 2.8.1.2 1.8 2.8 4.4 3.8.6.2 1 .3 1.3.4.5.1.9.1 1.3.1.4 0 1.2-.4 1.4-.9.2-.5.2-.9.2-1-.1-.1-.2-.2-.5-.3l-1.5-.7c-.3-.1-.6-.2-.9.2l-.6.7c-.1.1-.3.2-.6.1-.3-.1-1.3-.5-2.5-1.6-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.4.1-.5l.4-.5c.1-.2.2-.4.3-.6.1-.2 0-.4 0-.5l-.7-1.6z"
+                            fill="currentColor" />
+                    </svg>
+                    Join WhatsApp
+                </a>
+            </div>
+
+            <!-- TAG FILTERS -->
+            <div class="tag-filter-row" id="tagFilters" aria-label="Filter by tag"></div>
+
+            <p class="result-count" id="resultCount" aria-live="polite"></p>
+        </div>
+    </header>
+
+    <main id="content" class="shell" aria-live="polite"></main>
+
+    <!-- BOOK DETAIL OVERLAY -->
+    <div id="overlay" class="overlay" aria-hidden="true">
+        <div class="overlay-backdrop" id="overlayBackdrop"></div>
+        <div class="overlay-panel" role="dialog" aria-modal="true" aria-labelledby="overlayTitle">
+            <button class="overlay-close" id="overlayClose" aria-label="Close details">×</button>
+            <p class="overlay-chip" id="overlayMonth"></p>
+            <h2 id="overlayTitle"></h2>
+            <p class="overlay-author" id="overlayAuthor"></p>
+            <p class="overlay-note" id="overlayNote"></p>
+            <div class="overlay-tags" id="overlayTags"></div>
+            <p class="overlay-local-hint">
+                Your note and rating are saved only in this browser (not shared publicly).
+            </p>
+
+            <label class="overlay-label" for="overlayNoteEditable">
+                Club thoughts (editable)
+                <textarea id="overlayNoteEditable" class="overlay-textarea"
+                    placeholder="Write what your group thought, favorite scenes, quotes…"></textarea>
+            </label>
+
+            <label class="overlay-label" for="overlayRatingInput">
+                Your rating / emoji (optional)
+                <input id="overlayRatingInput" class="overlay-input" placeholder="e.g. ★★★★☆ or 9/10 or 😭❤️" />
+            </label>
+
+            <div class="overlay-footer">
+                <span></span>
+                <a class="overlay-link" id="overlayLink" href="#" target="_blank" rel="noopener noreferrer">
+                    View on Open Library ↗
+                </a>
+            </div>
+        </div>
     </div>
-  </div>
-</header>
 
-<main id="content" aria-live="polite"></main>
+    <a class="top" href="#top" id="toTop" title="Back to top" style="display:none">↑ Top</a>
 
-<a class="top" href="#top" id="toTop" title="Back to top" style="display:none">↑ Top</a>
+    <footer class="shell">
+        Built with ♥ for <strong>Booked</strong>.
+    </footer>
 
-<footer>
-  Built with ♥ for <strong>Booked</strong>.
-</footer>
+    <script>
+        /* ====================== DATA (with tags + static descriptions) ====================== */
+        const BOOKS = [
+            // 2023
+            {
+                year: 2023,
+                month: "November",
+                title: "Die Wand",
+                author: "Marlen Haushofer",
+                tags: ["Literary fiction", "Psychological", "German", "Survival"],
+                note: "A woman finds herself sealed off by an invisible wall in the Austrian mountains, forced to survive and confront radical solitude."
+            },
+            {
+                year: 2023,
+                month: "December",
+                title: "Giovanni's Room",
+                author: "James Baldwin",
+                tags: ["Classic", "Queer", "Tragic", "Paris"],
+                note: "A tense, intimate portrait of love, shame, and self-denial in 1950s Paris."
+            },
+            // 2024
+            {
+                year: 2024,
+                month: "January",
+                title: "After Dark",
+                author: "Haruki Murakami",
+                tags: ["Japanese", "Surreal", "Nocturnal", "Short"],
+                note: "A one-night drift through Tokyo where reality blurs and the city becomes a dreamlike stage."
+            },
+            {
+                year: 2024,
+                month: "February",
+                title: "Orlando",
+                author: "Virginia Woolf",
+                tags: ["Classic", "Queer", "Modernist", "Fantasy"],
+                note: "A playful, time-traveling life story of a character who changes gender and crosses centuries."
+            },
+            {
+                year: 2024,
+                month: "March",
+                title: "The Lathe of Heaven",
+                author: "Ursula K. Le Guin",
+                tags: ["Sci-fi", "Philosophical", "Dystopia"],
+                note: "A man’s dreams alter reality itself, raising questions about power, ethics, and utopian schemes."
+            },
+            {
+                year: 2024,
+                month: "April",
+                title: "Death with Interruptions",
+                author: "José Saramago",
+                tags: ["Speculative", "Satire", "Portuguese"],
+                note: "In one country, people stop dying—and the consequences are funny, bureaucratic, and deeply human."
+            },
+            {
+                year: 2024,
+                month: "May",
+                title: "An Apprenticeship or The Book of Pleasures",
+                author: "Clarice Lispector",
+                tags: ["Brazilian", "Philosophical", "Romance"],
+                note: "A lyrical inner journey of a woman learning how to love, think, and feel with new clarity."
+            },
+            {
+                year: 2024,
+                month: "June",
+                title: "Lolita",
+                author: "Vladimir Nabokov",
+                tags: ["Classic", "Controversial", "Psychological"],
+                note: "A disturbing narrative of obsession and abuse told in dazzling, unreliable prose."
+            },
+            {
+                year: 2024,
+                month: "July",
+                title: "Del amor y otros demonios",
+                author: "Gabriel García Márquez",
+                tags: ["Latin American", "Magical realism", "Romance"],
+                note: "A condemned girl and a priest meet in a world of superstition, illness, and forbidden desire."
+            },
+            {
+                year: 2024,
+                month: "August",
+                title: "Notes from Underground",
+                author: "Fyodor Dostoevsky",
+                tags: ["Classic", "Russian", "Existential"],
+                note: "A bitter, self-sabotaging narrator dismantles himself in a confession full of spite and clarity."
+            },
+            {
+                year: 2024,
+                month: "September",
+                title: "Lapvona",
+                author: "Ottessa Moshfegh",
+                tags: ["Contemporary", "Dark", "Satire", "Medieval"],
+                note: "A grotesque, darkly comic tale of faith, power, and cruelty in a strange medieval village."
+            },
+            {
+                year: 2024,
+                month: "October",
+                title: "The Picture of Dorian Gray",
+                author: "Oscar Wilde",
+                tags: ["Classic", "Gothic", "Aestheticism"],
+                note: "A young man never ages while his hidden portrait bears the marks of his corruption."
+            },
+            {
+                year: 2024,
+                month: "November",
+                title: "Dracula",
+                author: "Bram Stoker",
+                tags: ["Classic", "Gothic", "Horror"],
+                note: "The original vampire novel: diaries, letters, and sea logs trace an ancient evil crossing into England."
+            },
+            {
+                year: 2024,
+                month: "December",
+                title: "White Nights",
+                author: "Fyodor Dostoevsky",
+                tags: ["Russian", "Romantic", "Short"],
+                note: "A dreamy, lonely narrator wanders St. Petersburg and falls into a brief, intense connection."
+            },
+            // 2025
+            {
+                year: 2025,
+                month: "January",
+                title: "Moby-Dick",
+                author: "Herman Melville",
+                tags: ["Classic", "American", "Adventure", "Sea"],
+                note: "A sprawling, obsessive hunt for a white whale that becomes an encyclopedia of the sea and the soul."
+            },
+            {
+                year: 2025,
+                month: "February",
+                title: "One Hundred Years of Solitude",
+                author: "Gabriel García Márquez",
+                tags: ["Classic", "Magical realism", "Latin American"],
+                note: "The rise and fall of the Buendía family in the mythical town of Macondo, where magic and history coexist."
+            },
+            {
+                year: 2025,
+                month: "March",
+                title: "Fahrenheit 451",
+                author: "Ray Bradbury",
+                tags: ["Classic", "Dystopia", "Sci-fi"],
+                note: "In a future where books are burned, a fireman begins to question what he’s destroying."
+            },
+            {
+                year: 2025,
+                month: "May",
+                title: "Invisible Cities",
+                author: "Italo Calvino",
+                tags: ["Italian", "Experimental", "Short"],
+                note: "Marco Polo describes impossible, poetic cities to Kublai Khan—maybe real, maybe imagined."
+            },
+            {
+                year: 2025,
+                month: "June",
+                title: "A Room of One's Own",
+                author: "Virginia Woolf",
+                tags: ["Essay", "Feminist", "Nonfiction"],
+                note: "A foundational essay on women, money, space, and the conditions needed to write."
+            },
+            {
+                year: 2025,
+                month: "July",
+                title: "Animal Farm",
+                author: "George Orwell",
+                tags: ["Satire", "Dystopia", "Political", "Short"],
+                note: "A farmyard revolution goes wrong, turning into a compact allegory of power and betrayal."
+            },
+            {
+                year: 2025,
+                month: "August",
+                title: "Strange Case of Dr Jekyll and Mr Hyde",
+                author: "Robert Louis Stevenson",
+                tags: ["Classic", "Gothic", "Horror", "Short"],
+                note: "A respectable doctor hides a violent alter ego, embodying a split between public virtue and private vice."
+            },
+            {
+                year: 2025,
+                month: "September",
+                title: "Narcissus and Goldmund",
+                author: "Hermann Hesse",
+                tags: ["German", "Philosophical", "Bildungsroman"],
+                note: "Two friends follow opposite paths—contemplative monk and wandering artist—in search of meaning."
+            },
+            {
+                year: 2025,
+                month: "October",
+                title: "Who's Afraid of Virginia Woolf?",
+                author: "Edward Albee",
+                tags: ["Play", "American", "Psychological"],
+                note: "A long, alcohol-fueled night where a couple weaponizes truth and illusion against each other and their guests."
+            },
+            {
+                year: 2025,
+                month: "November",
+                title: "Never Let Me Go",
+                author: "Kazuo Ishiguro",
+                tags: ["Dystopia", "Sci-fi", "Contemporary"],
+                note: "Former students slowly uncover the dark purpose behind their idyllic boarding school upbringing."
+            },
+            {
+                year: 2025,
+                month: "December",
+                title: "The Handmaid's Tale",
+                author: "Margaret Atwood",
+                tags: ["Dystopia", "Feminist", "Classic"],
+                note: "In a theocratic regime, a handmaid narrates her tightly controlled life and quiet acts of resistance."
+            }
+        ];
 
-<script>
-/* ====================== DATA (added authors) ====================== */
-const BOOKS = [
-  // 2023
-  {year:2023, month:"November", title:"Die Wand", author:"Marlen Haushofer"}, // if you meant another “The Wall”, just change the author
-  {year:2023, month:"December", title:"Giovanni's Room", author:"James Baldwin"},
-  // 2024
-  {year:2024, month:"January", title:"After Dark", author:"Haruki Murakami"},
-  {year:2024, month:"February", title:"Orlando", author:"Virginia Woolf"},
-  {year:2024, month:"March", title:"The Lathe of Heaven", author:"Ursula K. Le Guin"},
-  {year:2024, month:"April", title:"Death with Interruptions", author:"José Saramago"},
-  {year:2024, month:"May", title:"An Apprenticeship or The Book of Pleasures", author:"Clarice Lispector"},
-  {year:2024, month:"June", title:"Lolita", author:"Vladimir Nabokov"},
-  {year:2024, month:"July", title:"Del amor y otros demonios", author:"Gabriel García Márquez"},
-  {year:2024, month:"August", title:"Notes from Underground", author:"Fyodor Dostoevsky"},
-  {year:2024, month:"September", title:"Lapvona", author:"Ottessa Moshfegh"},
-  {year:2024, month:"October", title:"The Picture of Dorian Gray", author:"Oscar Wilde"},
-  {year:2024, month:"November", title:"Dracula", author:"Bram Stoker"},
-  {year:2024, month:"December", title:"White Nights", author:"Fyodor Dostoevsky"},
-  // 2025
-  {year:2025, month:"January", title:"Moby-Dick", author:"Herman Melville"},
-  {year:2025, month:"February", title:"One Hundred Years of Solitude", author:"Gabriel García Márquez"},
-  {year:2025, month:"March", title:"Fahrenheit 451", author:"Ray Bradbury"},
-  {year:2025, month:"May", title:"Invisible Cities", author:"Italo Calvino"},
-  {year:2025, month:"June", title:"A Room of One's Own", author:"Virginia Woolf"},
-  {year:2025, month:"July", title:"Animal Farm", author:"George Orwell"},
-  {year:2025, month:"August", title:"Strange Case of Dr Jekyll and Mr Hyde", author:"Robert Louis Stevenson"},
-  {year:2025, month:"September", title:"Narcissus and Goldmund", author:"Hermann Hesse"},
-  {year:2025, month:"October", title:"Who's Afraid of Virginia Woolf?", author:"Edward Albee"},
-  {year:2025, month:"November", title:"Never Let Me Go", author:"Kazuo Ishiguro"},
-  {year:2025, month:"December", title:"The Handmaid's Tale", author:"Margaret Atwood"}
+        /* ====================== HELPERS ====================== */
+        const $ = (sel, ctx = document) => ctx.querySelector(sel);
+        const $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel));
 
-  
+        function hashHue(str) {
+            let h = 0; for (let i = 0; i < str.length; i++) { h = (h * 31 + str.charCodeAt(i)) >>> 0; } return h % 360;
+        }
 
+        function getBookId(b) {
+            return (b.title + '-' + b.author + '-' + b.year)
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-+|-+$/g, '');
+        }
 
+        function loadMeta(id) {
+            try {
+                const raw = localStorage.getItem('booked_meta_' + id);
+                return raw ? JSON.parse(raw) : {};
+            } catch (_) {
+                return {};
+            }
+        }
 
-];
+        function saveMeta(id, meta) {
+            try {
+                localStorage.setItem('booked_meta_' + id, JSON.stringify(meta));
+            } catch (_) { }
+        }
 
-/* ====================== HELPERS ====================== */
-const $ = (sel, ctx=document)=>ctx.querySelector(sel);
-const $$ = (sel, ctx=document)=>Array.from(ctx.querySelectorAll(sel));
+        /* ====================== RENDER ====================== */
+        function createCard(item, index) {
+            const h = hashHue(item.title + item.month + item.year + item.author);
+            const link = document.createElement('a');
+            link.className = 'book reveal';
+            link.setAttribute('tabindex', '0');
+            link.dataset.year = item.year;
+            link.dataset.month = item.month.toLowerCase();
+            link.dataset.title = item.title.toLowerCase();
+            link.dataset.author = item.author.toLowerCase();
+            link.dataset.idx = index;
+            link.dataset.tags = (item.tags || []).map(t => t.toLowerCase()).join('|');
+            link.href = '#';
+            link.target = '_blank'; link.rel = 'noopener noreferrer';
 
-function hashHue(str){
-  let h=0; for (let i=0;i<str.length;i++){ h = (h*31 + str.charCodeAt(i)) >>> 0; } return h % 360;
-}
+            link.innerHTML = `
+        <div class="cover skeleton" style="--h:${h}">
+          <span class="corner">${item.year}</span>
+        </div>
+        <div class="info">
+          <h3 class="title">${item.title}</h3>
+          <p class="author">${item.author}</p>
+          <div class="meta">
+            <span class="tag" title="Month">${item.month}</span>
+            <span class="tag" title="Index in list">#${index + 1}</span>
+          </div>
+        </div>
+      `;
 
-/* ====================== RENDER ====================== */
-function createCard(item, index){
-  const h = hashHue(item.title + item.month + item.year + item.author);
-  const link = document.createElement('a');
-  link.className = 'book reveal';
-  link.setAttribute('tabindex','0');
-  link.dataset.year = item.year;
-  link.dataset.month = item.month.toLowerCase();
-  link.dataset.title = item.title.toLowerCase();
-  link.dataset.author = item.author.toLowerCase();
-  link.href = '#'; // temporary, will be upgraded to Open Library link if found
-  link.target = '_blank'; link.rel = 'noopener noreferrer';
+            // tilt only on pointer devices
+            if (window.matchMedia('(pointer:fine)').matches) {
+                link.addEventListener('pointermove', (e) => {
+                    const r = link.getBoundingClientRect();
+                    const x = (e.clientX - r.left) / r.width;
+                    const y = (e.clientY - r.top) / r.height;
+                    const rx = (y - .5) * -6;
+                    const ry = (x - .5) * 6;
+                    link.style.transform = `perspective(800px) rotateX(${rx}deg) rotateY(${ry}deg) translateY(-2px)`;
+                });
+                link.addEventListener('pointerleave', () => { link.style.transform = ''; });
+            }
 
-  link.innerHTML = `
-    <div class="cover skeleton" style="--h:${h}">
-      <span class="corner">${item.year}</span>
-    </div>
-    <div class="info">
-      <h3 class="title">${item.title}</h3>
-      <p class="author">${item.author}</p>
-      <div class="meta">
-        <span class="tag" title="Month">${item.month}</span>
-        <span class="tag" title="Index in list">#${index+1}</span>
-      </div>
-    </div>
-  `;
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const idx = Number(link.dataset.idx);
+                openOverlay(idx);
+            });
 
-  // tilt
-  link.addEventListener('pointermove', (e)=>{
-    const r = link.getBoundingClientRect();
-    const x = (e.clientX - r.left) / r.width;
-    const y = (e.clientY - r.top) / r.height;
-    const rx = (y - .5) * -6;
-    const ry = (x - .5) * 6;
-    link.style.transform = `perspective(800px) rotateX(${rx}deg) rotateY(${ry}deg) translateY(-2px)`;
-  });
-  link.addEventListener('pointerleave', ()=>{ link.style.transform = ''; });
+            return link;
+        }
 
-  return link;
-}
+        function render() {
+            const content = $('#content');
+            content.innerHTML = '';
 
-function render(){
-  const content = $('#content');
-  content.innerHTML = '';
+            const years = [...new Set(BOOKS.map(b => b.year))].sort((a, b) => a - b);
+            years.forEach(Y => {
+                const h2 = document.createElement('h2');
+                h2.className = 'year';
+                h2.textContent = Y;
+                h2.id = `year-${Y}`;
+                content.appendChild(h2);
 
-  const years = [...new Set(BOOKS.map(b=>b.year))].sort((a,b)=>a-b);
-  years.forEach(Y=>{
-    const h2 = document.createElement('h2');
-    h2.className='year';
-    h2.textContent = Y;
-    content.appendChild(h2);
+                const grid = document.createElement('section');
+                grid.className = 'grid';
+                grid.setAttribute('aria-label', `Books read in ${Y}`);
 
-    const grid = document.createElement('section');
-    grid.className='grid';
-    grid.setAttribute('aria-label', `Books read in ${Y}`);
+                BOOKS.filter(b => b.year === Y).forEach((b, i) => {
+                    grid.appendChild(createCard(b, BOOKS.indexOf(b)));
+                });
 
-    BOOKS.filter(b=>b.year===Y).forEach((b,i)=>{
-      grid.appendChild(createCard(b, BOOKS.indexOf(b)));
-    });
+                content.appendChild(grid);
+            });
 
-    content.appendChild(grid);
-  });
+            // reveal on scroll
+            const io = new IntersectionObserver((entries) => entries.forEach(en => {
+                if (en.isIntersecting) en.target.classList.add('in');
+            }), { threshold: .12 });
+            $$('.reveal', content).forEach(el => io.observe(el));
+        }
 
-  // reveal on scroll
-  const io = new IntersectionObserver((entries)=>entries.forEach(en=>{
-    if (en.isIntersecting) en.target.classList.add('in');
-  }), {threshold: .12});
-  $$('.reveal', content).forEach(el=> io.observe(el));
-}
+        /* ====================== FILTERS ====================== */
+        function applyFilters() {
+            const q = $('#search').value.trim().toLowerCase();
+            const activeChip = $('.chip[data-active="true"]');
+            const yearFilter = activeChip?.dataset.year ?? 'all';
 
-/* ====================== FILTERS ====================== */
-function applyFilters(){
-  const q = $('#search').value.trim().toLowerCase();
-  const activeChip = $('.chip[data-active="true"]');
-  const yearFilter = activeChip?.dataset.year ?? 'all';
+            const activeTagChip = $('.tag-chip[data-active="true"]');
+            const tagFilter = activeTagChip?.dataset.tag ?? 'all';
 
-  $$('.grid .book').forEach(card=>{
-    const okYear = (yearFilter==='all') || (String(card.dataset.year)===yearFilter);
-    const blob = (card.dataset.title + ' ' + card.dataset.month + ' ' + card.dataset.author);
-    const okText = q==='' || blob.includes(q);
-    card.style.display = (okYear && okText) ? '' : 'none';
-  });
-}
+            const cards = $$('.grid .book');
+            let visible = 0;
 
-/* ====================== THEME ====================== */
-function setTheme(mode){
-  document.documentElement.dataset.theme = mode;
-  localStorage.setItem('theme', mode);
-  // icon swap
-  const dark = mode==='dark';
-  $('#moon').style.display = dark ? 'block':'none';
-  $('#sun').style.display  = dark ? 'none' :'block';
-}
-function initTheme(){
-  const saved = localStorage.getItem('theme');
-  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  setTheme(saved ?? (prefersDark ? 'dark' : 'light'));
-}
+            cards.forEach(card => {
+                const okYear = (yearFilter === 'all') || (String(card.dataset.year) === yearFilter);
+                const blob = (card.dataset.title + ' ' + card.dataset.month + ' ' + card.dataset.author);
+                const okText = q === '' || blob.includes(q);
 
-/* ====================== BACK TO TOP ====================== */
-function setupTopButton(){
-  const btn = $('#toTop');
-  const show = () => { btn.style.display = (window.scrollY>500) ? 'inline-flex' : 'none'; };
-  window.addEventListener('scroll', show, {passive:true});
-  show();
-}
+                const tagsStr = card.dataset.tags || '';
+                const tags = tagsStr ? tagsStr.split('|') : [];
+                const okTag = (tagFilter === 'all') || tags.includes(tagFilter);
 
-/* ====================== COVERS (Open Library) ====================== */
-/*
-  We try to find each book via Open Library search, pick a doc with a cover,
-  set the card’s link to the Work page, and set the cover background image.
-  Graceful fallback: animated abstract cover if not found.
-*/
-async function fetchCover({title, author}){
-  const url = `https://openlibrary.org/search.json?title=${encodeURIComponent(title)}&author=${encodeURIComponent(author)}&limit=5`;
-  const r = await fetch(url);
-  if(!r.ok) throw new Error('search failed');
-  const data = await r.json();
-  // prefer docs that have cover_i and highest edition_count
-  const doc = (data.docs || [])
-    .filter(d => d.cover_i)
-    .sort((a,b)=>(b.edition_count||0)-(a.edition_count||0))[0];
-  if(!doc) return null;
+                const show = okYear && okText && okTag;
+                card.style.display = show ? '' : 'none';
+                if (show) visible++;
+            });
 
-  const coverUrl = `https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg`;
-  const workKey = (doc.key && doc.key.startsWith('/works/')) ? doc.key : (doc.work_key && doc.work_key[0]);
-  const link = workKey ? `https://openlibrary.org${workKey}` :
-                         `https://openlibrary.org/search?q=${encodeURIComponent(title + ' ' + author)}`;
-  return {coverUrl, link};
-}
+            const total = cards.length;
+            const res = $('#resultCount');
+            if (visible === total && q === '' && yearFilter === 'all' && tagFilter === 'all') {
+                res.textContent = `${total} books · all years`;
+            } else if (visible === 0) {
+                res.textContent = 'No books found. Try a different search, year, or tag.';
+            } else {
+                res.textContent = `${visible} of ${total} books shown`;
+            }
+        }
 
-async function hydrateCovers(){
-  const cards = $$('.grid .book');
-  // do a few at a time to be polite
-  const concurrency = 4;
-  let i = 0;
-  async function next(){
-    if (i >= cards.length) return;
-    const idx = i++;
-    const el = cards[idx];
-    const title = el.dataset.title;
-    const author = el.dataset.author;
-    try{
-      const res = await fetchCover({title, author});
-      if (res){
-        const cover = el.querySelector('.cover');
-        cover.style.backgroundImage = `url("${res.coverUrl}")`;
-        cover.classList.add('has-img');
-        el.href = res.link;
-      }
-    }catch(_){}
-    finally{
-      el.querySelector('.cover')?.classList.remove('skeleton');
-      next();
-    }
-  }
-  Array.from({length: Math.min(concurrency, cards.length)}).forEach(next);
-}
+        function renderTagFilters() {
+            const container = $('#tagFilters');
+            const set = new Set();
+            BOOKS.forEach(b => (b.tags || []).forEach(t => set.add(t)));
+            const tags = Array.from(set).sort((a, b) => a.localeCompare(b));
 
-/* ====================== BOOT ====================== */
-document.addEventListener('DOMContentLoaded', ()=>{
-  initTheme();
-  render();
-  setupTopButton();
+            container.innerHTML = '';
 
-  // Search
-  $('#search').addEventListener('input', applyFilters);
+            const allBtn = document.createElement('button');
+            allBtn.className = 'chip tag-chip';
+            allBtn.dataset.tag = 'all';
+            allBtn.dataset.active = 'true';
+            allBtn.textContent = 'All tags';
+            container.appendChild(allBtn);
 
-  // Year chips
-  $$('.chip').forEach(ch=>{
-    ch.addEventListener('click', ()=>{
-      $$('.chip').forEach(x=>x.dataset.active='false');
-      ch.dataset.active='true';
-      applyFilters();
-      const Y = ch.dataset.year;
-      if (Y!=='all'){
-        const target = $$('.year').find(h=>h.textContent.trim()===Y);
-        if (target) target.scrollIntoView({behavior:'smooth', block:'start'});
-      }
-    });
-  });
+            tags.forEach(tag => {
+                const btn = document.createElement('button');
+                btn.className = 'chip tag-chip';
+                btn.dataset.tag = tag.toLowerCase();
+                btn.textContent = tag;
+                container.appendChild(btn);
+            });
 
-  // Theme toggle
-  $('#themeBtn').addEventListener('click', ()=>{
-    const cur = document.documentElement.dataset.theme || 'light';
-    setTheme(cur === 'dark' ? 'light' : 'dark');
-  });
+            $$('.tag-chip', container).forEach(btn => {
+                btn.addEventListener('click', () => {
+                    $$('.tag-chip', container).forEach(b => b.dataset.active = 'false');
+                    btn.dataset.active = 'true';
+                    applyFilters();
+                });
+            });
+        }
 
-  // animated accent hue
-  const updateAccent = ()=>{
-    const t = Date.now()/1000;
-    const hue = Math.floor((t/20)%360);
-    document.documentElement.style.setProperty('--accent', `${hue} 83% 62%`);
-    requestAnimationFrame(updateAccent);
-  };
-  updateAccent();
+        /* ====================== THEME ====================== */
+        function setTheme(mode) {
+            document.documentElement.dataset.theme = mode;
+            localStorage.setItem('theme', mode);
+            const dark = mode === 'dark';
+            $('#moon').style.display = dark ? 'block' : 'none';
+            $('#sun').style.display = dark ? 'none' : 'block';
+        }
+        function initTheme() {
+            const saved = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            setTheme(saved ?? (prefersDark ? 'dark' : 'light'));
+        }
 
-  // Load real covers & links
-  hydrateCovers();
-});
-</script>
+        /* ====================== BACK TO TOP ====================== */
+        function setupTopButton() {
+            const btn = $('#toTop');
+            const show = () => { btn.style.display = (window.scrollY > 500) ? 'inline-flex' : 'none'; };
+            window.addEventListener('scroll', show, { passive: true });
+            show();
+        }
+
+        /* ====================== COVERS (Open Library) ====================== */
+        async function fetchCover({ title, author }) {
+            const url = `https://openlibrary.org/search.json?title=${encodeURIComponent(title)}&author=${encodeURIComponent(author)}&limit=5`;
+            const r = await fetch(url);
+            if (!r.ok) throw new Error('search failed');
+            const data = await r.json();
+            const doc = (data.docs || [])
+                .filter(d => d.cover_i)
+                .sort((a, b) => (b.edition_count || 0) - (a.edition_count || 0))[0];
+            if (!doc) return null;
+
+            const coverUrl = `https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg`;
+            const workKey = (doc.key && doc.key.startsWith('/works/')) ? doc.key : (doc.work_key && doc.work_key[0]);
+            const link = workKey ? `https://openlibrary.org${workKey}` :
+                `https://openlibrary.org/search?q=${encodeURIComponent(title + ' ' + author)}`;
+            return { coverUrl, link };
+        }
+
+        async function hydrateCovers() {
+            const cards = $$('.grid .book');
+            const concurrency = 4;
+            let i = 0;
+            async function next() {
+                if (i >= cards.length) return;
+                const el = cards[i++];
+                const idx = Number(el.dataset.idx);
+                const title = el.dataset.title;
+                const author = el.dataset.author;
+                try {
+                    const res = await fetchCover({ title, author });
+                    if (res) {
+                        const cover = el.querySelector('.cover');
+                        cover.style.backgroundImage = `url("${res.coverUrl}")`;
+                        cover.classList.add('has-img');
+                        BOOKS[idx].link = res.link;
+                    }
+                } catch (_) { }
+                finally {
+                    el.querySelector('.cover')?.classList.remove('skeleton');
+                    next();
+                }
+            }
+            Array.from({ length: Math.min(concurrency, cards.length) }).forEach(next);
+        }
+
+        /* ====================== META SUMMARY & CURRENT ====================== */
+        function updateMetaSummary() {
+            const meta = $('#metaSummary');
+            const years = [...new Set(BOOKS.map(b => b.year))].sort((a, b) => a - b);
+            const first = years[0];
+            const last = years[years.length - 1];
+            meta.textContent = `${BOOKS.length} books · ${first}–${last}`;
+        }
+
+        function setupCurrent() {
+            const currentEl = $('#current');
+            const titleEl = $('#currentTitle');
+            const metaEl = $('#currentMeta');
+            const btn = $('#currentBtn');
+
+            const idx = BOOKS.findIndex(b => b.year === 2025 && b.month === "December");
+            if (idx === -1) {
+                currentEl.style.display = 'none';
+                return;
+            }
+            const b = BOOKS[idx];
+            titleEl.textContent = b.title;
+            metaEl.textContent = `December 2025 · ${b.author}`;
+
+            btn.addEventListener('click', () => {
+                const card = $(`.book[data-idx="${idx}"]`);
+                if (card) {
+                    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    openOverlay(idx);
+                }
+            });
+        }
+
+        /* ====================== OVERLAY ====================== */
+        function openOverlay(idx) {
+            const b = BOOKS[idx];
+            const overlay = $('#overlay');
+            if (!b || !overlay) return;
+
+            const id = getBookId(b);
+            overlay.dataset.open = 'true';
+            overlay.dataset.id = id;
+            overlay.setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden';
+
+            $('#overlayMonth').textContent = `${b.month} ${b.year}`;
+            $('#overlayTitle').textContent = b.title;
+            $('#overlayAuthor').textContent = b.author;
+            $('#overlayNote').textContent = b.note || '';
+
+            const tagsWrap = $('#overlayTags');
+            tagsWrap.innerHTML = '';
+            (b.tags || []).forEach(t => {
+                const span = document.createElement('span');
+                span.className = 'tag';
+                span.textContent = t;
+                tagsWrap.appendChild(span);
+            });
+
+            const meta = loadMeta(id);
+            const noteEditable = $('#overlayNoteEditable');
+            const ratingInput = $('#overlayRatingInput');
+            noteEditable.value = meta.note || '';
+            ratingInput.value = meta.rating || '';
+
+            const link = $('#overlayLink');
+            if (b.link) {
+                link.href = b.link;
+                link.style.display = 'inline-flex';
+            } else {
+                link.style.display = 'none';
+            }
+
+            $('#overlayClose').focus();
+        }
+
+        function closeOverlay() {
+            const overlay = $('#overlay');
+            overlay.dataset.open = 'false';
+            overlay.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+            overlay.dataset.id = '';
+        }
+
+        function bindOverlay() {
+            $('#overlayClose').addEventListener('click', closeOverlay);
+            $('#overlayBackdrop').addEventListener('click', closeOverlay);
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && $('#overlay').dataset.open === 'true') {
+                    closeOverlay();
+                }
+            });
+
+            const noteEditable = $('#overlayNoteEditable');
+            const ratingInput = $('#overlayRatingInput');
+
+            function persist() {
+                const overlay = $('#overlay');
+                const id = overlay.dataset.id;
+                if (!id) return;
+                const meta = {
+                    note: noteEditable.value.trim(),
+                    rating: ratingInput.value.trim()
+                };
+                saveMeta(id, meta);
+            }
+
+            noteEditable.addEventListener('input', persist);
+            ratingInput.addEventListener('input', persist);
+        }
+
+        /* ====================== BOOT ====================== */
+        document.addEventListener('DOMContentLoaded', () => {
+            initTheme();
+            render();
+            renderTagFilters();
+            setupTopButton();
+            updateMetaSummary();
+            setupCurrent();
+            bindOverlay();
+
+            // Search
+            $('#search').addEventListener('input', applyFilters);
+
+            // Year chips
+            $$('.chip').forEach(ch => {
+                ch.addEventListener('click', () => {
+                    $$('.chip').forEach(x => x.dataset.active = 'false');
+                    ch.dataset.active = 'true';
+                    applyFilters();
+                    const Y = ch.dataset.year;
+                    if (Y !== 'all') {
+                        const target = $(`#year-${Y}`);
+                        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                });
+            });
+
+            // Theme toggle
+            $('#themeBtn').addEventListener('click', () => {
+                const cur = document.documentElement.dataset.theme || 'light';
+                setTheme(cur === 'dark' ? 'light' : 'dark');
+            });
+
+            // initial filter state + counters
+            applyFilters();
+
+            // Load real covers & links (after initial paint)
+            if (window.requestIdleCallback) {
+                window.requestIdleCallback(hydrateCovers);
+            } else {
+                setTimeout(hydrateCovers, 300);
+            }
+        });
+    </script>
 </body>
+
 </html>
