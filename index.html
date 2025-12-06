@@ -63,18 +63,25 @@
 
         /* ============== LAYOUT ============== */
         .shell {
-            width: min(100% - 32px, var(--shell-max));
+            width: min(100% - 24px, var(--shell-max));
             margin-inline: auto;
         }
 
         header.hero {
             position: relative;
-            min-height: 70svh;
+            min-height: auto;
             display: grid;
             place-items: center;
-            padding: clamp(24px, 4vw, 48px) 0;
+            padding: clamp(24px, 6vw, 48px) 0 32px;
             text-align: center;
             isolation: isolate;
+        }
+
+        @media (min-width:768px) {
+            header.hero {
+                min-height: 70svh;
+                padding: clamp(24px, 4vw, 48px) 0;
+            }
         }
 
         header.hero .back-blur {
@@ -228,7 +235,8 @@
             background: var(--glass);
         }
 
-        .chip[data-active="true"] {
+        .chip[data-active="true"],
+        .lang-chip[data-active="true"] {
             background: hsl(var(--accent)/.18);
             border-color: hsl(var(--accent)/.35);
             color: hsl(var(--accent));
@@ -248,6 +256,15 @@
             display: inline-flex;
             align-items: center;
             gap: .4rem;
+        }
+
+        .lang-switch {
+            gap: 4px;
+        }
+
+        .lang-chip {
+            font-size: 12px;
+            padding: .4rem .6rem;
         }
 
         .tag-filter-row {
@@ -284,7 +301,7 @@
         }
 
         main {
-            padding: 32px 0 120px;
+            padding: 24px 0 72px;
         }
 
         .grid {
@@ -565,6 +582,98 @@
             gap: .25rem;
         }
 
+        /* ============== FEEDBACK FORM (CENTERED) ============== */
+        .feedback {
+            margin: 24px 0 64px;
+            padding: 22px 20px 26px;
+            border-radius: 18px;
+            background: var(--glass);
+            border: 1px solid color-mix(in oklab, var(--fg) 10%, transparent);
+            max-width: 640px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .feedback h2,
+        .feedback p {
+            margin: 0 0 .75rem;
+            font-size: 18px;
+            text-align: center;
+        }
+
+        .feedback p {
+            font-size: 13px;
+            color: var(--muted);
+            max-width: 520px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .feedback h2 {
+            margin-bottom: .35rem;
+        }
+
+        .feedback form {
+            margin-top: .25rem;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: .25rem;
+        }
+
+        .feedback label {
+            display: block;
+            text-align: left;
+            font-size: 13px;
+            margin: 0 auto .75rem;
+            color: var(--muted);
+            max-width: 520px;
+            width: 100%;
+        }
+
+        .feedback textarea,
+        .feedback input[type="text"] {
+            width: 100%;
+            margin-top: .25rem;
+            border-radius: 12px;
+            border: 1px solid color-mix(in oklab, var(--fg) 15%, transparent);
+            padding: .5rem .6rem;
+            font-family: inherit;
+            font-size: 13px;
+            background: var(--card);
+            color: var(--fg);
+        }
+
+        .feedback textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .feedback button[type="submit"] {
+            margin-top: .4rem;
+            font-size: 14px;
+            padding: .55rem 1.35rem;
+            align-self: center;
+            transition: transform .16s ease, box-shadow .16s ease;
+        }
+
+        .feedback button[type="submit"]:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow);
+        }
+
+        .feedback button[type="submit"]:active {
+            transform: translateY(0);
+            box-shadow: none;
+        }
+
+        .feedback-status {
+            margin-top: .5rem;
+            font-size: 12px;
+            color: var(--muted);
+            text-align: center;
+        }
+
         /* top button */
         .top {
             position: fixed;
@@ -615,14 +724,14 @@
         <div class="back-blur" aria-hidden="true"></div>
         <div class="hero-inner shell">
             <span class="badge">Booked · book club</span>
-            <h1>Our Reading Journey</h1>
-            <p class="sub">Every book we’ve read since we began. Filter, search, and toggle themes.</p>
+            <h1 id="heroTitle">Our Reading Journey</h1>
+            <p class="sub" id="heroSub">Every book we’ve read since we began. Filter, search, and toggle themes.</p>
             <p class="meta-row" id="metaSummary" aria-live="polite"></p>
 
             <!-- CURRENTLY READING -->
             <section class="current" id="current" aria-label="Currently reading">
                 <div class="current-main">
-                    <div class="current-label">Currently reading</div>
+                    <div class="current-label" id="currentLabel">Currently reading</div>
                     <h2 id="currentTitle"></h2>
                     <p id="currentMeta"></p>
                 </div>
@@ -632,8 +741,8 @@
             </section>
 
             <!-- CONTROLS -->
-            <div class="controls" role="group" aria-label="Filters and actions">
-                <label class="pill" title="Search books">
+            <div class="controls" id="controlsGroup" role="group" aria-label="Filters and actions">
+                <label class="pill" id="searchPill" title="Search books">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                         <path d="M21 21l-4.3-4.3m2.1-5.2a7 7 0 11-14 0 7 7 0 0114 0z" stroke="currentColor"
                             stroke-width="2" stroke-linecap="round" />
@@ -641,8 +750,8 @@
                     <input id="search" type="search" placeholder="Search title, author, or month…" />
                 </label>
 
-                <div class="pill" style="gap:6px;" title="Filter by year">
-                    <span>Year:</span>
+                <div class="pill" id="yearFilterPill" style="gap:6px;" title="Filter by year">
+                    <span id="yearLabel">Year:</span>
                     <button class="chip" data-year="all" data-active="true">All</button>
                     <button class="chip" data-year="2023">2023</button>
                     <button class="chip" data-year="2024">2024</button>
@@ -660,13 +769,18 @@
                         <path d="M20 15.5A8.5 8.5 0 119.5 4a7 7 0 0010.5 11.5z" stroke="currentColor" stroke-width="2"
                             stroke-linecap="round" />
                     </svg>
-                    <span>Theme</span>
+                    <span id="themeLabel">Theme</span>
                 </button>
 
+                <!-- LANGUAGE SWITCH -->
+                <div class="pill lang-switch" id="langSwitch" title="Language">
+                    <button class="chip lang-chip" data-lang="en" data-active="true">EN</button>
+                    <button class="chip lang-chip" data-lang="de">DE</button>
+                </div>
+
                 <!-- WHATSAPP JOIN BUTTON (replace href with your actual invite link) -->
-                <a class="pill join-btn" href="https://chat.whatsapp.com/EStsFPtmF2PJy6HX54eLat" target="_blank"
-                    rel="noopener noreferrer" title="Join our WhatsApp group">
-                    <!-- simple WhatsApp-like icon -->
+                <a class="pill join-btn" id="joinBtn" href="https://chat.whatsapp.com/REPLACE_WITH_YOUR_INVITE"
+                    target="_blank" rel="noopener noreferrer" title="Join our WhatsApp group">
                     <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
                         <path d="M12 3a9 9 0 00-7.8 13.5L3 21l4.7-1.2A9 9 0 1012 3z" fill="none" stroke="currentColor"
                             stroke-width="1.6" stroke-linecap="round" />
@@ -674,7 +788,7 @@
                             d="M9.5 8.8c-.2-.5-.4-.5-.7-.5h-.6c-.2 0-.5.1-.7.3-.2.3-.9.9-.9 2.2 0 1.3.9 2.6 1 2.8.1.2 1.8 2.8 4.4 3.8.6.2 1 .3 1.3.4.5.1.9.1 1.3.1.4 0 1.2-.4 1.4-.9.2-.5.2-.9.2-1-.1-.1-.2-.2-.5-.3l-1.5-.7c-.3-.1-.6-.2-.9.2l-.6.7c-.1.1-.3.2-.6.1-.3-.1-1.3-.5-2.5-1.6-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.4.1-.5l.4-.5c.1-.2.2-.4.3-.6.1-.2 0-.4 0-.5l-.7-1.6z"
                             fill="currentColor" />
                     </svg>
-                    Join WhatsApp
+                    <span id="joinText">Join WhatsApp</span>
                 </a>
             </div>
 
@@ -687,6 +801,29 @@
 
     <main id="content" class="shell" aria-live="polite"></main>
 
+    <!-- FEEDBACK SECTION -->
+    <section class="shell feedback" id="feedback">
+        <h2 id="feedbackTitle">Share your thoughts with us</h2>
+        <p id="feedbackSubtitle">Send a short note about a book, a suggestion, or anything you’d like. It lands in our
+            inbox via Google Forms.</p>
+
+        <form id="feedbackForm">
+            <label for="feedbackMessage">
+                <span id="feedbackMessageLabel">Message</span>
+                <textarea id="feedbackMessage" required
+                    placeholder="What did you think, what should we read next…"></textarea>
+            </label>
+
+            <label for="feedbackName">
+                <span id="feedbackNameLabel">Name (optional)</span>
+                <input id="feedbackName" type="text" placeholder="Your name or nickname" />
+            </label>
+
+            <button type="submit" class="pill" id="feedbackSubmitButton">Send</button>
+            <p class="feedback-status" id="feedbackStatus"></p>
+        </form>
+    </section>
+
     <!-- BOOK DETAIL OVERLAY -->
     <div id="overlay" class="overlay" aria-hidden="true">
         <div class="overlay-backdrop" id="overlayBackdrop"></div>
@@ -697,25 +834,25 @@
             <p class="overlay-author" id="overlayAuthor"></p>
             <p class="overlay-note" id="overlayNote"></p>
             <div class="overlay-tags" id="overlayTags"></div>
-            <p class="overlay-local-hint">
+            <p class="overlay-local-hint" id="overlayLocalHint">
                 Your note and rating are saved only in this browser (not shared publicly).
             </p>
 
-            <label class="overlay-label" for="overlayNoteEditable">
-                Club thoughts (editable)
+            <label class="overlay-label" for="overlayNoteEditable" id="overlayNoteLabel">
+                <span id="overlayNoteLabelText">Club thoughts (editable)</span>
                 <textarea id="overlayNoteEditable" class="overlay-textarea"
                     placeholder="Write what your group thought, favorite scenes, quotes…"></textarea>
             </label>
 
-            <label class="overlay-label" for="overlayRatingInput">
-                Your rating / emoji (optional)
-                <input id="overlayRatingInput" class="overlay-input" placeholder="e.g. ★★★★☆ or 9/10 or 😭❤️" />
+            <label class="overlay-label" for="overlayRatingInput" id="overlayRatingLabel">
+                <span id="overlayRatingLabelText">Your rating / emoji (optional)</span>
+                <input id="overlayRatingInput" class="overlay-input" placeholder="e.g. ★★★★☆ or 😭❤️" />
             </label>
 
             <div class="overlay-footer">
                 <span></span>
                 <a class="overlay-link" id="overlayLink" href="#" target="_blank" rel="noopener noreferrer">
-                    View on Open Library ↗
+                    <span id="overlayOpenLibText">View on Open Library ↗</span>
                 </a>
             </div>
         </div>
@@ -723,12 +860,12 @@
 
     <a class="top" href="#top" id="toTop" title="Back to top" style="display:none">↑ Top</a>
 
-    <footer class="shell">
+    <footer class="shell" id="footerText">
         Built with ♥ for <strong>Booked</strong>.
     </footer>
 
     <script>
-        /* ====================== DATA (with tags + static descriptions) ====================== */
+        /* ====================== DATA (with tags + descriptions) ====================== */
         const BOOKS = [
             // 2023
             {
@@ -935,6 +1072,116 @@
             }
         ];
 
+        /* ====================== MONTH LOCALIZATION ====================== */
+        const MONTHS = {
+            en: {
+                January: "January", February: "February", March: "March", April: "April",
+                May: "May", June: "June", July: "July", August: "August",
+                September: "September", October: "October", November: "November", December: "December"
+            },
+            de: {
+                January: "Januar", February: "Februar", March: "März", April: "April",
+                May: "Mai", June: "Juni", July: "Juli", August: "August",
+                September: "September", October: "Oktober", November: "November", December: "Dezember"
+            }
+        };
+
+        /* ====================== I18N ====================== */
+        const I18N = {
+            en: {
+                heroTitle: "Our Reading Journey",
+                heroSub: "Every book we’ve read since we began. Filter, search, and toggle themes.",
+                metaSummary: (total, first, last) => `${total} books · ${first}–${last}`,
+                currentlyReading: "Currently reading",
+                jumpToBook: "Jump to book ↓",
+                yearLabel: "Year:",
+                searchPlaceholder: "Search title, author, or month…",
+                searchTitle: "Search books",
+                controlsAria: "Filters and actions",
+                yearFilterTitle: "Filter by year",
+                langSwitchTitle: "Language",
+                tagFilterAria: "Filter by tag",
+                themeLabel: "Theme",
+                themeTitle: "Toggle light/dark",
+                joinWhatsapp: "Join WhatsApp",
+                joinWhatsappTitle: "Join our WhatsApp group",
+                allTags: "All tags",
+                resultAll: (total) => `${total} books · all years`,
+                resultFiltered: (visible, total) => `${visible} of ${total} books shown`,
+                resultNone: "No books found. Try a different search, year, or tag.",
+                tagMonthTitle: "Month",
+                tagIndexTitle: "Index in list",
+                overlayLocalHint: "Your note and rating are saved only in this browser (not shared publicly).",
+                overlayNoteLabel: "Club thoughts (editable)",
+                overlayNotePlaceholder: "Write what your group thought, favorite scenes, quotes…",
+                overlayRatingLabel: "Your rating / emoji (optional)",
+                overlayRatingPlaceholder: "e.g. ★★★★☆ or 😭❤️",
+                overlayOpenLib: "View on Open Library ↗",
+                feedbackTitle: "Share your thoughts with us",
+                feedbackSubtitle: "Send a short note about a book, a suggestion, or anything you’d like. It lands in our inbox via Google Forms.",
+                feedbackMessageLabel: "Message",
+                feedbackMessagePlaceholder: "What did you think, what should we read next…",
+                feedbackNameLabel: "Name (optional)",
+                feedbackNamePlaceholder: "Your name or nickname",
+                feedbackSubmit: "Send",
+                feedbackThanks: "Thanks for your message! We’ve received it.",
+                feedbackError: "Something went wrong — please try again later.",
+                feedbackNotConfigured: "The form isn’t configured yet. Ask the organizer to connect Google Forms.",
+                footerHtml: "Built with ♥ for <strong>Booked</strong>."
+            },
+            de: {
+                heroTitle: "Unsere Lese-Reise",
+                heroSub: "Alle Bücher, die wir seit dem Start gelesen haben. Filtern, suchen und das Thema wechseln.",
+                metaSummary: (total, first, last) => `${total} Bücher · ${first}–${last}`,
+                currentlyReading: "Gerade lesen",
+                jumpToBook: "Zum Buch springen ↓",
+                yearLabel: "Jahr:",
+                searchPlaceholder: "Titel, Autor·in oder Monat suchen…",
+                searchTitle: "Bücher suchen",
+                controlsAria: "Filter und Aktionen",
+                yearFilterTitle: "Nach Jahr filtern",
+                langSwitchTitle: "Sprache",
+                tagFilterAria: "Nach Tags filtern",
+                themeLabel: "Thema",
+                themeTitle: "Hell/Dunkel wechseln",
+                joinWhatsapp: "WhatsApp-Gruppe",
+                joinWhatsappTitle: "Tritt unserer WhatsApp-Gruppe bei",
+                allTags: "Alle Tags",
+                resultAll: (total) => `${total} Bücher · alle Jahre`,
+                resultFiltered: (visible, total) => `${visible} von ${total} Büchern`,
+                resultNone: "Keine Bücher gefunden. Ändere Suche, Jahr oder Tag.",
+                tagMonthTitle: "Monat",
+                tagIndexTitle: "Position in der Liste",
+                overlayLocalHint: "Deine Notizen & Bewertung werden nur in diesem Browser gespeichert (nicht öffentlich).",
+                overlayNoteLabel: "Gedanken des Clubs (bearbeitbar)",
+                overlayNotePlaceholder: "Was fandet ihr spannend? Szenen, Zitate, Eindrücke…",
+                overlayRatingLabel: "Deine Bewertung / Emojis (optional)",
+                overlayRatingPlaceholder: "z.B. ★★★★☆ oder 😭❤️",
+                overlayOpenLib: "Bei Open Library ansehen ↗",
+                feedbackTitle: "Schreib uns etwas",
+                feedbackSubtitle: "Schick uns eine kurze Nachricht zu einem Buch, einen Vorschlag oder einfach einen Gedanken. Sie landet direkt bei uns über Google Forms.",
+                feedbackMessageLabel: "Nachricht",
+                feedbackMessagePlaceholder: "Wie fandest du das Buch, was sollen wir als Nächstes lesen…",
+                feedbackNameLabel: "Name (optional)",
+                feedbackNamePlaceholder: "Dein Name oder Spitzname",
+                feedbackSubmit: "Senden",
+                feedbackThanks: "Danke für deine Nachricht – sie ist bei uns angekommen.",
+                feedbackError: "Etwas ist schiefgelaufen – versuch es später noch einmal.",
+                feedbackNotConfigured: "Das Formular ist noch nicht konfiguriert. Bitte die Orga, Google Forms zu verbinden.",
+                footerHtml: "Mit ♥ für <strong>Booked</strong> gebaut."
+            }
+        };
+
+        let currentLang = 'en';
+        let currentBookIndex = null;
+
+        /* ====================== GOOGLE FORM CONFIG ====================== */
+        const GOOGLE_FORM_ACTION = "https://docs.google.com/forms/u/0/d/19NfvoWJBLybWPbZD7zz-9lCox4Fax2LzjTXyXjnhINw/previewResponse";
+        const GOOGLE_FORM_FIELDS = {
+            message: "entry.2103806539",
+            name: "entry.2116861404"
+        };
+
         /* ====================== HELPERS ====================== */
         const $ = (sel, ctx = document) => ctx.querySelector(sel);
         const $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel));
@@ -980,6 +1227,9 @@
             link.href = '#';
             link.target = '_blank'; link.rel = 'noopener noreferrer';
 
+            const t = I18N[currentLang];
+            const displayMonth = (MONTHS[currentLang] && MONTHS[currentLang][item.month]) || item.month;
+
             link.innerHTML = `
         <div class="cover skeleton" style="--h:${h}">
           <span class="corner">${item.year}</span>
@@ -988,13 +1238,12 @@
           <h3 class="title">${item.title}</h3>
           <p class="author">${item.author}</p>
           <div class="meta">
-            <span class="tag" title="Month">${item.month}</span>
-            <span class="tag" title="Index in list">#${index + 1}</span>
+            <span class="tag" title="${t.tagMonthTitle}">${displayMonth}</span>
+            <span class="tag" title="${t.tagIndexTitle}">#${index + 1}</span>
           </div>
         </div>
       `;
 
-            // tilt only on pointer devices
             if (window.matchMedia('(pointer:fine)').matches) {
                 link.addEventListener('pointermove', (e) => {
                     const r = link.getBoundingClientRect();
@@ -1039,7 +1288,6 @@
                 content.appendChild(grid);
             });
 
-            // reveal on scroll
             const io = new IntersectionObserver((entries) => entries.forEach(en => {
                 if (en.isIntersecting) en.target.classList.add('in');
             }), { threshold: .12 });
@@ -1049,7 +1297,7 @@
         /* ====================== FILTERS ====================== */
         function applyFilters() {
             const q = $('#search').value.trim().toLowerCase();
-            const activeChip = $('.chip[data-active="true"]');
+            const activeChip = $('.chip[data-year][data-active="true"]');
             const yearFilter = activeChip?.dataset.year ?? 'all';
 
             const activeTagChip = $('.tag-chip[data-active="true"]');
@@ -1074,12 +1322,14 @@
 
             const total = cards.length;
             const res = $('#resultCount');
+            const t = I18N[currentLang];
+
             if (visible === total && q === '' && yearFilter === 'all' && tagFilter === 'all') {
-                res.textContent = `${total} books · all years`;
+                res.textContent = t.resultAll(total);
             } else if (visible === 0) {
-                res.textContent = 'No books found. Try a different search, year, or tag.';
+                res.textContent = t.resultNone;
             } else {
-                res.textContent = `${visible} of ${total} books shown`;
+                res.textContent = t.resultFiltered(visible, total);
             }
         }
 
@@ -1089,13 +1339,14 @@
             BOOKS.forEach(b => (b.tags || []).forEach(t => set.add(t)));
             const tags = Array.from(set).sort((a, b) => a.localeCompare(b));
 
+            const t = I18N[currentLang];
             container.innerHTML = '';
 
             const allBtn = document.createElement('button');
             allBtn.className = 'chip tag-chip';
             allBtn.dataset.tag = 'all';
             allBtn.dataset.active = 'true';
-            allBtn.textContent = 'All tags';
+            allBtn.textContent = t.allTags;
             container.appendChild(allBtn);
 
             tags.forEach(tag => {
@@ -1113,6 +1364,8 @@
                     applyFilters();
                 });
             });
+
+            container.setAttribute('aria-label', t.tagFilterAria);
         }
 
         /* ====================== THEME ====================== */
@@ -1127,6 +1380,71 @@
             const saved = localStorage.getItem('theme');
             const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
             setTheme(saved ?? (prefersDark ? 'dark' : 'light'));
+        }
+
+        /* ====================== LANG ====================== */
+        function updateMetaSummary() {
+            const meta = $('#metaSummary');
+            const years = [...new Set(BOOKS.map(b => b.year))].sort((a, b) => a - b);
+            const first = years[0];
+            const last = years[years.length - 1];
+            const t = I18N[currentLang];
+            meta.textContent = t.metaSummary(BOOKS.length, first, last);
+        }
+
+        function updateCurrentText() {
+            if (currentBookIndex == null) return;
+            const b = BOOKS[currentBookIndex];
+            const displayMonth = (MONTHS[currentLang] && MONTHS[currentLang][b.month]) || b.month;
+            $('#currentTitle').textContent = b.title;
+            $('#currentMeta').textContent = `${displayMonth} ${b.year} · ${b.author}`;
+        }
+
+        function setLanguage(lang) {
+            if (!I18N[lang]) lang = 'en';
+            currentLang = lang;
+            document.documentElement.lang = lang;
+            localStorage.setItem('booked_lang', lang);
+            const t = I18N[lang];
+
+            $('#heroTitle').textContent = t.heroTitle;
+            $('#heroSub').textContent = t.heroSub;
+            $('#yearLabel').textContent = t.yearLabel;
+            $('#search').placeholder = t.searchPlaceholder;
+            $('#searchPill').title = t.searchTitle;
+            $('#controlsGroup').setAttribute('aria-label', t.controlsAria);
+            $('#yearFilterPill').title = t.yearFilterTitle;
+            $('#langSwitch').title = t.langSwitchTitle;
+            $('#themeLabel').textContent = t.themeLabel;
+            $('#themeBtn').title = t.themeTitle;
+            $('#currentLabel').textContent = t.currentlyReading;
+            $('#currentBtn').textContent = t.jumpToBook;
+            $('#joinText').textContent = t.joinWhatsapp;
+            $('#joinBtn').title = t.joinWhatsappTitle;
+            $('#overlayLocalHint').textContent = t.overlayLocalHint;
+            $('#overlayNoteLabelText').textContent = t.overlayNoteLabel;
+            $('#overlayNoteEditable').placeholder = t.overlayNotePlaceholder;
+            $('#overlayRatingLabelText').textContent = t.overlayRatingLabel;
+            $('#overlayRatingInput').placeholder = t.overlayRatingPlaceholder;
+            $('#overlayOpenLibText').textContent = t.overlayOpenLib;
+            $('#footerText').innerHTML = t.footerHtml;
+            $('#feedbackTitle').textContent = t.feedbackTitle;
+            $('#feedbackSubtitle').textContent = t.feedbackSubtitle;
+            $('#feedbackMessageLabel').textContent = t.feedbackMessageLabel;
+            $('#feedbackMessage').placeholder = t.feedbackMessagePlaceholder;
+            $('#feedbackNameLabel').textContent = t.feedbackNameLabel;
+            $('#feedbackName').placeholder = t.feedbackNamePlaceholder;
+            $('#feedbackSubmitButton').textContent = t.feedbackSubmit;
+
+            $$('.lang-chip').forEach(btn => {
+                btn.dataset.active = (btn.dataset.lang === lang) ? 'true' : 'false';
+            });
+
+            render();
+            renderTagFilters();
+            updateMetaSummary();
+            updateCurrentText();
+            applyFilters();
         }
 
         /* ====================== BACK TO TOP ====================== */
@@ -1182,19 +1500,9 @@
             Array.from({ length: Math.min(concurrency, cards.length) }).forEach(next);
         }
 
-        /* ====================== META SUMMARY & CURRENT ====================== */
-        function updateMetaSummary() {
-            const meta = $('#metaSummary');
-            const years = [...new Set(BOOKS.map(b => b.year))].sort((a, b) => a - b);
-            const first = years[0];
-            const last = years[years.length - 1];
-            meta.textContent = `${BOOKS.length} books · ${first}–${last}`;
-        }
-
+        /* ====================== CURRENTLY READING ====================== */
         function setupCurrent() {
             const currentEl = $('#current');
-            const titleEl = $('#currentTitle');
-            const metaEl = $('#currentMeta');
             const btn = $('#currentBtn');
 
             const idx = BOOKS.findIndex(b => b.year === 2025 && b.month === "December");
@@ -1202,15 +1510,15 @@
                 currentEl.style.display = 'none';
                 return;
             }
-            const b = BOOKS[idx];
-            titleEl.textContent = b.title;
-            metaEl.textContent = `December 2025 · ${b.author}`;
+            currentBookIndex = idx;
+            updateCurrentText();
 
             btn.addEventListener('click', () => {
-                const card = $(`.book[data-idx="${idx}"]`);
+                if (currentBookIndex == null) return;
+                const card = $(`.book[data-idx="${currentBookIndex}"]`);
                 if (card) {
                     card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    openOverlay(idx);
+                    openOverlay(currentBookIndex);
                 }
             });
         }
@@ -1227,7 +1535,8 @@
             overlay.setAttribute('aria-hidden', 'false');
             document.body.style.overflow = 'hidden';
 
-            $('#overlayMonth').textContent = `${b.month} ${b.year}`;
+            const displayMonth = (MONTHS[currentLang] && MONTHS[currentLang][b.month]) || b.month;
+            $('#overlayMonth').textContent = `${displayMonth} ${b.year}`;
             $('#overlayTitle').textContent = b.title;
             $('#overlayAuthor').textContent = b.author;
             $('#overlayNote').textContent = b.note || '';
@@ -1293,23 +1602,65 @@
             ratingInput.addEventListener('input', persist);
         }
 
+        /* ====================== FEEDBACK FORM HANDLER ====================== */
+        function setupFeedbackForm() {
+            const form = $('#feedbackForm');
+            const status = $('#feedbackStatus');
+
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const t = I18N[currentLang];
+
+                if (!GOOGLE_FORM_ACTION || !GOOGLE_FORM_FIELDS.message) {
+                    status.textContent = t.feedbackNotConfigured;
+                    return;
+                }
+
+                const message = $('#feedbackMessage').value.trim();
+                const name = $('#feedbackName').value.trim();
+
+                if (!message) {
+                    form.reportValidity();
+                    return;
+                }
+
+                const fd = new FormData();
+                fd.append(GOOGLE_FORM_FIELDS.message, message);
+                if (GOOGLE_FORM_FIELDS.name) {
+                    fd.append(GOOGLE_FORM_FIELDS.name, name);
+                }
+
+                status.textContent = "";
+
+                fetch(GOOGLE_FORM_ACTION, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: fd
+                }).then(() => {
+                    $('#feedbackMessage').value = "";
+                    $('#feedbackName').value = "";
+                    status.textContent = t.feedbackThanks;
+                }).catch(() => {
+                    status.textContent = t.feedbackError;
+                });
+            });
+        }
+
         /* ====================== BOOT ====================== */
         document.addEventListener('DOMContentLoaded', () => {
             initTheme();
-            render();
-            renderTagFilters();
             setupTopButton();
-            updateMetaSummary();
             setupCurrent();
             bindOverlay();
+            setupFeedbackForm();
 
             // Search
             $('#search').addEventListener('input', applyFilters);
 
             // Year chips
-            $$('.chip').forEach(ch => {
+            $$('.chip[data-year]').forEach(ch => {
                 ch.addEventListener('click', () => {
-                    $$('.chip').forEach(x => x.dataset.active = 'false');
+                    $$('.chip[data-year]').forEach(x => x.dataset.active = 'false');
                     ch.dataset.active = 'true';
                     applyFilters();
                     const Y = ch.dataset.year;
@@ -1326,8 +1677,15 @@
                 setTheme(cur === 'dark' ? 'light' : 'dark');
             });
 
-            // initial filter state + counters
-            applyFilters();
+            // Language switch
+            $$('.lang-chip').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    setLanguage(btn.dataset.lang);
+                });
+            });
+
+            const savedLang = localStorage.getItem('booked_lang') || 'en';
+            setLanguage(savedLang);
 
             // Load real covers & links (after initial paint)
             if (window.requestIdleCallback) {
