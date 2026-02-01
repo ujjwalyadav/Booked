@@ -756,6 +756,9 @@
                     <button class="chip" data-year="2023">2023</button>
                     <button class="chip" data-year="2024">2024</button>
                     <button class="chip" data-year="2025">2025</button>
+                    <button class="chip" data-year="2026">2026</button>
+
+                    
                 </div>
 
                 <button class="pill theme-toggle" id="themeBtn" title="Toggle light/dark">
@@ -1063,12 +1066,20 @@
                 note: "Former students slowly uncover the dark purpose behind their idyllic boarding school upbringing."
             },
             {
-                year: 2025,
-                month: "December",
+                year: 2026,
+                month: "January",
                 title: "The Handmaid's Tale",
                 author: "Margaret Atwood",
                 tags: ["Dystopia", "Feminist", "Classic"],
                 note: "In a theocratic regime, a handmaid narrates her tightly controlled life and quiet acts of resistance."
+            },
+            {
+                year: 2026,
+                month: "February",
+                title: "Any Ursula K. Le Guin work",
+                author: "Ursula K. Le Guin",
+                tags: ["Sci-fi", "Fantasy", "Speculative", "Author focus"],
+                note: "Author month: any novel by Ursula K. Le Guin is allowed. Each reader may choose their own book."
             }
         ];
 
@@ -1505,7 +1516,7 @@
             const currentEl = $('#current');
             const btn = $('#currentBtn');
 
-            const idx = BOOKS.findIndex(b => b.year === 2025 && b.month === "December");
+            const idx = BOOKS.findIndex(b => b.year === 2026 && b.month === "February");
             if (idx === -1) {
                 currentEl.style.display = 'none';
                 return;
