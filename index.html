@@ -347,7 +347,6 @@
                 radial-gradient(150px 120px at 88% 22%, hsl(calc(var(--h) + 40) 82% 62% / .7), transparent 70%),
                 radial-gradient(140px 140px at 30% 88%, hsl(calc(var(--h) + 80) 80% 60% /.65), transparent 70%),
                 linear-gradient(135deg, hsl(calc(var(--h) + 12) 42% 16%), hsl(calc(var(--h) - 8) 42% 10%));
-            animation: hueWander 18s linear infinite;
             background-size: cover;
             background-blend-mode: normal;
         }
@@ -1485,7 +1484,7 @@
                 .sort((a, b) => (b.edition_count || 0) - (a.edition_count || 0))[0];
             if (!doc) return null;
 
-            const coverUrl = `https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg`;
+            const coverUrl = `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg`;
             const workKey = (doc.key && doc.key.startsWith('/works/')) ? doc.key : (doc.work_key && doc.work_key[0]);
             const link = workKey ? `https://openlibrary.org${workKey}` :
                 `https://openlibrary.org/search?q=${encodeURIComponent(title + ' ' + author)}`;
@@ -1494,7 +1493,7 @@
 
         async function hydrateCovers() {
             const cards = $$('.grid .book');
-            const concurrency = 4;
+            const concurrency = 2;
             let i = 0;
             async function next() {
                 if (i >= cards.length) return;
@@ -1524,7 +1523,7 @@
             const currentEl = $('#current');
             const btn = $('#currentBtn');
 
-            const idx = BOOKS.findIndex(b => b.year === 2026 && b.month === "February");
+            const idx = BOOKS.findIndex(b => b.year === 2026 && b.month === "March");
             if (idx === -1) {
                 currentEl.style.display = 'none';
                 return;
