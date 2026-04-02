@@ -1087,7 +1087,16 @@
                 author: "Albert Camus",
                 tags: ["Essay", "Philosophical", "Nonfiction"],
                 note: "Absurd hero — one who confronts the futility of existence with defiant consciousness and, in doing so, finds a form of personal triumph."
+            },
+            {
+                year: 2026,
+                month: "April",
+                title: "Interview with the Vampire",
+                author: "Anne Rice",
+                tags: ["Gothic Horror", "Philosophical Drama", "Supernatural Fantasy"],
+                note: "Absurd hero — one who confronts the futility of existence with defiant consciousness and, in doing so, finds a form of personal triumph."
             }
+            
         ];
 
         /* ====================== MONTH LOCALIZATION ====================== */
@@ -1523,7 +1532,7 @@
             const currentEl = $('#current');
             const btn = $('#currentBtn');
 
-            const idx = BOOKS.findIndex(b => b.year === 2026 && b.month === "March");
+            const idx = BOOKS.findIndex(b => b.year === 2026 && b.month === "April");
             if (idx === -1) {
                 currentEl.style.display = 'none';
                 return;
