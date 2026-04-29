@@ -16,10 +16,8 @@
             --shadow: 0 10px 30px rgba(0, 0, 0, .35);
             --accent: 262 83% 62%;
             --shell-max: 1120px;
-            /* global content width */
         }
 
-        /* light palette (default) */
         :root[data-theme="light"] {
             color-scheme: light;
             --bg: #faf9ff;
@@ -30,7 +28,6 @@
             --shadow: 0 10px 30px rgba(26, 26, 44, .12);
         }
 
-        /* dark palette */
         :root[data-theme="dark"] {
             color-scheme: dark;
             --bg: #0b0c10;
@@ -41,12 +38,13 @@
         }
 
         * {
-            box-sizing: border-box
+            box-sizing: border-box;
         }
 
         html,
         body {
-            height: 100%
+            min-height: 100%;
+            scroll-behavior: smooth;
         }
 
         body {
@@ -61,25 +59,43 @@
             overflow-x: hidden;
         }
 
-        /* ============== LAYOUT ============== */
         .shell {
             width: min(100% - 24px, var(--shell-max));
             margin-inline: auto;
         }
 
+        .skip-link {
+            position: absolute;
+            left: 12px;
+            top: 12px;
+            transform: translateY(-220%);
+            background: var(--card);
+            color: var(--fg);
+            padding: .55rem .8rem;
+            border-radius: 999px;
+            z-index: 100;
+            text-decoration: none;
+            box-shadow: var(--shadow);
+            border: 1px solid color-mix(in oklab, var(--fg) 12%, transparent);
+        }
+
+        .skip-link:focus {
+            transform: translateY(0);
+        }
+
+        /* ============== HERO ============== */
         header.hero {
             position: relative;
-            min-height: auto;
             display: grid;
             place-items: center;
-            padding: clamp(24px, 6vw, 48px) 0 32px;
+            padding: clamp(24px, 6vw, 48px) 0 28px;
             text-align: center;
             isolation: isolate;
         }
 
         @media (min-width:768px) {
             header.hero {
-                min-height: 70svh;
+                min-height: 48svh;
                 padding: clamp(24px, 4vw, 48px) 0;
             }
         }
@@ -145,8 +161,8 @@
 
         /* ============== CURRENTLY READING ============== */
         .current {
-            margin-top: 1.5rem;
-            padding: 0.85rem 1rem;
+            margin-top: 1rem;
+            padding: .85rem 1rem;
             border-radius: 18px;
             border: 1px solid color-mix(in oklab, var(--fg) 10%, transparent);
             background: var(--glass);
@@ -155,6 +171,8 @@
             align-items: center;
             justify-content: space-between;
             gap: 1rem;
+            width: min(100%, 680px);
+            text-align: left;
         }
 
         .current-label {
@@ -176,15 +194,8 @@
         }
 
         .current-btn {
-            all: unset;
-            cursor: pointer;
-            padding: .4rem .8rem;
-            border-radius: 999px;
-            border: 1px solid color-mix(in oklab, var(--fg) 15%, transparent);
+            white-space: nowrap;
             font-size: 13px;
-            display: inline-flex;
-            align-items: center;
-            gap: .25rem;
         }
 
         @media (max-width:600px) {
@@ -194,13 +205,95 @@
             }
         }
 
-        /* ============== CONTROLS & TAG FILTERS ============== */
+        /* ============== STICKY TOOLBOX ============== */
+        .toolbox {
+            position: sticky;
+            top: 0;
+            z-index: 40;
+            padding: 10px 0 12px;
+            margin-top: 0;
+            backdrop-filter: blur(14px);
+        }
+
+        .toolbox-inner {
+            border: 1px solid color-mix(in oklab, var(--fg) 10%, transparent);
+            background:
+                linear-gradient(180deg,
+                    color-mix(in oklab, var(--card), transparent 10%),
+                    color-mix(in oklab, var(--card), transparent 22%));
+            border-radius: 24px;
+            box-shadow: var(--shadow);
+            padding: 10px;
+        }
+
+        .view-tabs,
         .controls {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             justify-content: center;
             flex-wrap: wrap;
-            margin-top: 1.25rem;
+        }
+
+        .view-tabs {
+            margin-bottom: 8px;
+        }
+
+        .controls {
+            margin-top: 0;
+        }
+
+        .compact-filters {
+            display: flex;
+            justify-content: center;
+            margin-top: .65rem;
+        }
+
+        .filter-menu {
+            position: relative;
+        }
+
+        .filter-menu summary {
+            list-style: none;
+        }
+
+        .filter-menu summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .tag-menu-summary {
+            font-size: 13px;
+        }
+
+        #tagSummaryValue {
+            color: hsl(var(--accent));
+        }
+
+        .tag-filter-row {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            width: min(680px, calc(100vw - 32px));
+            max-height: min(48vh, 360px);
+            overflow: auto;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            justify-content: center;
+            padding: 12px;
+            border-radius: 18px;
+            background: var(--card);
+            border: 1px solid color-mix(in oklab, var(--fg) 12%, transparent);
+            box-shadow: var(--shadow);
+            z-index: 100;
+        }
+
+        .filter-menu:not([open]) .tag-filter-row {
+            display: none;
+        }
+
+        body:not([data-view="library"]) .library-only {
+            display: none;
         }
 
         .pill {
@@ -212,13 +305,13 @@
             padding: .55rem .9rem;
             background: var(--glass);
             backdrop-filter: blur(8px);
-            box-shadow: var(--shadow);
+            box-shadow: none;
         }
 
         input[type="search"] {
             all: unset;
             padding: .25rem;
-            min-width: min(60vw, 320px);
+            min-width: min(58vw, 320px);
         }
 
         button,
@@ -236,7 +329,9 @@
         }
 
         .chip[data-active="true"],
-        .lang-chip[data-active="true"] {
+        .view-chip[data-active="true"],
+        .lang-chip[data-active="true"],
+        .tag-chip[data-active="true"] {
             background: hsl(var(--accent)/.18);
             border-color: hsl(var(--accent)/.35);
             color: hsl(var(--accent));
@@ -256,6 +351,8 @@
             display: inline-flex;
             align-items: center;
             gap: .4rem;
+            color: inherit;
+            text-decoration: none;
         }
 
         .lang-switch {
@@ -267,29 +364,44 @@
             padding: .4rem .6rem;
         }
 
-        .tag-filter-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            margin-top: .75rem;
-            justify-content: center;
-        }
-
         .tag-chip {
             font-size: 13px;
             padding: .35rem .75rem;
         }
 
         .result-count {
-            margin-top: .75rem;
+            margin: .65rem 0 0;
             font-size: 13px;
             color: var(--muted);
+            text-align: center;
         }
 
-        /* sticky year headers */
+        .sort-select {
+            border: 0;
+            background: transparent;
+            color: inherit;
+            font: inherit;
+            font-weight: 650;
+            max-width: 180px;
+        }
+
+        .sort-select option {
+            color: var(--fg);
+            background: var(--card);
+        }
+
+        /* ============== MAIN VIEWS ============== */
+        main {
+            padding: 24px 0 72px;
+        }
+
+        .view-panel[hidden] {
+            display: none;
+        }
+
         .year {
             position: sticky;
-            top: 0;
+            top: 92px;
             z-index: 5;
             backdrop-filter: blur(10px);
             background: color-mix(in oklab, var(--bg), transparent 25%);
@@ -300,22 +412,28 @@
             border-bottom: 1px solid color-mix(in oklab, var(--fg) 12%, transparent);
         }
 
-        main {
-            padding: 24px 0 72px;
+        @media (max-width:760px) {
+            .year {
+                top: 128px;
+            }
         }
 
         .grid {
             display: grid;
             gap: clamp(14px, 2vw, 24px);
             grid-template-columns: repeat(auto-fill, minmax(min(230px, 100%), 1fr));
+            content-visibility: auto;
+            contain-intrinsic-size: 800px;
+            margin-bottom: 30px;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: var(--muted);
+            padding: 30px 0 10px;
         }
 
         /* ============== BOOK CARD ============== */
-        a.book {
-            color: inherit;
-            text-decoration: none;
-        }
-
         .book {
             position: relative;
             overflow: hidden;
@@ -327,6 +445,9 @@
             box-shadow: var(--shadow);
             transform-style: preserve-3d;
             transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease;
+            width: 100%;
+            text-align: left;
+            color: inherit;
         }
 
         @media (hover:hover) and (pointer:fine) {
@@ -338,7 +459,8 @@
         }
 
         .cover {
-            height: 260px;
+            aspect-ratio: 2 / 3;
+            height: auto;
             border-bottom: 1px solid color-mix(in oklab, var(--fg) 12%, transparent);
             position: relative;
             overflow: hidden;
@@ -347,19 +469,19 @@
                 radial-gradient(150px 120px at 88% 22%, hsl(calc(var(--h) + 40) 82% 62% / .7), transparent 70%),
                 radial-gradient(140px 140px at 30% 88%, hsl(calc(var(--h) + 80) 80% 60% /.65), transparent 70%),
                 linear-gradient(135deg, hsl(calc(var(--h) + 12) 42% 16%), hsl(calc(var(--h) - 8) 42% 10%));
-            background-size: cover;
-            background-blend-mode: normal;
         }
 
-        @keyframes hueWander {
-            50% {
-                filter: hue-rotate(18deg) saturate(1.05);
-            }
+        .cover-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+            position: relative;
+            z-index: 1;
         }
 
-        .cover.has-img {
-            background-size: cover;
-            background-position: center;
+        .cover.has-img .cover-img {
+            display: block;
         }
 
         .cover::after {
@@ -374,9 +496,9 @@
             filter: blur(4px);
             transform: rotate(8deg);
             pointer-events: none;
+            z-index: 2;
         }
 
-        /* skeleton shimmer while fetching */
         .cover.skeleton::before {
             content: "";
             position: absolute;
@@ -384,15 +506,16 @@
             background: linear-gradient(90deg, #fff0, #fff3, #fff0);
             animation: shimmer 1.6s infinite;
             mix-blend-mode: soft-light;
+            z-index: 3;
         }
 
         @keyframes shimmer {
             0% {
-                transform: translateX(-100%)
+                transform: translateX(-100%);
             }
 
             100% {
-                transform: translateX(100%)
+                transform: translateX(100%);
             }
         }
 
@@ -407,6 +530,7 @@
             background: hsl(var(--accent)/.2);
             color: hsl(var(--accent));
             border: 1px solid hsl(var(--accent)/.35);
+            z-index: 4;
         }
 
         .info {
@@ -444,37 +568,32 @@
             font-size: 12px;
         }
 
-        /* ============== OVERLAY ============== */
-        .overlay {
-            position: fixed;
-            inset: 0;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 60;
+        /* ============== DIALOG OVERLAY ============== */
+        .overlay-dialog {
+            border: 0;
+            padding: 0;
+            background: transparent;
+            color: inherit;
+            max-width: none;
+            width: 100%;
         }
 
-        .overlay[data-open="true"] {
-            display: flex;
-        }
-
-        .overlay-backdrop {
-            position: absolute;
-            inset: 0;
+        .overlay-dialog::backdrop {
             background: rgba(0, 0, 0, .55);
             backdrop-filter: blur(8px);
         }
 
         .overlay-panel {
             position: relative;
-            max-width: 480px;
-            width: min(100% - 32px, 480px);
+            max-width: 520px;
+            width: min(100% - 32px, 520px);
             border-radius: 24px;
             background: var(--card);
             padding: 24px 20px 20px;
             box-shadow: var(--shadow);
-            z-index: 1;
             text-align: left;
+            margin: auto;
+            border: 1px solid color-mix(in oklab, var(--fg) 12%, transparent);
         }
 
         .overlay-close {
@@ -579,18 +698,342 @@
             display: inline-flex;
             align-items: center;
             gap: .25rem;
+            color: inherit;
         }
 
-        /* ============== FEEDBACK FORM (CENTERED) ============== */
+        /* ============== STATS ============== */
+        .section-head {
+            text-align: center;
+            max-width: 720px;
+            margin: 0 auto 24px;
+        }
+
+        .section-head h2 {
+            margin: 0 0 .35rem;
+            font-size: clamp(28px, 4vw, 44px);
+            line-height: 1.1;
+        }
+
+        .section-head p {
+            margin: 0;
+            color: var(--muted);
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card,
+        .chart-card,
+        .map-card {
+            border-radius: 20px;
+            background: color-mix(in oklab, var(--card), transparent 4%);
+            border: 1px solid color-mix(in oklab, var(--fg) 10%, transparent);
+            box-shadow: var(--shadow);
+        }
+
+        .stat-card {
+            padding: 18px;
+        }
+
+        .stat-value {
+            margin: 0;
+            font-size: clamp(28px, 5vw, 44px);
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .stat-label {
+            margin: .5rem 0 0;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .charts {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(330px, 100%), 1fr));
+            gap: 16px;
+        }
+
+        .chart-card {
+            padding: 18px;
+        }
+
+        .chart-card h3,
+        .map-card h3 {
+            margin: 0 0 12px;
+            font-size: 18px;
+        }
+
+        .bar-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .bar-row {
+            display: grid;
+            grid-template-columns: minmax(90px, 1fr) minmax(80px, 2fr) auto;
+            gap: 10px;
+            align-items: center;
+            font-size: 13px;
+        }
+
+        .bar-name {
+            color: var(--fg);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .bar-track {
+            height: 9px;
+            border-radius: 999px;
+            background: color-mix(in oklab, var(--fg) 10%, transparent);
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            display: block;
+            width: var(--pct);
+            height: 100%;
+            border-radius: inherit;
+            background: hsl(var(--accent)/.75);
+        }
+
+        .bar-count {
+            color: var(--muted);
+            min-width: 2ch;
+            text-align: right;
+        }
+
+        /* ============== MAP ============== */
+        .map-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.4fr) minmax(min(320px, 100%), .8fr);
+            gap: 16px;
+            align-items: stretch;
+        }
+
+        @media (max-width:860px) {
+            .map-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .map-card {
+            padding: 18px;
+            border-radius: 20px;
+            background: color-mix(in oklab, var(--card), transparent 4%);
+            border: 1px solid color-mix(in oklab, var(--fg) 10%, transparent);
+            box-shadow: var(--shadow);
+        }
+
+        .map-canvas {
+            position: relative;
+            min-height: min(64vh, 560px);
+            border-radius: 18px;
+            background:
+                radial-gradient(700px 380px at 50% 50%, hsl(var(--accent)/.13), transparent 72%),
+                linear-gradient(180deg,
+                    color-mix(in oklab, var(--bg), var(--card) 30%),
+                    color-mix(in oklab, var(--bg), black 6%));
+            overflow: hidden;
+            border: 1px solid color-mix(in oklab, var(--fg) 10%, transparent);
+        }
+
+        .world-map-svg {
+            display: block;
+            width: 100%;
+            height: 100%;
+            min-height: min(64vh, 560px);
+        }
+
+        .map-ocean {
+            fill: transparent;
+        }
+
+        .map-country {
+            fill: color-mix(in oklab, var(--fg) 14%, transparent);
+            stroke: color-mix(in oklab, var(--bg), black 30%);
+            stroke-width: .35;
+            vector-effect: non-scaling-stroke;
+            transition: fill .18s ease, opacity .18s ease;
+        }
+
+        .map-country.is-read {
+            fill: hsl(145 78% 34% / .88);
+            cursor: pointer;
+        }
+
+        .map-country.is-read.level-2 {
+            fill: hsl(150 82% 41% / .9);
+        }
+
+        .map-country.is-read.level-3 {
+            fill: hsl(158 88% 48% / .92);
+        }
+
+        .map-country.is-read:hover,
+        .map-country.is-read:focus {
+            fill: hsl(195 92% 62% / .96);
+            outline: none;
+        }
+
+        .map-country.is-selected {
+            fill: hsl(198 94% 64% / .98);
+            stroke: color-mix(in oklab, white 75%, transparent);
+            stroke-width: 1.1;
+        }
+
+        .map-tooltip {
+            position: absolute;
+            transform: translate(-50%, calc(-100% - 14px));
+            pointer-events: none;
+            min-width: 160px;
+            max-width: 240px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            background: color-mix(in oklab, var(--card), black 10%);
+            border: 1px solid color-mix(in oklab, var(--fg) 12%, transparent);
+            box-shadow: var(--shadow);
+            color: var(--fg);
+            font-size: 13px;
+            text-align: center;
+            z-index: 10;
+        }
+
+        .map-tooltip strong {
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .map-tooltip span {
+            color: var(--muted);
+        }
+
+        .map-tooltip::after {
+            content: "";
+            position: absolute;
+            left: 50%;
+            bottom: -7px;
+            transform: translateX(-50%) rotate(45deg);
+            width: 14px;
+            height: 14px;
+            background: color-mix(in oklab, var(--card), black 10%);
+            border-right: 1px solid color-mix(in oklab, var(--fg) 12%, transparent);
+            border-bottom: 1px solid color-mix(in oklab, var(--fg) 12%, transparent);
+        }
+
+        .map-zoom {
+            position: absolute;
+            left: 12px;
+            bottom: 12px;
+            display: inline-flex;
+            overflow: hidden;
+            border-radius: 10px;
+            border: 1px solid color-mix(in oklab, var(--fg) 12%, transparent);
+            background: color-mix(in oklab, var(--card), transparent 8%);
+            box-shadow: var(--shadow);
+            z-index: 5;
+        }
+
+        .map-zoom button {
+            border: 0;
+            border-radius: 0;
+            background: transparent;
+            padding: .45rem .7rem;
+            font-size: 18px;
+            line-height: 1;
+        }
+
+        .map-zoom button+button {
+            border-left: 1px solid color-mix(in oklab, var(--fg) 12%, transparent);
+        }
+
+        .map-source {
+            position: absolute;
+            right: 14px;
+            bottom: 14px;
+            color: var(--muted);
+            font-size: 12px;
+            z-index: 5;
+        }
+
+        .map-status {
+            position: absolute;
+            inset: auto 18px 52px;
+            color: var(--muted);
+            font-size: 13px;
+            text-align: center;
+            z-index: 6;
+        }
+
+        .map-details-list {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            display: grid;
+            gap: 8px;
+        }
+
+        .map-details-list li {
+            padding: 9px 10px;
+            border-radius: 12px;
+            background: var(--glass);
+            border: 1px solid color-mix(in oklab, var(--fg) 9%, transparent);
+        }
+
+        .map-book-title {
+            display: block;
+            font-weight: 700;
+        }
+
+        .map-book-meta {
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .country-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .country-card {
+            text-align: left;
+            width: 100%;
+            border-radius: 18px;
+            padding: 14px;
+            background: color-mix(in oklab, var(--card), transparent 4%);
+            border: 1px solid color-mix(in oklab, var(--fg) 10%, transparent);
+        }
+
+        .country-card[data-active="true"] {
+            border-color: hsl(var(--accent)/.45);
+            background: hsl(var(--accent)/.12);
+        }
+
+        .country-card strong {
+            display: block;
+        }
+
+        .country-card span {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        /* ============== FEEDBACK FORM ============== */
         .feedback {
-            margin: 24px 0 64px;
+            margin: 24px auto 64px;
             padding: 22px 20px 26px;
             border-radius: 18px;
             background: var(--glass);
             border: 1px solid color-mix(in oklab, var(--fg) 10%, transparent);
             max-width: 640px;
-            margin-left: auto;
-            margin-right: auto;
         }
 
         .feedback h2,
@@ -631,7 +1074,8 @@
         }
 
         .feedback textarea,
-        .feedback input[type="text"] {
+        .feedback input[type="text"],
+        .feedback select {
             width: 100%;
             margin-top: .25rem;
             border-radius: 12px;
@@ -673,7 +1117,7 @@
             text-align: center;
         }
 
-        /* top button */
+        /* ============== MISC ============== */
         .top {
             position: fixed;
             right: 16px;
@@ -718,74 +1162,86 @@
     </style>
 </head>
 
-<body>
+<body data-view="library">
+    <a class="skip-link" href="#main">Skip to books</a>
+
     <header class="hero">
         <div class="back-blur" aria-hidden="true"></div>
+
         <div class="hero-inner shell">
             <span class="badge">Booked · book club</span>
             <h1 id="heroTitle">Our Reading Journey</h1>
             <p class="sub" id="heroSub">Every book we’ve read since we began. Filter, search, and toggle themes.</p>
             <p class="meta-row" id="metaSummary" aria-live="polite"></p>
 
-            <!-- CURRENTLY READING -->
             <section class="current" id="current" aria-label="Currently reading">
                 <div class="current-main">
                     <div class="current-label" id="currentLabel">Currently reading</div>
                     <h2 id="currentTitle"></h2>
                     <p id="currentMeta"></p>
                 </div>
-                <button class="current-btn" id="currentBtn">
+                <button class="current-btn pill" id="currentBtn" type="button">
                     Jump to book ↓
                 </button>
             </section>
+        </div>
+    </header>
 
-            <!-- CONTROLS -->
+    <section class="toolbox shell" aria-label="Site navigation and filters">
+        <div class="toolbox-inner">
+            <div class="view-tabs" role="group" aria-label="Views">
+                <button class="chip view-chip" id="viewLibrary" type="button" data-view="library" data-active="true"
+                    aria-pressed="true">Library</button>
+                <button class="chip view-chip" id="viewStats" type="button" data-view="stats" data-active="false"
+                    aria-pressed="false">Stats</button>
+                <button class="chip view-chip" id="viewMap" type="button" data-view="map" data-active="false"
+                    aria-pressed="false">Map</button>
+            </div>
+
             <div class="controls" id="controlsGroup" role="group" aria-label="Filters and actions">
-                <label class="pill" id="searchPill" title="Search books">
+                <label class="pill library-only" id="searchPill" title="Search books">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                         <path d="M21 21l-4.3-4.3m2.1-5.2a7 7 0 11-14 0 7 7 0 0114 0z" stroke="currentColor"
                             stroke-width="2" stroke-linecap="round" />
                     </svg>
-                    <input id="search" type="search" placeholder="Search title, author, or month…" />
+                    <input id="search" type="search" placeholder="Search title, author, tag, country, or month…" />
                 </label>
 
-                <div class="pill" id="yearFilterPill" style="gap:6px;" title="Filter by year">
-                    <span id="yearLabel">Year:</span>
-                    <button class="chip" data-year="all" data-active="true">All</button>
-                    <button class="chip" data-year="2023">2023</button>
-                    <button class="chip" data-year="2024">2024</button>
-                    <button class="chip" data-year="2025">2025</button>
-                    <button class="chip" data-year="2026">2026</button>
+                <div class="pill library-only" id="yearFilterPill" style="gap:6px;" title="Filter by year"></div>
 
-                    
-                </div>
+                <label class="pill library-only" id="sortPill" title="Sort books">
+                    <span id="sortLabel">Sort:</span>
+                    <select id="sortSelect" class="sort-select" aria-label="Sort books"></select>
+                </label>
 
-                <button class="pill theme-toggle" id="themeBtn" title="Toggle light/dark">
+                <button class="pill theme-toggle" id="themeBtn" type="button" title="Toggle light/dark"
+                    aria-pressed="true">
                     <svg id="sun" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"
                         style="display:none;">
-                        <path d="M12 4V2m0 20v-2M4 12H2m20 0h-2M5 5L3.5 3.5M20.5 20.5L19 19M19 5l1.5-1.5M3.5 20.5L5 19"
+                        <path
+                            d="M12 4V2m0 20v-2M4 12H2m20 0h-2M5 5L3.5 3.5M20.5 20.5L19 19M19 5l1.5-1.5M3.5 20.5L5 19"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" />
                         <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2" />
                     </svg>
                     <svg id="moon" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                        <path d="M20 15.5A8.5 8.5 0 119.5 4a7 7 0 0010.5 11.5z" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" />
+                        <path d="M20 15.5A8.5 8.5 0 119.5 4a7 7 0 0010.5 11.5z" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" />
                     </svg>
                     <span id="themeLabel">Theme</span>
                 </button>
 
-                <!-- LANGUAGE SWITCH -->
                 <div class="pill lang-switch" id="langSwitch" title="Language">
-                    <button class="chip lang-chip" data-lang="en" data-active="true">EN</button>
-                    <button class="chip lang-chip" data-lang="de">DE</button>
+                    <button class="chip lang-chip" type="button" data-lang="en" data-active="true"
+                        aria-pressed="true">EN</button>
+                    <button class="chip lang-chip" type="button" data-lang="de" data-active="false"
+                        aria-pressed="false">DE</button>
                 </div>
 
-                <!-- WHATSAPP JOIN BUTTON (replace href with your actual invite link) -->
                 <a class="pill join-btn" id="joinBtn" href="https://chat.whatsapp.com/EStsFPtmF2PJy6HX54eLat"
                     target="_blank" rel="noopener noreferrer" title="Join our WhatsApp group">
                     <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M12 3a9 9 0 00-7.8 13.5L3 21l4.7-1.2A9 9 0 1012 3z" fill="none" stroke="currentColor"
-                            stroke-width="1.6" stroke-linecap="round" />
+                        <path d="M12 3a9 9 0 00-7.8 13.5L3 21l4.7-1.2A9 9 0 1012 3z" fill="none"
+                            stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
                         <path
                             d="M9.5 8.8c-.2-.5-.4-.5-.7-.5h-.6c-.2 0-.5.1-.7.3-.2.3-.9.9-.9 2.2 0 1.3.9 2.6 1 2.8.1.2 1.8 2.8 4.4 3.8.6.2 1 .3 1.3.4.5.1.9.1 1.3.1.4 0 1.2-.4 1.4-.9.2-.5.2-.9.2-1-.1-.1-.2-.2-.5-.3l-1.5-.7c-.3-.1-.6-.2-.9.2l-.6.7c-.1.1-.3.2-.6.1-.3-.1-1.3-.5-2.5-1.6-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.4.1-.5l.4-.5c.1-.2.2-.4.3-.6.1-.2 0-.4 0-.5l-.7-1.6z"
                             fill="currentColor" />
@@ -794,22 +1250,47 @@
                 </a>
             </div>
 
-            <!-- TAG FILTERS -->
-            <div class="tag-filter-row" id="tagFilters" aria-label="Filter by tag"></div>
+            <div class="compact-filters library-only">
+                <details class="filter-menu" id="tagMenu">
+                    <summary class="chip tag-menu-summary">
+                        <span id="tagSummaryLabel">Tags:</span>
+                        <span id="tagSummaryValue">All tags</span>
+                    </summary>
+                    <div class="tag-filter-row" id="tagFilters" aria-label="Filter by tag"></div>
+                </details>
+            </div>
 
-            <p class="result-count" id="resultCount" aria-live="polite"></p>
+            <p class="result-count library-only" id="resultCount" aria-live="polite"></p>
         </div>
-    </header>
+    </section>
 
-    <main id="content" class="shell" aria-live="polite"></main>
+    <main id="main" class="shell">
+        <section id="libraryView" class="view-panel">
+            <div id="content"></div>
+            <p id="emptyState" class="empty-state" hidden></p>
+        </section>
 
-    <!-- FEEDBACK SECTION -->
+        <section id="statsView" class="view-panel" hidden></section>
+
+        <section id="mapView" class="view-panel" hidden></section>
+    </main>
+
     <section class="shell feedback" id="feedback">
         <h2 id="feedbackTitle">Share your thoughts with us</h2>
         <p id="feedbackSubtitle">Send a short note about a book, a suggestion, or anything you’d like. It lands in our
             inbox via Google Forms.</p>
 
         <form id="feedbackForm">
+            <label for="feedbackCategory">
+                <span id="feedbackCategoryLabel">Type</span>
+                <select id="feedbackCategory">
+                    <option value="general">General thought</option>
+                    <option value="suggestion">Book suggestion</option>
+                    <option value="website">Website issue</option>
+                    <option value="meeting">Meeting idea</option>
+                </select>
+            </label>
+
             <label for="feedbackMessage">
                 <span id="feedbackMessageLabel">Message</span>
                 <textarea id="feedbackMessage" required
@@ -826,11 +1307,9 @@
         </form>
     </section>
 
-    <!-- BOOK DETAIL OVERLAY -->
-    <div id="overlay" class="overlay" aria-hidden="true">
-        <div class="overlay-backdrop" id="overlayBackdrop"></div>
-        <div class="overlay-panel" role="dialog" aria-modal="true" aria-labelledby="overlayTitle">
-            <button class="overlay-close" id="overlayClose" aria-label="Close details">×</button>
+    <dialog id="overlay" class="overlay-dialog" aria-labelledby="overlayTitle">
+        <div class="overlay-panel">
+            <button class="overlay-close" id="overlayClose" type="button" aria-label="Close details">×</button>
             <p class="overlay-chip" id="overlayMonth"></p>
             <h2 id="overlayTitle"></h2>
             <p class="overlay-author" id="overlayAuthor"></p>
@@ -858,7 +1337,7 @@
                 </a>
             </div>
         </div>
-    </div>
+    </dialog>
 
     <a class="top" href="#top" id="toTop" title="Back to top" style="display:none">↑ Top</a>
 
@@ -866,15 +1345,18 @@
         Built with ♥ for <strong>Booked</strong>.
     </footer>
 
+    <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
+
     <script>
-        /* ====================== DATA (with tags + descriptions) ====================== */
+        /* ====================== DATA ====================== */
         const BOOKS = [
-            // 2023
             {
                 year: 2023,
                 month: "November",
                 title: "Die Wand",
                 author: "Marlen Haushofer",
+                country: "Austria",
                 tags: ["Literary fiction", "Psychological", "German", "Survival"],
                 note: "A woman finds herself sealed off by an invisible wall in the Austrian mountains, forced to survive and confront radical solitude."
             },
@@ -883,15 +1365,16 @@
                 month: "December",
                 title: "Giovanni's Room",
                 author: "James Baldwin",
+                country: "United States",
                 tags: ["Classic", "Queer", "Tragic", "Paris"],
                 note: "A tense, intimate portrait of love, shame, and self-denial in 1950s Paris."
             },
-            // 2024
             {
                 year: 2024,
                 month: "January",
                 title: "After Dark",
                 author: "Haruki Murakami",
+                country: "Japan",
                 tags: ["Japanese", "Surreal", "Nocturnal", "Short"],
                 note: "A one-night drift through Tokyo where reality blurs and the city becomes a dreamlike stage."
             },
@@ -900,6 +1383,7 @@
                 month: "February",
                 title: "Orlando",
                 author: "Virginia Woolf",
+                country: "United Kingdom",
                 tags: ["Classic", "Queer", "Modernist", "Fantasy"],
                 note: "A playful, time-traveling life story of a character who changes gender and crosses centuries."
             },
@@ -908,6 +1392,7 @@
                 month: "March",
                 title: "The Lathe of Heaven",
                 author: "Ursula K. Le Guin",
+                country: "United States",
                 tags: ["Sci-fi", "Philosophical", "Dystopia"],
                 note: "A man’s dreams alter reality itself, raising questions about power, ethics, and utopian schemes."
             },
@@ -916,6 +1401,7 @@
                 month: "April",
                 title: "Death with Interruptions",
                 author: "José Saramago",
+                country: "Portugal",
                 tags: ["Speculative", "Satire", "Portuguese"],
                 note: "In one country, people stop dying—and the consequences are funny, bureaucratic, and deeply human."
             },
@@ -924,6 +1410,7 @@
                 month: "May",
                 title: "An Apprenticeship or The Book of Pleasures",
                 author: "Clarice Lispector",
+                country: "Brazil",
                 tags: ["Brazilian", "Philosophical", "Romance"],
                 note: "A lyrical inner journey of a woman learning how to love, think, and feel with new clarity."
             },
@@ -932,6 +1419,7 @@
                 month: "June",
                 title: "Lolita",
                 author: "Vladimir Nabokov",
+                country: "Russia",
                 tags: ["Classic", "Controversial", "Psychological"],
                 note: "A disturbing narrative of obsession and abuse told in dazzling, unreliable prose."
             },
@@ -940,6 +1428,7 @@
                 month: "July",
                 title: "Del amor y otros demonios",
                 author: "Gabriel García Márquez",
+                country: "Colombia",
                 tags: ["Latin American", "Magical realism", "Romance"],
                 note: "A condemned girl and a priest meet in a world of superstition, illness, and forbidden desire."
             },
@@ -948,6 +1437,7 @@
                 month: "August",
                 title: "Notes from Underground",
                 author: "Fyodor Dostoevsky",
+                country: "Russia",
                 tags: ["Classic", "Russian", "Existential"],
                 note: "A bitter, self-sabotaging narrator dismantles himself in a confession full of spite and clarity."
             },
@@ -956,6 +1446,7 @@
                 month: "September",
                 title: "Lapvona",
                 author: "Ottessa Moshfegh",
+                country: "United States",
                 tags: ["Contemporary", "Dark", "Satire", "Medieval"],
                 note: "A grotesque, darkly comic tale of faith, power, and cruelty in a strange medieval village."
             },
@@ -964,6 +1455,7 @@
                 month: "October",
                 title: "The Picture of Dorian Gray",
                 author: "Oscar Wilde",
+                country: "Ireland",
                 tags: ["Classic", "Gothic", "Aestheticism"],
                 note: "A young man never ages while his hidden portrait bears the marks of his corruption."
             },
@@ -972,6 +1464,7 @@
                 month: "November",
                 title: "Dracula",
                 author: "Bram Stoker",
+                country: "Ireland",
                 tags: ["Classic", "Gothic", "Horror"],
                 note: "The original vampire novel: diaries, letters, and sea logs trace an ancient evil crossing into England."
             },
@@ -980,15 +1473,16 @@
                 month: "December",
                 title: "White Nights",
                 author: "Fyodor Dostoevsky",
+                country: "Russia",
                 tags: ["Russian", "Romantic", "Short"],
                 note: "A dreamy, lonely narrator wanders St. Petersburg and falls into a brief, intense connection."
             },
-            // 2025
             {
                 year: 2025,
                 month: "January",
                 title: "Moby-Dick",
                 author: "Herman Melville",
+                country: "United States",
                 tags: ["Classic", "American", "Adventure", "Sea"],
                 note: "A sprawling, obsessive hunt for a white whale that becomes an encyclopedia of the sea and the soul."
             },
@@ -997,6 +1491,7 @@
                 month: "February",
                 title: "One Hundred Years of Solitude",
                 author: "Gabriel García Márquez",
+                country: "Colombia",
                 tags: ["Classic", "Magical realism", "Latin American"],
                 note: "The rise and fall of the Buendía family in the mythical town of Macondo, where magic and history coexist."
             },
@@ -1005,6 +1500,7 @@
                 month: "March",
                 title: "Fahrenheit 451",
                 author: "Ray Bradbury",
+                country: "United States",
                 tags: ["Classic", "Dystopia", "Sci-fi"],
                 note: "In a future where books are burned, a fireman begins to question what he’s destroying."
             },
@@ -1013,6 +1509,7 @@
                 month: "May",
                 title: "Invisible Cities",
                 author: "Italo Calvino",
+                country: "Italy",
                 tags: ["Italian", "Experimental", "Short"],
                 note: "Marco Polo describes impossible, poetic cities to Kublai Khan—maybe real, maybe imagined."
             },
@@ -1021,6 +1518,7 @@
                 month: "June",
                 title: "A Room of One's Own",
                 author: "Virginia Woolf",
+                country: "United Kingdom",
                 tags: ["Essay", "Feminist", "Nonfiction"],
                 note: "A foundational essay on women, money, space, and the conditions needed to write."
             },
@@ -1029,6 +1527,7 @@
                 month: "July",
                 title: "Animal Farm",
                 author: "George Orwell",
+                country: "United Kingdom",
                 tags: ["Satire", "Dystopia", "Political", "Short"],
                 note: "A farmyard revolution goes wrong, turning into a compact allegory of power and betrayal."
             },
@@ -1037,6 +1536,7 @@
                 month: "August",
                 title: "Strange Case of Dr Jekyll and Mr Hyde",
                 author: "Robert Louis Stevenson",
+                country: "United Kingdom",
                 tags: ["Classic", "Gothic", "Horror", "Short"],
                 note: "A respectable doctor hides a violent alter ego, embodying a split between public virtue and private vice."
             },
@@ -1045,6 +1545,7 @@
                 month: "September",
                 title: "Narcissus and Goldmund",
                 author: "Hermann Hesse",
+                country: "Germany",
                 tags: ["German", "Philosophical", "Bildungsroman"],
                 note: "Two friends follow opposite paths—contemplative monk and wandering artist—in search of meaning."
             },
@@ -1053,6 +1554,7 @@
                 month: "October",
                 title: "Who's Afraid of Virginia Woolf?",
                 author: "Edward Albee",
+                country: "United States",
                 tags: ["Play", "American", "Psychological"],
                 note: "A long, alcohol-fueled night where a couple weaponizes truth and illusion against each other and their guests."
             },
@@ -1061,6 +1563,7 @@
                 month: "November",
                 title: "Never Let Me Go",
                 author: "Kazuo Ishiguro",
+                country: "United Kingdom",
                 tags: ["Dystopia", "Sci-fi", "Contemporary"],
                 note: "Former students slowly uncover the dark purpose behind their idyllic boarding school upbringing."
             },
@@ -1069,6 +1572,7 @@
                 month: "January",
                 title: "The Handmaid's Tale",
                 author: "Margaret Atwood",
+                country: "Canada",
                 tags: ["Dystopia", "Feminist", "Classic"],
                 note: "In a theocratic regime, a handmaid narrates her tightly controlled life and quiet acts of resistance."
             },
@@ -1077,6 +1581,7 @@
                 month: "February",
                 title: "Any Ursula K. Le Guin work",
                 author: "Ursula K. Le Guin",
+                country: "United States",
                 tags: ["Sci-fi", "Fantasy", "Speculative", "Author focus"],
                 note: "Author month: any novel by Ursula K. Le Guin is allowed. Each reader may choose their own book."
             },
@@ -1085,26 +1590,29 @@
                 month: "March",
                 title: "The Myth of Sisyphus",
                 author: "Albert Camus",
+                country: "France",
                 tags: ["Essay", "Philosophical", "Nonfiction"],
-                note: "Absurd hero — one who confronts the futility of existence with defiant consciousness and, in doing so, finds a form of personal triumph."
+                note: "A philosophical essay about absurdity, meaning, and the defiant act of continuing to live with consciousness."
             },
             {
                 year: 2026,
                 month: "April",
                 title: "Interview with the Vampire",
                 author: "Anne Rice",
-                tags: ["Gothic Horror", "Philosophical Drama", "Supernatural Fantasy"],
-                note: "Gothic existential suffering — Louis's centuries-long torment asks whether a conscience is a gift or a prison when stripped of mortality, faith, and the hope of redemption"
+                country: "United States",
+                tags: ["Gothic", "Horror", "Philosophical", "Fantasy"],
+                note: "A confessional vampire story about immortality, desire, loneliness, guilt, and the cost of refusing ordinary human life."
             },
             {
                 year: 2026,
                 month: "May",
                 title: "Letters to a Young Poet",
                 author: "Rainer Maria Rilke",
-                tags: ["Epistolary Literature", "Literary Nonfiction", "Philosophical Essays"],
+                country: "Austria",
+                current: true,
+                tags: ["Letters", "Nonfiction", "Philosophical", "Poetry"],
                 note: "A series of intimate letters reflecting on solitude, love, creativity, and the inner life of the artist, urging patience and deep self-trust in the making of art."
             }
-            
         ];
 
         /* ====================== MONTH LOCALIZATION ====================== */
@@ -1121,31 +1629,71 @@
             }
         };
 
+        const MONTH_ORDER = {
+            January: 1, February: 2, March: 3, April: 4, May: 5, June: 6,
+            July: 7, August: 8, September: 9, October: 10, November: 11, December: 12
+        };
+
+        const COUNTRY_ISO_NUM = {
+            Austria: "040",
+            Brazil: "076",
+            Canada: "124",
+            Colombia: "170",
+            France: "250",
+            Germany: "276",
+            Ireland: "372",
+            Italy: "380",
+            Japan: "392",
+            Portugal: "620",
+            Russia: "643",
+            "United Kingdom": "826",
+            "United States": "840"
+        };
+
+        const ISO_NUM_TO_COUNTRY = Object.fromEntries(
+            Object.entries(COUNTRY_ISO_NUM).map(([country, iso]) => [iso, country])
+        );
+
+        let worldFeatures = null;
+        let worldMapDataPromise = null;
+
         /* ====================== I18N ====================== */
         const I18N = {
             en: {
                 heroTitle: "Our Reading Journey",
-                heroSub: "Every book we’ve read since we began. Filter, search, and toggle themes.",
+                heroSub: "Every book we’ve read since we began. Filter, search, explore stats, and browse the map.",
                 metaSummary: (total, first, last) => `${total} books · ${first}–${last}`,
                 currentlyReading: "Currently reading",
                 jumpToBook: "Jump to book ↓",
-                yearLabel: "Year:",
-                searchPlaceholder: "Search title, author, or month…",
-                searchTitle: "Search books",
                 controlsAria: "Filters and actions",
+                searchPlaceholder: "Search title, author, tag, country, or month…",
+                searchTitle: "Search books",
+                yearLabel: "Year:",
+                allYears: "All",
                 yearFilterTitle: "Filter by year",
-                langSwitchTitle: "Language",
-                tagFilterAria: "Filter by tag",
+                tagsLabel: "Tags:",
+                sortLabel: "Sort:",
+                sortTitle: "Sort books",
+                sortReading: "Reading order",
+                sortNewest: "Newest first",
+                sortTitleOption: "Title A–Z",
+                sortAuthor: "Author A–Z",
+                allBooksHeading: "All books",
                 themeLabel: "Theme",
                 themeTitle: "Toggle light/dark",
+                langSwitchTitle: "Language",
                 joinWhatsapp: "Join WhatsApp",
                 joinWhatsappTitle: "Join our WhatsApp group",
                 allTags: "All tags",
+                tagFilterAria: "Filter by tag",
                 resultAll: (total) => `${total} books · all years`,
                 resultFiltered: (visible, total) => `${visible} of ${total} books shown`,
                 resultNone: "No books found. Try a different search, year, or tag.",
                 tagMonthTitle: "Month",
                 tagIndexTitle: "Index in list",
+                navLibrary: "Library",
+                navStats: "Stats",
+                navMap: "Map",
                 overlayLocalHint: "Your note and rating are saved only in this browser (not shared publicly).",
                 overlayNoteLabel: "Club thoughts (editable)",
                 overlayNotePlaceholder: "Write what your group thought, favorite scenes, quotes…",
@@ -1154,6 +1702,11 @@
                 overlayOpenLib: "View on Open Library ↗",
                 feedbackTitle: "Share your thoughts with us",
                 feedbackSubtitle: "Send a short note about a book, a suggestion, or anything you’d like. It lands in our inbox via Google Forms.",
+                feedbackCategoryLabel: "Type",
+                feedbackCategoryGeneral: "General thought",
+                feedbackCategorySuggestion: "Book suggestion",
+                feedbackCategoryWebsite: "Website issue",
+                feedbackCategoryMeeting: "Meeting idea",
                 feedbackMessageLabel: "Message",
                 feedbackMessagePlaceholder: "What did you think, what should we read next…",
                 feedbackNameLabel: "Name (optional)",
@@ -1162,31 +1715,64 @@
                 feedbackThanks: "Thanks for your message! We’ve received it.",
                 feedbackError: "Something went wrong — please try again later.",
                 feedbackNotConfigured: "The form isn’t configured yet. Ask the organizer to connect Google Forms.",
+                statsTitle: "Book club stats",
+                statsSubtitle: "A quick overview of what Booked has read so far.",
+                totalBooks: "Total books",
+                yearsCovered: "Years covered",
+                uniqueAuthors: "Authors",
+                countriesRead: "Countries",
+                currentBook: "Current book",
+                booksByYear: "Books by year",
+                topTags: "Top tags",
+                booksByCountry: "Books by country",
+                recurringAuthors: "Recurring authors",
+                noRepeatingAuthors: "No repeating authors yet.",
+                mapTitle: "Reading map",
+                mapSubtitle: "A country-by-country view of the club’s reading journey.",
+                mapHelp: "Tap a highlighted country or country card to inspect the books.",
+                selectedCountryBooks: (country, count) => `${country} · ${count} ${count === 1 ? "book" : "books"}`,
+                showCountryBooks: "Show these in library",
+                countryCount: (count) => `${count} ${count === 1 ? "book" : "books"}`,
+                mapLibrariesMissing: "Map libraries could not be loaded.",
+                mapLoadError: "The world map could not be loaded. Country cards still work below.",
+                mapSource: "Map data from Natural Earth",
                 footerHtml: "Built with ♥ for <strong>Booked</strong>."
             },
             de: {
                 heroTitle: "Unsere Lese-Reise",
-                heroSub: "Alle Bücher, die wir seit dem Start gelesen haben. Filtern, suchen und das Thema wechseln.",
+                heroSub: "Alle Bücher, die wir seit dem Start gelesen haben. Filtern, suchen, Statistiken ansehen und die Karte entdecken.",
                 metaSummary: (total, first, last) => `${total} Bücher · ${first}–${last}`,
                 currentlyReading: "Gerade lesen",
                 jumpToBook: "Zum Buch springen ↓",
-                yearLabel: "Jahr:",
-                searchPlaceholder: "Titel, Autor·in oder Monat suchen…",
-                searchTitle: "Bücher suchen",
                 controlsAria: "Filter und Aktionen",
+                searchPlaceholder: "Titel, Autor·in, Tag, Land oder Monat suchen…",
+                searchTitle: "Bücher suchen",
+                yearLabel: "Jahr:",
+                allYears: "Alle",
                 yearFilterTitle: "Nach Jahr filtern",
-                langSwitchTitle: "Sprache",
-                tagFilterAria: "Nach Tags filtern",
+                tagsLabel: "Tags:",
+                sortLabel: "Sortieren:",
+                sortTitle: "Bücher sortieren",
+                sortReading: "Lesereihenfolge",
+                sortNewest: "Neueste zuerst",
+                sortTitleOption: "Titel A–Z",
+                sortAuthor: "Autor·in A–Z",
+                allBooksHeading: "Alle Bücher",
                 themeLabel: "Thema",
                 themeTitle: "Hell/Dunkel wechseln",
+                langSwitchTitle: "Sprache",
                 joinWhatsapp: "WhatsApp-Gruppe",
                 joinWhatsappTitle: "Tritt unserer WhatsApp-Gruppe bei",
                 allTags: "Alle Tags",
+                tagFilterAria: "Nach Tags filtern",
                 resultAll: (total) => `${total} Bücher · alle Jahre`,
                 resultFiltered: (visible, total) => `${visible} von ${total} Büchern`,
                 resultNone: "Keine Bücher gefunden. Ändere Suche, Jahr oder Tag.",
                 tagMonthTitle: "Monat",
                 tagIndexTitle: "Position in der Liste",
+                navLibrary: "Bibliothek",
+                navStats: "Statistik",
+                navMap: "Karte",
                 overlayLocalHint: "Deine Notizen & Bewertung werden nur in diesem Browser gespeichert (nicht öffentlich).",
                 overlayNoteLabel: "Gedanken des Clubs (bearbeitbar)",
                 overlayNotePlaceholder: "Was fandet ihr spannend? Szenen, Zitate, Eindrücke…",
@@ -1195,6 +1781,11 @@
                 overlayOpenLib: "Bei Open Library ansehen ↗",
                 feedbackTitle: "Schreib uns etwas",
                 feedbackSubtitle: "Schick uns eine kurze Nachricht zu einem Buch, einen Vorschlag oder einfach einen Gedanken. Sie landet direkt bei uns über Google Forms.",
+                feedbackCategoryLabel: "Art",
+                feedbackCategoryGeneral: "Allgemeiner Gedanke",
+                feedbackCategorySuggestion: "Buchvorschlag",
+                feedbackCategoryWebsite: "Website-Problem",
+                feedbackCategoryMeeting: "Treffen-Idee",
                 feedbackMessageLabel: "Nachricht",
                 feedbackMessagePlaceholder: "Wie fandest du das Buch, was sollen wir als Nächstes lesen…",
                 feedbackNameLabel: "Name (optional)",
@@ -1203,12 +1794,30 @@
                 feedbackThanks: "Danke für deine Nachricht – sie ist bei uns angekommen.",
                 feedbackError: "Etwas ist schiefgelaufen – versuch es später noch einmal.",
                 feedbackNotConfigured: "Das Formular ist noch nicht konfiguriert. Bitte die Orga, Google Forms zu verbinden.",
+                statsTitle: "Bookclub-Statistik",
+                statsSubtitle: "Ein kurzer Überblick darüber, was Booked bisher gelesen hat.",
+                totalBooks: "Bücher insgesamt",
+                yearsCovered: "Jahre",
+                uniqueAuthors: "Autor·innen",
+                countriesRead: "Länder",
+                currentBook: "Aktuelles Buch",
+                booksByYear: "Bücher nach Jahr",
+                topTags: "Häufigste Tags",
+                booksByCountry: "Bücher nach Land",
+                recurringAuthors: "Wiederkehrende Autor·innen",
+                noRepeatingAuthors: "Noch keine wiederkehrenden Autor·innen.",
+                mapTitle: "Lesekarte",
+                mapSubtitle: "Eine Länderansicht der bisherigen Lese-Reise.",
+                mapHelp: "Tippe auf ein hervorgehobenes Land oder eine Länderkarte, um die Bücher anzusehen.",
+                selectedCountryBooks: (country, count) => `${country} · ${count} ${count === 1 ? "Buch" : "Bücher"}`,
+                showCountryBooks: "In Bibliothek anzeigen",
+                countryCount: (count) => `${count} ${count === 1 ? "Buch" : "Bücher"}`,
+                mapLibrariesMissing: "Die Kartenbibliotheken konnten nicht geladen werden.",
+                mapLoadError: "Die Weltkarte konnte nicht geladen werden. Die Länderkarten unten funktionieren weiterhin.",
+                mapSource: "Kartendaten von Natural Earth",
                 footerHtml: "Mit ♥ für <strong>Booked</strong> gebaut."
             }
         };
-
-        let currentLang = 'en';
-        let currentBookIndex = null;
 
         /* ====================== GOOGLE FORM CONFIG ====================== */
         const GOOGLE_FORM_ACTION = "https://docs.google.com/forms/u/0/d/e/1FAIpQLSdKp4Xl2Al2hFHI3EDnfhkC7705L2PJaasKCyXKrRlYOX-1cw/formResponse";
@@ -1217,12 +1826,35 @@
             name: "entry.2116861404"
         };
 
+        /* ====================== STATE ====================== */
+        let currentLang = 'en';
+        let currentBookIndex = null;
+        let activeYear = 'all';
+        let activeTag = 'all';
+        let currentSort = 'reading';
+        let currentView = 'library';
+        let selectedMapCountry = null;
+
         /* ====================== HELPERS ====================== */
         const $ = (sel, ctx = document) => ctx.querySelector(sel);
         const $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel));
 
+        function escapeHTML(value) {
+            return String(value ?? '').replace(/[&<>"']/g, ch => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            }[ch]));
+        }
+
         function hashHue(str) {
-            let h = 0; for (let i = 0; i < str.length; i++) { h = (h * 31 + str.charCodeAt(i)) >>> 0; } return h % 360;
+            let h = 0;
+            for (let i = 0; i < str.length; i++) {
+                h = (h * 31 + str.charCodeAt(i)) >>> 0;
+            }
+            return h % 360;
         }
 
         function getBookId(b) {
@@ -1230,6 +1862,10 @@
                 .toLowerCase()
                 .replace(/[^a-z0-9]+/g, '-')
                 .replace(/^-+|-+$/g, '');
+        }
+
+        function getMonthName(month, lang = currentLang) {
+            return (MONTHS[lang] && MONTHS[lang][month]) || month;
         }
 
         function loadMeta(id) {
@@ -1247,177 +1883,393 @@
             } catch (_) { }
         }
 
-        /* ====================== RENDER ====================== */
+        function debounce(fn, delay = 150) {
+            let timeout;
+            return (...args) => {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => fn(...args), delay);
+            };
+        }
+
+        function setPressed(buttons, isActive) {
+            buttons.forEach(btn => {
+                const active = Boolean(isActive(btn));
+                btn.dataset.active = active ? 'true' : 'false';
+                btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+            });
+        }
+
+        function countBy(items, getter) {
+            return items.reduce((acc, item) => {
+                const key = getter(item);
+                if (!key) return acc;
+                acc[key] = (acc[key] || 0) + 1;
+                return acc;
+            }, {});
+        }
+
+        function sortedEntriesFromCount(counts) {
+            return Object.entries(counts).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+        }
+
+        function bookDateValue(book) {
+            return book.year * 100 + (MONTH_ORDER[book.month] || 0);
+        }
+
+        function buildSearchBlob(item) {
+            const monthEn = item.month;
+            const monthLocalized = getMonthName(item.month, currentLang);
+            const tags = item.tags || [];
+            return [
+                item.title,
+                item.author,
+                item.year,
+                monthEn,
+                monthLocalized,
+                item.country,
+                item.note,
+                ...tags
+            ].join(' ').toLowerCase();
+        }
+
+        /* ====================== YEAR FILTERS ====================== */
+        function renderYearFilters() {
+            const container = $('#yearFilterPill');
+            const t = I18N[currentLang];
+            const years = [...new Set(BOOKS.map(b => b.year))].sort((a, b) => a - b);
+
+            if (activeYear !== 'all' && !years.includes(Number(activeYear))) {
+                activeYear = 'all';
+            }
+
+            container.innerHTML = `<span id="yearLabel">${escapeHTML(t.yearLabel)}</span>`;
+
+            const allBtn = document.createElement('button');
+            allBtn.className = 'chip';
+            allBtn.type = 'button';
+            allBtn.dataset.year = 'all';
+            allBtn.textContent = t.allYears;
+            container.appendChild(allBtn);
+
+            years.forEach(year => {
+                const btn = document.createElement('button');
+                btn.className = 'chip';
+                btn.type = 'button';
+                btn.dataset.year = String(year);
+                btn.textContent = year;
+                container.appendChild(btn);
+            });
+
+            const buttons = $$('.chip[data-year]', container);
+            buttons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    activeYear = btn.dataset.year;
+                    setPressed(buttons, b => b.dataset.year === activeYear);
+                    applyFilters();
+
+                    if (activeYear !== 'all' && (currentSort === 'reading' || currentSort === 'newest')) {
+                        const target = $(`#year-${activeYear}`);
+                        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                });
+            });
+
+            setPressed(buttons, btn => btn.dataset.year === activeYear);
+            container.title = t.yearFilterTitle;
+        }
+
+        /* ====================== SORT ====================== */
+        function renderSortOptions() {
+            const t = I18N[currentLang];
+            const select = $('#sortSelect');
+            $('#sortLabel').textContent = t.sortLabel;
+            $('#sortPill').title = t.sortTitle;
+
+            select.innerHTML = `
+                <option value="reading">${escapeHTML(t.sortReading)}</option>
+                <option value="newest">${escapeHTML(t.sortNewest)}</option>
+                <option value="title">${escapeHTML(t.sortTitleOption)}</option>
+                <option value="author">${escapeHTML(t.sortAuthor)}</option>
+            `;
+            select.value = currentSort;
+        }
+
+        function getSortedBookEntries() {
+            const entries = BOOKS.map((book, index) => ({ book, index }));
+
+            if (currentSort === 'newest') {
+                return entries.sort((a, b) => bookDateValue(b.book) - bookDateValue(a.book));
+            }
+
+            if (currentSort === 'title') {
+                return entries.sort((a, b) => a.book.title.localeCompare(b.book.title));
+            }
+
+            if (currentSort === 'author') {
+                return entries.sort((a, b) => a.book.author.localeCompare(b.book.author) || a.book.title.localeCompare(b.book.title));
+            }
+
+            return entries;
+        }
+
+        /* ====================== RENDER LIBRARY ====================== */
         function createCard(item, index) {
             const h = hashHue(item.title + item.month + item.year + item.author);
-            const link = document.createElement('a');
-            link.className = 'book reveal';
-            link.setAttribute('tabindex', '0');
-            link.dataset.year = item.year;
-            link.dataset.month = item.month.toLowerCase();
-            link.dataset.title = item.title.toLowerCase();
-            link.dataset.author = item.author.toLowerCase();
-            link.dataset.idx = index;
-            link.dataset.tags = (item.tags || []).map(t => t.toLowerCase()).join('|');
-            link.href = '#';
-            link.target = '_blank'; link.rel = 'noopener noreferrer';
+            const card = document.createElement('button');
+            card.className = 'book reveal';
+            card.type = 'button';
+            card.dataset.year = item.year;
+            card.dataset.month = item.month.toLowerCase();
+            card.dataset.title = item.title.toLowerCase();
+            card.dataset.author = item.author.toLowerCase();
+            card.dataset.country = (item.country || '').toLowerCase();
+            card.dataset.idx = index;
+            card.dataset.tags = (item.tags || []).map(t => t.toLowerCase()).join('|');
+            card.dataset.search = buildSearchBlob(item);
+            card.setAttribute('aria-label', `Open details for ${item.title} by ${item.author}`);
 
             const t = I18N[currentLang];
-            const displayMonth = (MONTHS[currentLang] && MONTHS[currentLang][item.month]) || item.month;
+            const displayMonth = getMonthName(item.month, currentLang);
+            const coverAlt = `Cover of ${item.title} by ${item.author}`;
 
-            link.innerHTML = `
-        <div class="cover skeleton" style="--h:${h}">
-          <span class="corner">${item.year}</span>
-        </div>
-        <div class="info">
-          <h3 class="title">${item.title}</h3>
-          <p class="author">${item.author}</p>
-          <div class="meta">
-            <span class="tag" title="${t.tagMonthTitle}">${displayMonth}</span>
-            <span class="tag" title="${t.tagIndexTitle}">#${index + 1}</span>
-          </div>
-        </div>
-      `;
+            card.innerHTML = `
+                <div class="cover skeleton" style="--h:${h}">
+                    <img class="cover-img" alt="${escapeHTML(coverAlt)}" loading="lazy" decoding="async">
+                    <span class="corner">${escapeHTML(item.year)}</span>
+                </div>
+                <div class="info">
+                    <h3 class="title">${escapeHTML(item.title)}</h3>
+                    <p class="author">${escapeHTML(item.author)}</p>
+                    <div class="meta">
+                        <span class="tag" title="${escapeHTML(t.tagMonthTitle)}">${escapeHTML(displayMonth)}</span>
+                        <span class="tag" title="${escapeHTML(t.tagIndexTitle)}">#${index + 1}</span>
+                    </div>
+                </div>
+            `;
 
             if (window.matchMedia('(pointer:fine)').matches) {
-                link.addEventListener('pointermove', (e) => {
-                    const r = link.getBoundingClientRect();
+                card.addEventListener('pointermove', (e) => {
+                    const r = card.getBoundingClientRect();
                     const x = (e.clientX - r.left) / r.width;
                     const y = (e.clientY - r.top) / r.height;
                     const rx = (y - .5) * -6;
                     const ry = (x - .5) * 6;
-                    link.style.transform = `perspective(800px) rotateX(${rx}deg) rotateY(${ry}deg) translateY(-2px)`;
+                    card.style.transform = `perspective(800px) rotateX(${rx}deg) rotateY(${ry}deg) translateY(-2px)`;
                 });
-                link.addEventListener('pointerleave', () => { link.style.transform = ''; });
+                card.addEventListener('pointerleave', () => {
+                    card.style.transform = '';
+                });
             }
 
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                const idx = Number(link.dataset.idx);
-                openOverlay(idx);
+            card.addEventListener('click', () => {
+                openOverlay(index);
             });
 
-            return link;
+            return card;
         }
 
-        function render() {
+        function renderLibrary() {
             const content = $('#content');
             content.innerHTML = '';
 
-            const years = [...new Set(BOOKS.map(b => b.year))].sort((a, b) => a - b);
-            years.forEach(Y => {
+            const entries = getSortedBookEntries();
+
+            if (currentSort === 'title' || currentSort === 'author') {
                 const h2 = document.createElement('h2');
                 h2.className = 'year';
-                h2.textContent = Y;
-                h2.id = `year-${Y}`;
+                h2.textContent = I18N[currentLang].allBooksHeading;
+                h2.id = 'group-all-books';
                 content.appendChild(h2);
 
                 const grid = document.createElement('section');
-                grid.className = 'grid';
-                grid.setAttribute('aria-label', `Books read in ${Y}`);
+                grid.className = 'grid book-group';
+                grid.setAttribute('aria-label', I18N[currentLang].allBooksHeading);
+                grid.setAttribute('aria-labelledby', h2.id);
 
-                BOOKS.filter(b => b.year === Y).forEach((b, i) => {
-                    grid.appendChild(createCard(b, BOOKS.indexOf(b)));
+                entries.forEach(({ book, index }) => {
+                    grid.appendChild(createCard(book, index));
                 });
 
                 content.appendChild(grid);
-            });
+            } else {
+                const yearsInOrder = [];
+                entries.forEach(({ book }) => {
+                    if (!yearsInOrder.includes(book.year)) yearsInOrder.push(book.year);
+                });
 
-            const io = new IntersectionObserver((entries) => entries.forEach(en => {
-                if (en.isIntersecting) en.target.classList.add('in');
-            }), { threshold: .12 });
-            $$('.reveal', content).forEach(el => io.observe(el));
+                yearsInOrder.forEach(Y => {
+                    const h2 = document.createElement('h2');
+                    h2.className = 'year';
+                    h2.textContent = Y;
+                    h2.id = `year-${Y}`;
+                    content.appendChild(h2);
+
+                    const grid = document.createElement('section');
+                    grid.className = 'grid book-group';
+                    grid.setAttribute('aria-label', `Books read in ${Y}`);
+                    grid.setAttribute('aria-labelledby', h2.id);
+
+                    entries
+                        .filter(({ book }) => book.year === Y)
+                        .forEach(({ book, index }) => {
+                            grid.appendChild(createCard(book, index));
+                        });
+
+                    content.appendChild(grid);
+                });
+            }
+
+            applyFilters();
+            hydrateCoversDeferred();
         }
 
         /* ====================== FILTERS ====================== */
         function applyFilters() {
             const q = $('#search').value.trim().toLowerCase();
-            const activeChip = $('.chip[data-year][data-active="true"]');
-            const yearFilter = activeChip?.dataset.year ?? 'all';
-
-            const activeTagChip = $('.tag-chip[data-active="true"]');
-            const tagFilter = activeTagChip?.dataset.tag ?? 'all';
-
-            const cards = $$('.grid .book');
+            const cards = $$('#content .book');
             let visible = 0;
 
             cards.forEach(card => {
-                const okYear = (yearFilter === 'all') || (String(card.dataset.year) === yearFilter);
-                const blob = (card.dataset.title + ' ' + card.dataset.month + ' ' + card.dataset.author);
-                const okText = q === '' || blob.includes(q);
+                const okYear = (activeYear === 'all') || (String(card.dataset.year) === activeYear);
+                const okText = q === '' || (card.dataset.search || '').includes(q);
 
                 const tagsStr = card.dataset.tags || '';
                 const tags = tagsStr ? tagsStr.split('|') : [];
-                const okTag = (tagFilter === 'all') || tags.includes(tagFilter);
+                const okTag = (activeTag === 'all') || tags.includes(activeTag);
 
                 const show = okYear && okText && okTag;
                 card.style.display = show ? '' : 'none';
                 if (show) visible++;
             });
 
+            $$('.book-group').forEach(group => {
+                const shownInGroup = $$('.book', group).some(card => card.style.display !== 'none');
+                group.hidden = !shownInGroup;
+                const labelId = group.getAttribute('aria-labelledby');
+                const heading = labelId ? document.getElementById(labelId) : null;
+                if (heading) heading.hidden = !shownInGroup;
+            });
+
             const total = cards.length;
             const res = $('#resultCount');
+            const empty = $('#emptyState');
             const t = I18N[currentLang];
 
-            if (visible === total && q === '' && yearFilter === 'all' && tagFilter === 'all') {
+            if (visible === total && q === '' && activeYear === 'all' && activeTag === 'all') {
                 res.textContent = t.resultAll(total);
+                empty.hidden = true;
             } else if (visible === 0) {
                 res.textContent = t.resultNone;
+                empty.textContent = t.resultNone;
+                empty.hidden = false;
             } else {
                 res.textContent = t.resultFiltered(visible, total);
+                empty.hidden = true;
             }
+        }
+
+        function updateTagSummary() {
+            const value = $('#tagSummaryValue');
+            if (!value) return;
+
+            if (activeTag === 'all') {
+                value.textContent = I18N[currentLang].allTags;
+                return;
+            }
+
+            const allTags = [...new Set(BOOKS.flatMap(b => b.tags || []))];
+            const original = allTags.find(tag => tag.toLowerCase() === activeTag);
+            value.textContent = original || I18N[currentLang].allTags;
         }
 
         function renderTagFilters() {
             const container = $('#tagFilters');
             const set = new Set();
             BOOKS.forEach(b => (b.tags || []).forEach(t => set.add(t)));
+
             const tags = Array.from(set).sort((a, b) => a.localeCompare(b));
+            const tagKeys = tags.map(tag => tag.toLowerCase());
+
+            if (activeTag !== 'all' && !tagKeys.includes(activeTag)) {
+                activeTag = 'all';
+            }
 
             const t = I18N[currentLang];
             container.innerHTML = '';
 
             const allBtn = document.createElement('button');
             allBtn.className = 'chip tag-chip';
+            allBtn.type = 'button';
             allBtn.dataset.tag = 'all';
-            allBtn.dataset.active = 'true';
             allBtn.textContent = t.allTags;
             container.appendChild(allBtn);
 
             tags.forEach(tag => {
                 const btn = document.createElement('button');
                 btn.className = 'chip tag-chip';
+                btn.type = 'button';
                 btn.dataset.tag = tag.toLowerCase();
                 btn.textContent = tag;
                 container.appendChild(btn);
             });
 
-            $$('.tag-chip', container).forEach(btn => {
+            const buttons = $$('.tag-chip', container);
+            buttons.forEach(btn => {
                 btn.addEventListener('click', () => {
-                    $$('.tag-chip', container).forEach(b => b.dataset.active = 'false');
-                    btn.dataset.active = 'true';
+                    activeTag = btn.dataset.tag;
+                    setPressed(buttons, b => b.dataset.tag === activeTag);
+                    updateTagSummary();
                     applyFilters();
+
+                    const menu = $('#tagMenu');
+                    if (menu) menu.removeAttribute('open');
                 });
             });
 
+            setPressed(buttons, btn => btn.dataset.tag === activeTag);
+            updateTagSummary();
             container.setAttribute('aria-label', t.tagFilterAria);
+        }
+
+        function setupTagMenu() {
+            document.addEventListener('click', (event) => {
+                const menu = $('#tagMenu');
+                if (!menu || !menu.open) return;
+                if (!menu.contains(event.target)) {
+                    menu.removeAttribute('open');
+                }
+            });
+
+            document.addEventListener('keydown', (event) => {
+                if (event.key !== 'Escape') return;
+                const menu = $('#tagMenu');
+                if (menu && menu.open) menu.removeAttribute('open');
+            });
         }
 
         /* ====================== THEME ====================== */
         function setTheme(mode) {
             document.documentElement.dataset.theme = mode;
             localStorage.setItem('theme', mode);
+
             const dark = mode === 'dark';
             $('#moon').style.display = dark ? 'block' : 'none';
             $('#sun').style.display = dark ? 'none' : 'block';
+            $('#themeBtn').setAttribute('aria-pressed', dark ? 'true' : 'false');
+
+            const metaTheme = document.querySelector('meta[name="theme-color"]');
+            if (metaTheme) {
+                metaTheme.setAttribute('content', dark ? '#101012' : '#faf9ff');
+            }
         }
+
         function initTheme() {
             const saved = localStorage.getItem('theme');
             const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
             setTheme(saved ?? (prefersDark ? 'dark' : 'light'));
         }
 
-        /* ====================== LANG ====================== */
+        /* ====================== LANGUAGE ====================== */
         function updateMetaSummary() {
             const meta = $('#metaSummary');
             const years = [...new Set(BOOKS.map(b => b.year))].sort((a, b) => a - b);
@@ -1430,7 +2282,7 @@
         function updateCurrentText() {
             if (currentBookIndex == null) return;
             const b = BOOKS[currentBookIndex];
-            const displayMonth = (MONTHS[currentLang] && MONTHS[currentLang][b.month]) || b.month;
+            const displayMonth = getMonthName(b.month, currentLang);
             $('#currentTitle').textContent = b.title;
             $('#currentMeta').textContent = `${displayMonth} ${b.year} · ${b.author}`;
         }
@@ -1440,15 +2292,16 @@
             currentLang = lang;
             document.documentElement.lang = lang;
             localStorage.setItem('booked_lang', lang);
+
             const t = I18N[lang];
 
             $('#heroTitle').textContent = t.heroTitle;
             $('#heroSub').textContent = t.heroSub;
-            $('#yearLabel').textContent = t.yearLabel;
             $('#search').placeholder = t.searchPlaceholder;
             $('#searchPill').title = t.searchTitle;
             $('#controlsGroup').setAttribute('aria-label', t.controlsAria);
-            $('#yearFilterPill').title = t.yearFilterTitle;
+            $('#sortPill').title = t.sortTitle;
+            $('#tagSummaryLabel').textContent = t.tagsLabel;
             $('#langSwitch').title = t.langSwitchTitle;
             $('#themeLabel').textContent = t.themeLabel;
             $('#themeBtn').title = t.themeTitle;
@@ -1456,83 +2309,167 @@
             $('#currentBtn').textContent = t.jumpToBook;
             $('#joinText').textContent = t.joinWhatsapp;
             $('#joinBtn').title = t.joinWhatsappTitle;
+
+            $('#viewLibrary').textContent = t.navLibrary;
+            $('#viewStats').textContent = t.navStats;
+            $('#viewMap').textContent = t.navMap;
+
             $('#overlayLocalHint').textContent = t.overlayLocalHint;
             $('#overlayNoteLabelText').textContent = t.overlayNoteLabel;
             $('#overlayNoteEditable').placeholder = t.overlayNotePlaceholder;
             $('#overlayRatingLabelText').textContent = t.overlayRatingLabel;
             $('#overlayRatingInput').placeholder = t.overlayRatingPlaceholder;
             $('#overlayOpenLibText').textContent = t.overlayOpenLib;
+
             $('#footerText').innerHTML = t.footerHtml;
+
             $('#feedbackTitle').textContent = t.feedbackTitle;
             $('#feedbackSubtitle').textContent = t.feedbackSubtitle;
+            $('#feedbackCategoryLabel').textContent = t.feedbackCategoryLabel;
             $('#feedbackMessageLabel').textContent = t.feedbackMessageLabel;
             $('#feedbackMessage').placeholder = t.feedbackMessagePlaceholder;
             $('#feedbackNameLabel').textContent = t.feedbackNameLabel;
             $('#feedbackName').placeholder = t.feedbackNamePlaceholder;
             $('#feedbackSubmitButton').textContent = t.feedbackSubmit;
 
-            $$('.lang-chip').forEach(btn => {
-                btn.dataset.active = (btn.dataset.lang === lang) ? 'true' : 'false';
-            });
+            $('#feedbackCategory').innerHTML = `
+                <option value="general">${escapeHTML(t.feedbackCategoryGeneral)}</option>
+                <option value="suggestion">${escapeHTML(t.feedbackCategorySuggestion)}</option>
+                <option value="website">${escapeHTML(t.feedbackCategoryWebsite)}</option>
+                <option value="meeting">${escapeHTML(t.feedbackCategoryMeeting)}</option>
+            `;
 
-            render();
+            setPressed($$('.lang-chip'), btn => btn.dataset.lang === lang);
+
+            renderYearFilters();
+            renderSortOptions();
             renderTagFilters();
+            renderLibrary();
+            renderStats();
+            renderMap();
             updateMetaSummary();
             updateCurrentText();
-            applyFilters();
+            setView(currentView);
+        }
+
+        /* ====================== VIEW TABS ====================== */
+        function setView(view) {
+            if (!['library', 'stats', 'map'].includes(view)) view = 'library';
+            currentView = view;
+            document.body.dataset.view = view;
+
+            $('#libraryView').hidden = view !== 'library';
+            $('#statsView').hidden = view !== 'stats';
+            $('#mapView').hidden = view !== 'map';
+
+            setPressed($$('.view-chip'), btn => btn.dataset.view === view);
+
+            if (view === 'stats') renderStats();
+            if (view === 'map') renderMap();
+        }
+
+        function setupViewTabs() {
+            $$('.view-chip').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    setView(btn.dataset.view);
+                });
+            });
         }
 
         /* ====================== BACK TO TOP ====================== */
         function setupTopButton() {
             const btn = $('#toTop');
-            const show = () => { btn.style.display = (window.scrollY > 500) ? 'inline-flex' : 'none'; };
+            const show = () => {
+                btn.style.display = (window.scrollY > 500) ? 'inline-flex' : 'none';
+            };
             window.addEventListener('scroll', show, { passive: true });
             show();
         }
 
-        /* ====================== COVERS (Open Library) ====================== */
+        /* ====================== COVERS ====================== */
         async function fetchCover({ title, author }) {
             const url = `https://openlibrary.org/search.json?title=${encodeURIComponent(title)}&author=${encodeURIComponent(author)}&limit=5`;
             const r = await fetch(url);
             if (!r.ok) throw new Error('search failed');
+
             const data = await r.json();
             const doc = (data.docs || [])
                 .filter(d => d.cover_i)
                 .sort((a, b) => (b.edition_count || 0) - (a.edition_count || 0))[0];
+
             if (!doc) return null;
 
             const coverUrl = `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg`;
-            const workKey = (doc.key && doc.key.startsWith('/works/')) ? doc.key : (doc.work_key && doc.work_key[0]);
+            const workKey = doc.key || (doc.work_key && doc.work_key[0] ? `/works/${doc.work_key[0]}` : null);
             const link = workKey ? `https://openlibrary.org${workKey}` :
                 `https://openlibrary.org/search?q=${encodeURIComponent(title + ' ' + author)}`;
+
             return { coverUrl, link };
         }
 
-        async function hydrateCovers() {
-            const cards = $$('.grid .book');
-            const concurrency = 2;
-            let i = 0;
-            async function next() {
-                if (i >= cards.length) return;
-                const el = cards[i++];
-                const idx = Number(el.dataset.idx);
-                const title = el.dataset.title;
-                const author = el.dataset.author;
+        async function fetchCoverCached(book) {
+            const key = 'booked_cover_' + getBookId(book);
+
+            try {
+                const cached = localStorage.getItem(key);
+                if (cached) return JSON.parse(cached);
+            } catch (_) { }
+
+            const result = await fetchCover({
+                title: book.title,
+                author: book.author
+            });
+
+            if (result) {
                 try {
-                    const res = await fetchCover({ title, author });
-                    if (res) {
-                        const cover = el.querySelector('.cover');
-                        cover.style.backgroundImage = `url("${res.coverUrl}")`;
-                        cover.classList.add('has-img');
-                        BOOKS[idx].link = res.link;
-                    }
+                    localStorage.setItem(key, JSON.stringify(result));
                 } catch (_) { }
-                finally {
-                    el.querySelector('.cover')?.classList.remove('skeleton');
-                    next();
+            }
+
+            return result;
+        }
+
+        function hydrateCoversDeferred() {
+            const run = () => hydrateCovers();
+            if ('requestIdleCallback' in window) {
+                window.requestIdleCallback(run);
+            } else {
+                setTimeout(run, 200);
+            }
+        }
+
+        async function hydrateCovers() {
+            const cards = $$('#content .book');
+            const concurrency = 4;
+            let i = 0;
+
+            async function worker() {
+                while (i < cards.length) {
+                    const el = cards[i++];
+                    if (!document.body.contains(el)) continue;
+
+                    const idx = Number(el.dataset.idx);
+                    const book = BOOKS[idx];
+                    const cover = el.querySelector('.cover');
+                    const img = el.querySelector('.cover-img');
+
+                    try {
+                        const res = await fetchCoverCached(book);
+                        if (res && cover && img && document.body.contains(el)) {
+                            img.src = res.coverUrl;
+                            cover.classList.add('has-img');
+                            BOOKS[idx].link = res.link;
+                        }
+                    } catch (_) { }
+                    finally {
+                        if (cover) cover.classList.remove('skeleton');
+                    }
                 }
             }
-            Array.from({ length: Math.min(concurrency, cards.length) }).forEach(next);
+
+            await Promise.all(
+                Array.from({ length: Math.min(concurrency, cards.length) }, () => worker())
+            );
         }
 
         /* ====================== CURRENTLY READING ====================== */
@@ -1540,21 +2477,33 @@
             const currentEl = $('#current');
             const btn = $('#currentBtn');
 
-            const idx = BOOKS.findIndex(b => b.year === 2026 && b.month === "May");
+            const idx = BOOKS.findIndex(b => b.current);
             if (idx === -1) {
                 currentEl.style.display = 'none';
                 return;
             }
+
             currentBookIndex = idx;
             updateCurrentText();
 
             btn.addEventListener('click', () => {
                 if (currentBookIndex == null) return;
-                const card = $(`.book[data-idx="${currentBookIndex}"]`);
-                if (card) {
-                    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    openOverlay(currentBookIndex);
-                }
+
+                setView('library');
+                activeYear = 'all';
+                activeTag = 'all';
+                $('#search').value = '';
+                renderYearFilters();
+                renderTagFilters();
+                applyFilters();
+
+                requestAnimationFrame(() => {
+                    const card = $(`.book[data-idx="${currentBookIndex}"]`);
+                    if (card) {
+                        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        openOverlay(currentBookIndex);
+                    }
+                });
             });
         }
 
@@ -1565,12 +2514,9 @@
             if (!b || !overlay) return;
 
             const id = getBookId(b);
-            overlay.dataset.open = 'true';
             overlay.dataset.id = id;
-            overlay.setAttribute('aria-hidden', 'false');
-            document.body.style.overflow = 'hidden';
 
-            const displayMonth = (MONTHS[currentLang] && MONTHS[currentLang][b.month]) || b.month;
+            const displayMonth = getMonthName(b.month, currentLang);
             $('#overlayMonth').textContent = `${displayMonth} ${b.year}`;
             $('#overlayTitle').textContent = b.title;
             $('#overlayAuthor').textContent = b.author;
@@ -1586,10 +2532,8 @@
             });
 
             const meta = loadMeta(id);
-            const noteEditable = $('#overlayNoteEditable');
-            const ratingInput = $('#overlayRatingInput');
-            noteEditable.value = meta.note || '';
-            ratingInput.value = meta.rating || '';
+            $('#overlayNoteEditable').value = meta.note || '';
+            $('#overlayRatingInput').value = meta.rating || '';
 
             const link = $('#overlayLink');
             if (b.link) {
@@ -1599,38 +2543,54 @@
                 link.style.display = 'none';
             }
 
+            document.body.style.overflow = 'hidden';
+
+            if (typeof overlay.showModal === 'function' && !overlay.open) {
+                overlay.showModal();
+            } else {
+                overlay.setAttribute('open', '');
+            }
+
             $('#overlayClose').focus();
         }
 
         function closeOverlay() {
             const overlay = $('#overlay');
-            overlay.dataset.open = 'false';
-            overlay.setAttribute('aria-hidden', 'true');
             document.body.style.overflow = '';
             overlay.dataset.id = '';
+
+            if (typeof overlay.close === 'function' && overlay.open) {
+                overlay.close();
+            } else {
+                overlay.removeAttribute('open');
+            }
         }
 
         function bindOverlay() {
+            const overlay = $('#overlay');
+
             $('#overlayClose').addEventListener('click', closeOverlay);
-            $('#overlayBackdrop').addEventListener('click', closeOverlay);
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && $('#overlay').dataset.open === 'true') {
-                    closeOverlay();
-                }
+
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) closeOverlay();
+            });
+
+            overlay.addEventListener('cancel', () => {
+                document.body.style.overflow = '';
+                overlay.dataset.id = '';
             });
 
             const noteEditable = $('#overlayNoteEditable');
             const ratingInput = $('#overlayRatingInput');
 
             function persist() {
-                const overlay = $('#overlay');
                 const id = overlay.dataset.id;
                 if (!id) return;
-                const meta = {
+
+                saveMeta(id, {
                     note: noteEditable.value.trim(),
                     rating: ratingInput.value.trim()
-                };
-                saveMeta(id, meta);
+                });
             }
 
             noteEditable.addEventListener('input', persist);
@@ -1653,14 +2613,19 @@
 
                 const message = $('#feedbackMessage').value.trim();
                 const name = $('#feedbackName').value.trim();
+                const categorySelect = $('#feedbackCategory');
+                const categoryLabel = categorySelect.selectedOptions[0]?.textContent || categorySelect.value;
 
                 if (!message) {
                     form.reportValidity();
                     return;
                 }
 
+                const combinedMessage = `Type: ${categoryLabel}\n\n${message}`;
+
                 const fd = new FormData();
-                fd.append(GOOGLE_FORM_FIELDS.message, message);
+                fd.append(GOOGLE_FORM_FIELDS.message, combinedMessage);
+
                 if (GOOGLE_FORM_FIELDS.name) {
                     fd.append(GOOGLE_FORM_FIELDS.name, name);
                 }
@@ -1674,6 +2639,7 @@
                 }).then(() => {
                     $('#feedbackMessage').value = "";
                     $('#feedbackName').value = "";
+                    $('#feedbackCategory').value = "general";
                     status.textContent = t.feedbackThanks;
                 }).catch(() => {
                     status.textContent = t.feedbackError;
@@ -1681,53 +2647,408 @@
             });
         }
 
+        /* ====================== STATS ====================== */
+        function renderBarList(counts, maxItems = 8) {
+            const entries = sortedEntriesFromCount(counts).slice(0, maxItems);
+            const max = entries[0]?.[1] || 1;
+
+            if (!entries.length) return '';
+
+            return `
+                <div class="bar-list">
+                    ${entries.map(([name, count]) => {
+                const pct = Math.max(8, Math.round((count / max) * 100));
+                return `
+                            <div class="bar-row">
+                                <span class="bar-name" title="${escapeHTML(name)}">${escapeHTML(name)}</span>
+                                <span class="bar-track" aria-hidden="true">
+                                    <span class="bar-fill" style="--pct:${pct}%"></span>
+                                </span>
+                                <span class="bar-count">${count}</span>
+                            </div>
+                        `;
+            }).join('')}
+                </div>
+            `;
+        }
+
+        function renderStats() {
+            const view = $('#statsView');
+            const t = I18N[currentLang];
+
+            const years = [...new Set(BOOKS.map(b => b.year))].sort((a, b) => a - b);
+            const authors = new Set(BOOKS.map(b => b.author));
+            const countries = new Set(BOOKS.map(b => b.country));
+            const current = BOOKS.find(b => b.current);
+
+            const yearCounts = countBy(BOOKS, b => String(b.year));
+            const countryCounts = countBy(BOOKS, b => b.country);
+            const authorCounts = countBy(BOOKS, b => b.author);
+            const repeatingAuthors = Object.fromEntries(
+                sortedEntriesFromCount(authorCounts).filter(([, count]) => count > 1)
+            );
+
+            const tagCounts = BOOKS.reduce((acc, book) => {
+                (book.tags || []).forEach(tag => {
+                    acc[tag] = (acc[tag] || 0) + 1;
+                });
+                return acc;
+            }, {});
+
+            view.innerHTML = `
+                <div class="section-head">
+                    <h2>${escapeHTML(t.statsTitle)}</h2>
+                    <p>${escapeHTML(t.statsSubtitle)}</p>
+                </div>
+
+                <div class="stat-grid">
+                    <article class="stat-card">
+                        <p class="stat-value">${BOOKS.length}</p>
+                        <p class="stat-label">${escapeHTML(t.totalBooks)}</p>
+                    </article>
+                    <article class="stat-card">
+                        <p class="stat-value">${years[0]}–${years[years.length - 1]}</p>
+                        <p class="stat-label">${escapeHTML(t.yearsCovered)}</p>
+                    </article>
+                    <article class="stat-card">
+                        <p class="stat-value">${authors.size}</p>
+                        <p class="stat-label">${escapeHTML(t.uniqueAuthors)}</p>
+                    </article>
+                    <article class="stat-card">
+                        <p class="stat-value">${countries.size}</p>
+                        <p class="stat-label">${escapeHTML(t.countriesRead)}</p>
+                    </article>
+                </div>
+
+                <div class="charts">
+                    <article class="chart-card">
+                        <h3>${escapeHTML(t.currentBook)}</h3>
+                        <p class="title">${escapeHTML(current ? current.title : '—')}</p>
+                        <p class="author">${escapeHTML(current ? `${getMonthName(current.month, currentLang)} ${current.year} · ${current.author}` : '')}</p>
+                    </article>
+
+                    <article class="chart-card">
+                        <h3>${escapeHTML(t.booksByYear)}</h3>
+                        ${renderBarList(yearCounts, 10)}
+                    </article>
+
+                    <article class="chart-card">
+                        <h3>${escapeHTML(t.topTags)}</h3>
+                        ${renderBarList(tagCounts, 10)}
+                    </article>
+
+                    <article class="chart-card">
+                        <h3>${escapeHTML(t.booksByCountry)}</h3>
+                        ${renderBarList(countryCounts, 10)}
+                    </article>
+
+                    <article class="chart-card">
+                        <h3>${escapeHTML(t.recurringAuthors)}</h3>
+                        ${Object.keys(repeatingAuthors).length ? renderBarList(repeatingAuthors, 8) : `<p class="author">${escapeHTML(t.noRepeatingAuthors)}</p>`}
+                    </article>
+                </div>
+            `;
+        }
+
+        /* ====================== MAP ====================== */
+        function groupBooksByCountry() {
+            return BOOKS.reduce((acc, book) => {
+                const country = book.country || 'Unknown';
+                if (!acc[country]) acc[country] = [];
+                acc[country].push(book);
+                return acc;
+            }, {});
+        }
+
+        function selectMapCountry(country) {
+            selectedMapCountry = country;
+            renderMap();
+        }
+
+        function showCountryInLibrary(country) {
+            setView('library');
+            activeYear = 'all';
+            activeTag = 'all';
+            $('#search').value = country.toLowerCase();
+            renderYearFilters();
+            renderTagFilters();
+            applyFilters();
+
+            requestAnimationFrame(() => {
+                $('#main').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        }
+
+        function renderMap() {
+            const view = $('#mapView');
+            const t = I18N[currentLang];
+            const groups = groupBooksByCountry();
+            const countries = sortedEntriesFromCount(countBy(BOOKS, b => b.country));
+
+            if (!selectedMapCountry || !groups[selectedMapCountry]) {
+                selectedMapCountry = countries[0]?.[0] || null;
+            }
+
+            const selectedBooks = selectedMapCountry ? groups[selectedMapCountry] : [];
+
+            const countryCards = countries.map(([country, count]) => `
+                <button class="country-card" type="button" data-country-card="${escapeHTML(country)}"
+                    data-active="${country === selectedMapCountry ? 'true' : 'false'}">
+                    <strong>${escapeHTML(country)}</strong>
+                    <span>${escapeHTML(t.countryCount(count))}</span>
+                </button>
+            `).join('');
+
+            view.innerHTML = `
+                <div class="section-head">
+                    <h2>${escapeHTML(t.mapTitle)}</h2>
+                    <p>${escapeHTML(t.mapSubtitle)}</p>
+                    <p class="meta-row">${escapeHTML(t.mapHelp)}</p>
+                </div>
+
+                <div class="map-layout">
+                    <article class="map-card">
+                        <div class="map-canvas" aria-label="${escapeHTML(t.mapTitle)}">
+                            <svg id="worldMapSvg" class="world-map-svg" role="img" aria-label="${escapeHTML(t.mapTitle)}"></svg>
+
+                            <div id="mapTooltip" class="map-tooltip" hidden></div>
+
+                            <div class="map-zoom" aria-label="Map zoom controls">
+                                <button type="button" data-map-zoom="in" aria-label="Zoom in">+</button>
+                                <button type="button" data-map-zoom="out" aria-label="Zoom out">−</button>
+                            </div>
+
+                            <div class="map-source">${escapeHTML(t.mapSource)}</div>
+                            <p id="mapStatus" class="map-status"></p>
+                        </div>
+                    </article>
+
+                    <aside class="map-card">
+                        <h3>${escapeHTML(t.selectedCountryBooks(selectedMapCountry || '', selectedBooks.length))}</h3>
+                        <ul class="map-details-list">
+                            ${selectedBooks.map(book => `
+                                <li>
+                                    <span class="map-book-title">${escapeHTML(book.title)}</span>
+                                    <span class="map-book-meta">${escapeHTML(getMonthName(book.month, currentLang))} ${book.year} · ${escapeHTML(book.author)}</span>
+                                </li>
+                            `).join('')}
+                        </ul>
+                        <p style="margin:14px 0 0;">
+                            <button class="pill country-show" type="button" data-country="${escapeHTML(selectedMapCountry || '')}">
+                                ${escapeHTML(t.showCountryBooks)}
+                            </button>
+                        </p>
+                    </aside>
+                </div>
+
+                <div class="country-grid">
+                    ${countryCards}
+                </div>
+            `;
+
+            $$('[data-country-card]', view).forEach(card => {
+                card.addEventListener('click', () => selectMapCountry(card.dataset.countryCard));
+            });
+
+            $('.country-show', view)?.addEventListener('click', (e) => {
+                showCountryInLibrary(e.currentTarget.dataset.country);
+            });
+
+            drawWorldMap();
+        }
+
+        async function loadWorldFeatures() {
+            if (worldFeatures) return worldFeatures;
+
+            if (!worldMapDataPromise) {
+                worldMapDataPromise = fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
+                    .then(response => {
+                        if (!response.ok) throw new Error('World map data failed to load.');
+                        return response.json();
+                    })
+                    .then(data => topojson.feature(data, data.objects.countries).features);
+            }
+
+            worldFeatures = await worldMapDataPromise;
+            return worldFeatures;
+        }
+
+        async function drawWorldMap() {
+            const svgEl = $('#worldMapSvg');
+            const canvas = $('.map-canvas');
+            const tooltip = $('#mapTooltip');
+            const status = $('#mapStatus');
+            const t = I18N[currentLang];
+
+            if (!svgEl || !canvas) return;
+
+            if (!window.d3 || !window.topojson) {
+                if (status) status.textContent = t.mapLibrariesMissing;
+                return;
+            }
+
+            try {
+                const features = await loadWorldFeatures();
+                const counts = countBy(BOOKS, b => b.country);
+                const maxCount = Math.max(...Object.values(counts), 1);
+
+                const svg = d3.select(svgEl);
+                svg.selectAll('*').remove();
+
+                const box = canvas.getBoundingClientRect();
+                const width = Math.max(760, Math.round(box.width || 960));
+                const height = Math.max(440, Math.round(box.height || 540));
+
+                svg.attr('viewBox', `0 0 ${width} ${height}`);
+
+                const projection = d3.geoNaturalEarth1();
+                projection.fitExtent(
+                    [[14, 14], [width - 14, height - 14]],
+                    { type: 'FeatureCollection', features }
+                );
+
+                const path = d3.geoPath(projection);
+                const g = svg.append('g');
+
+                g.append('path')
+                    .datum({ type: 'Sphere' })
+                    .attr('class', 'map-ocean')
+                    .attr('d', path);
+
+                const countryPaths = g.selectAll('path.map-country')
+                    .data(features)
+                    .join('path')
+                    .attr('class', d => {
+                        const iso = String(d.id).padStart(3, '0');
+                        const siteCountry = ISO_NUM_TO_COUNTRY[iso];
+                        const count = siteCountry ? (counts[siteCountry] || 0) : 0;
+
+                        let level = '';
+                        if (count >= Math.ceil(maxCount * .66)) level = 'level-3';
+                        else if (count >= Math.ceil(maxCount * .33)) level = 'level-2';
+                        else if (count > 0) level = 'level-1';
+
+                        return [
+                            'map-country',
+                            count ? 'is-read' : '',
+                            level,
+                            siteCountry === selectedMapCountry ? 'is-selected' : ''
+                        ].filter(Boolean).join(' ');
+                    })
+                    .attr('d', path)
+                    .attr('tabindex', d => {
+                        const iso = String(d.id).padStart(3, '0');
+                        return ISO_NUM_TO_COUNTRY[iso] ? 0 : null;
+                    })
+                    .attr('role', d => {
+                        const iso = String(d.id).padStart(3, '0');
+                        return ISO_NUM_TO_COUNTRY[iso] ? 'button' : null;
+                    })
+                    .attr('aria-label', d => {
+                        const iso = String(d.id).padStart(3, '0');
+                        const siteCountry = ISO_NUM_TO_COUNTRY[iso];
+                        if (!siteCountry) return null;
+                        const count = counts[siteCountry] || 0;
+                        return `${siteCountry}, ${t.countryCount(count)}`;
+                    });
+
+                countryPaths
+                    .on('click', (event, d) => {
+                        const iso = String(d.id).padStart(3, '0');
+                        const siteCountry = ISO_NUM_TO_COUNTRY[iso];
+                        if (siteCountry) selectMapCountry(siteCountry);
+                    })
+                    .on('keydown', (event, d) => {
+                        if (event.key !== 'Enter' && event.key !== ' ') return;
+                        event.preventDefault();
+
+                        const iso = String(d.id).padStart(3, '0');
+                        const siteCountry = ISO_NUM_TO_COUNTRY[iso];
+                        if (siteCountry) selectMapCountry(siteCountry);
+                    })
+                    .on('mousemove', (event, d) => {
+                        const iso = String(d.id).padStart(3, '0');
+                        const siteCountry = ISO_NUM_TO_COUNTRY[iso];
+
+                        if (!siteCountry || !tooltip) {
+                            if (tooltip) tooltip.hidden = true;
+                            return;
+                        }
+
+                        const count = counts[siteCountry] || 0;
+                        const [x, y] = d3.pointer(event, canvas);
+
+                        tooltip.innerHTML = `
+                            <strong>${escapeHTML(siteCountry)}</strong>
+                            <span>${escapeHTML(t.countryCount(count))}</span>
+                        `;
+                        tooltip.style.left = `${x}px`;
+                        tooltip.style.top = `${y}px`;
+                        tooltip.hidden = false;
+                    })
+                    .on('mouseleave', () => {
+                        if (tooltip) tooltip.hidden = true;
+                    });
+
+                const zoom = d3.zoom()
+                    .scaleExtent([1, 8])
+                    .on('zoom', event => {
+                        g.attr('transform', event.transform);
+                    });
+
+                svg.call(zoom).on('dblclick.zoom', null);
+
+                $$('[data-map-zoom]').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const direction = btn.dataset.mapZoom;
+                        const factor = direction === 'in' ? 1.35 : 1 / 1.35;
+                        svg.transition().duration(180).call(zoom.scaleBy, factor);
+                    });
+                });
+
+                if (status) status.textContent = '';
+            } catch (_) {
+                if (status) {
+                    status.textContent = t.mapLoadError;
+                }
+            }
+        }
+
         /* ====================== BOOT ====================== */
         document.addEventListener('DOMContentLoaded', () => {
             initTheme();
             setupTopButton();
             setupCurrent();
+            setupViewTabs();
+            setupTagMenu();
             bindOverlay();
             setupFeedbackForm();
 
-            // Search
-            $('#search').addEventListener('input', applyFilters);
+            $('#search').addEventListener('input', debounce(applyFilters, 120));
 
-            // Year chips
-            $$('.chip[data-year]').forEach(ch => {
-                ch.addEventListener('click', () => {
-                    $$('.chip[data-year]').forEach(x => x.dataset.active = 'false');
-                    ch.dataset.active = 'true';
-                    applyFilters();
-                    const Y = ch.dataset.year;
-                    if (Y !== 'all') {
-                        const target = $(`#year-${Y}`);
-                        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }
-                });
+            $('#sortSelect').addEventListener('change', (e) => {
+                currentSort = e.target.value;
+                renderLibrary();
+                applyFilters();
             });
 
-            // Theme toggle
             $('#themeBtn').addEventListener('click', () => {
                 const cur = document.documentElement.dataset.theme || 'light';
                 setTheme(cur === 'dark' ? 'light' : 'dark');
             });
 
-            // Language switch
             $$('.lang-chip').forEach(btn => {
                 btn.addEventListener('click', () => {
                     setLanguage(btn.dataset.lang);
                 });
             });
 
+            window.addEventListener('resize', debounce(() => {
+                if (currentView === 'map') drawWorldMap();
+            }, 180));
+
             const savedLang = localStorage.getItem('booked_lang') || 'en';
             setLanguage(savedLang);
-
-            // Load real covers & links (after initial paint)
-            if (window.requestIdleCallback) {
-                window.requestIdleCallback(hydrateCovers);
-            } else {
-                setTimeout(hydrateCovers, 300);
-            }
         });
     </script>
 </body>
