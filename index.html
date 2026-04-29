@@ -1527,10 +1527,54 @@ h1 {
         text-align: left;
     }
 }
+        /* Mobile-only desktop-view suggestion */
+.mobile-note {
+    display: none;
+}
+
+@media (max-width: 760px) {
+    .mobile-note {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        position: sticky;
+        top: 0;
+        z-index: 200;
+        width: 100%;
+        padding: 10px 14px;
+        text-align: center;
+        font-size: 13px;
+        line-height: 1.4;
+        color: var(--fg);
+        background: color-mix(in oklab, var(--card), transparent 4%);
+        border-bottom: 1px solid color-mix(in oklab, var(--fg) 12%, transparent);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, .18);
+        backdrop-filter: blur(12px);
+    }
+
+    .mobile-note button {
+        min-width: 32px;
+        min-height: 32px;
+        padding: 0;
+        border-radius: 999px;
+        justify-content: center;
+        background: var(--glass);
+        flex: 0 0 auto;
+    }
+
+    .mobile-note[hidden] {
+        display: none;
+    }
+}
     </style>
 </head>
 
 <body data-view="library">
+    <div class="mobile-note" id="mobileNote">
+        For the best experience, open this site in desktop view on your phone.
+        <button type="button" id="mobileNoteClose" aria-label="Close notice">×</button>
+    </div>
     <a class="skip-link" href="#main">Skip to books</a>
 
     <header class="hero">
@@ -3391,6 +3435,22 @@ h1 {
             setupTagMenu();
             bindOverlay();
             setupFeedbackForm();
+
+            const mobileNote = document.getElementById('mobileNote');
+            const mobileNoteClose = document.getElementById('mobileNoteClose');
+
+            if (mobileNote && mobileNoteClose) {
+                const dismissed = localStorage.getItem('booked_mobile_note_dismissed');
+
+                if (dismissed === 'true') {
+                    mobileNote.hidden = true;
+               }
+
+               mobileNoteClose.addEventListener('click', () => {
+                   mobileNote.hidden = true;
+                   localStorage.setItem('booked_mobile_note_dismissed', 'true');
+               });
+            }
 
             $('#search').addEventListener('input', debounce(applyFilters, 120));
 
