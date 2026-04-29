@@ -1095,6 +1095,14 @@
                 author: "Anne Rice",
                 tags: ["Gothic Horror", "Philosophical Drama", "Supernatural Fantasy"],
                 note: "Absurd hero — one who confronts the futility of existence with defiant consciousness and, in doing so, finds a form of personal triumph."
+            },
+            {
+                year: 2026,
+                month: "May",
+                title: "Letters to a Young Poet",
+                author: "Rainer Maria Rilke",
+                tags: ["Epistolary Literature", "Literary Nonfiction", "Philosophical Essays"],
+                note: "A series of intimate letters reflecting on solitude, love, creativity, and the inner life of the artist, urging patience and deep self-trust in the making of art."
             }
             
         ];
@@ -1532,7 +1540,7 @@
             const currentEl = $('#current');
             const btn = $('#currentBtn');
 
-            const idx = BOOKS.findIndex(b => b.year === 2026 && b.month === "April");
+            const idx = BOOKS.findIndex(b => b.year === 2026 && b.month === "May");
             if (idx === -1) {
                 currentEl.style.display = 'none';
                 return;
