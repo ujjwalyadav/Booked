@@ -207,8 +207,7 @@
 
         /* ============== STICKY TOOLBOX ============== */
         .toolbox {
-            position: sticky;
-            top: 0;
+            position: static;
             z-index: 40;
             padding: 10px 0 12px;
             margin-top: 0;
@@ -401,7 +400,7 @@
 
         .year {
             position: sticky;
-            top: 92px;
+            top: 0;
             z-index: 5;
             backdrop-filter: blur(10px);
             background: color-mix(in oklab, var(--bg), transparent 25%);
@@ -414,7 +413,7 @@
 
         @media (max-width:760px) {
             .year {
-                top: 128px;
+                top: 0;
             }
         }
 
