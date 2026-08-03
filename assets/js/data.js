@@ -310,10 +310,21 @@ window.BOOKED_DATA = Object.freeze({
       author: "Oscar Wilde",
       country: "United Kingdom",
       published: 1905,
-      current: true,
+      current: false,
       tags: ["Epistolary", "Autobiographical", "Philosophical"],
       note: "A deeply personal letter written during Wilde’s imprisonment, reflecting on suffering, love, betrayal, spiritual growth, and his relationship with Lord Alfred Douglas."
-    }
+    },
+     {
+  year: 2026,
+  month: "August",
+  title: "East of Eden",
+  author: "John Steinbeck",
+  country: "United States",
+  published: 1952,
+  current: true,
+  tags: ["Family Saga", "Historical Fiction", "Biblical Retelling"],
+  note: "A sweeping multigenerational novel set in California’s Salinas Valley, exploring family conflict, love, guilt, free will, and the struggle between good and evil through a modern retelling of Cain and Abel."
+}
   ],
 
   links: {
