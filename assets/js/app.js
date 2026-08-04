@@ -610,8 +610,6 @@
     updateDocumentMetadata();
 
     $("#skipLink").textContent = t().skipLink;
-    $("#mobileNoteText").textContent = t().mobileNote;
-    $("#mobileNoteClose").setAttribute("aria-label", t().closeNotice);
     $("#siteBadge").textContent = t().badge;
     $("#heroTitle").textContent = t().heroTitle;
     $("#heroSub").textContent = t().heroSub;
@@ -1287,16 +1285,6 @@
     update();
   }
 
-  function initializeMobileNotice() {
-    const notice = $("#mobileNote");
-    const close = $("#mobileNoteClose");
-    if (getStored("booked_mobile_note_dismissed") === "true") notice.hidden = true;
-    close.addEventListener("click", () => {
-      notice.hidden = true;
-      setStored("booked_mobile_note_dismissed", "true");
-    });
-  }
-
   function initializeTagMenu() {
     document.addEventListener("click", event => {
       const menu = $("#tagMenu");
@@ -1351,7 +1339,6 @@
     initializeTheme();
     initializeViewFromHash();
     initializeTopButton();
-    initializeMobileNotice();
     initializeTagMenu();
     initializeCurrentBook();
     initializeOverlay();
