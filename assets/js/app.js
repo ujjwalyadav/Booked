@@ -182,6 +182,8 @@
       book.month,
       getMonthName(book.month),
       book.country,
+      getBookPages(book) ? String(getBookPages(book)) : "",
+      getBookPages(book) ? formatPages(getBookPages(book)) : "",
       book.note,
       ...(book.tags || [])
     ].join(" "));
@@ -189,6 +191,49 @@
 
   function fallbackOpenLibraryLink(book) {
     return `https://openlibrary.org/search?q=${encodeURIComponent(`${book.title} ${book.author}`)}`;
+  }
+
+  function getBookPages(book) {
+    return Number.isFinite(book?.pages) && book.pages > 0 ? book.pages : null;
+  }
+
+  function formatPages(pages) {
+    return Number.isFinite(pages) ? t().pageCount(pages) : t().pageCountUnknown;
+  }
+
+  function getPageSourceTitle(book) {
+    return book?.pageSourceName
+      ? t().pageSourceTitle(book.pageSourceName)
+      : t().pageSourceMissing;
+  }
+
+  function formatMeetingDate(value) {
+    if (!value) return "";
+    const date = new Date(`${value}T12:00:00`);
+    if (Number.isNaN(date.getTime())) return "";
+    const locale = state.lang === "de" ? "de-DE" : "en-GB";
+    return new Intl.DateTimeFormat(locale, {
+      day: "numeric",
+      month: "long",
+      year: "numeric"
+    }).format(date);
+  }
+
+  function getOpenAccessLink(book) {
+    if (!book?.openAccess?.url) return null;
+
+    try {
+      const url = new URL(book.openAccess.url, window.location.href);
+      if (!["http:", "https:"].includes(url.protocol)) return null;
+
+      return {
+        url: url.href,
+        label: book.openAccess.label || t().readOpenAccess,
+        verifiedOn: book.openAccess.verifiedOn || ""
+      };
+    } catch {
+      return null;
+    }
   }
 
   function updateDocumentMetadata() {
@@ -269,6 +314,7 @@
     select.innerHTML = `
       <option value="reading">${escapeHTML(t().sortReading)}</option>
       <option value="newest">${escapeHTML(t().sortNewest)}</option>
+      <option value="pages">${escapeHTML(t().sortPages)}</option>
       <option value="title">${escapeHTML(t().sortTitleOption)}</option>
       <option value="author">${escapeHTML(t().sortAuthor)}</option>
     `;
@@ -337,6 +383,8 @@
         return entries.sort((a, b) => a.book.title.localeCompare(b.book.title));
       case "author":
         return entries.sort((a, b) => a.book.author.localeCompare(b.book.author) || a.book.title.localeCompare(b.book.title));
+      case "pages":
+        return entries.sort((a, b) => (getBookPages(b.book) || 0) - (getBookPages(a.book) || 0) || a.book.title.localeCompare(b.book.title));
       default:
         return entries;
     }
@@ -357,6 +405,10 @@
     const currentRibbon = book.current
       ? `<span class="current-ribbon">${escapeHTML(t().currentlyReading)}</span>`
       : "";
+    const pages = getBookPages(book);
+    const pageTag = pages
+      ? `<span class="tag" title="${escapeHTML(getPageSourceTitle(book))}">${escapeHTML(formatPages(pages))}</span>`
+      : `<span class="tag tag-muted" title="${escapeHTML(getPageSourceTitle(book))}">${escapeHTML(t().pageCountUnknown)}</span>`;
 
     card.innerHTML = `
       <div class="cover skeleton" style="--h:${hue}">
@@ -370,6 +422,7 @@
         <div class="meta">
           <span class="tag" title="${escapeHTML(t().tagMonthTitle)}">${escapeHTML(getMonthName(book.month))}</span>
           <span class="tag" title="${escapeHTML(t().tagIndexTitle)}">#${index + 1}</span>
+          ${pageTag}
         </div>
       </div>
     `;
@@ -399,7 +452,7 @@
     content.innerHTML = "";
     const entries = getSortedBookEntries();
 
-    if (["title", "author"].includes(state.sort)) {
+    if (["title", "author", "pages"].includes(state.sort)) {
       appendBookGroup(content, t().allBooksHeading, "group-all-books", entries);
     } else {
       const years = [];
@@ -602,7 +655,57 @@
     section.hidden = false;
     section.setAttribute("aria-label", t().currentlyReading);
     $("#currentTitle").textContent = current.title;
-    $("#currentMeta").textContent = `${getMonthName(current.month)} ${current.year} · ${current.author}`;
+    const currentPages = getBookPages(current);
+    $("#currentMeta").textContent = [
+      `${getMonthName(current.month)} ${current.year}`,
+      current.author,
+      currentPages ? formatPages(currentPages) : null
+    ].filter(Boolean).join(" · ");
+
+    const meetingDate = formatMeetingDate(current.meetingDate);
+    $("#currentMeeting").textContent = meetingDate ? t().meetingDate(meetingDate) : "";
+
+    const openLink = $("#currentOpenLink");
+    const openAccess = getOpenAccessLink(current);
+    if (openAccess) {
+      openLink.hidden = false;
+      openLink.href = openAccess.url;
+      openLink.textContent = openAccess.label;
+      openLink.title = openAccess.verifiedOn
+        ? t().openAccessVerified(openAccess.verifiedOn)
+        : t().openAccessTitle;
+    } else {
+      openLink.hidden = true;
+      openLink.removeAttribute("href");
+      openLink.textContent = t().readOpenAccess;
+      openLink.title = "";
+    }
+
+    updateCurrentCover(current);
+  }
+
+  async function updateCurrentCover(current) {
+    const wrapper = $("#current .current-art");
+    const image = $("#currentCoverImage");
+    if (!wrapper || !image || !current) return;
+
+    wrapper.classList.remove("has-img");
+    image.removeAttribute("src");
+    image.alt = t().coverAlt(current.title, current.author);
+
+    try {
+      const result = current.coverUrl
+        ? { coverUrl: current.coverUrl, link: current.link }
+        : await fetchCoverCached(current);
+      if (result.coverUrl && BOOKS[state.currentBookIndex] === current) {
+        current.coverUrl = result.coverUrl;
+        current.link = result.link || current.link;
+        image.src = result.coverUrl;
+        wrapper.classList.add("has-img");
+      }
+    } catch (error) {
+      console.warn(`Could not load current cover for "${current.title}".`, error);
+    }
   }
 
   function translateStaticInterface() {
@@ -615,6 +718,7 @@
     $("#heroSub").textContent = t().heroSub;
     $("#currentLabel").textContent = t().currentlyReading;
     $("#currentBtn").textContent = t().jumpToBook;
+    $("#currentOpenLink").textContent = t().readOpenAccess;
 
     $("#viewTabs").setAttribute("aria-label", t().viewsAria);
     $("#controlsGroup").setAttribute("aria-label", t().controlsAria);
@@ -775,9 +879,12 @@
     $("#overlayTitle").textContent = book.title;
     $("#overlayAuthor").textContent = book.author;
     $("#overlayNote").textContent = book.note || "";
-    $("#overlayPublished").textContent = Number.isFinite(book.published)
-      ? `${t().publicationTimeline}: ${book.published}`
-      : t().unknownPublicationYear;
+    const pages = getBookPages(book);
+    $("#overlayPublished").textContent = [
+      Number.isFinite(book.published) ? `${t().publishedLabel}: ${book.published}` : t().unknownPublicationYear,
+      pages ? formatPages(pages) : t().pageCountUnknown
+    ].join(" · ");
+    $("#overlayPublished").title = getPageSourceTitle(book);
 
     const tags = $("#overlayTags");
     tags.innerHTML = "";
@@ -970,12 +1077,37 @@
     `;
   }
 
+  function renderPageRanking(maxItems = 10) {
+    const books = BOOKS
+      .filter(book => getBookPages(book) && !book.current)
+      .slice()
+      .sort((a, b) => getBookPages(b) - getBookPages(a) || a.title.localeCompare(b.title))
+      .slice(0, maxItems);
+
+    if (!books.length) return `<p class="author">${escapeHTML(t().pageCountUnknown)}</p>`;
+
+    return `
+      <div class="page-ranking">
+        ${books.map((book, index) => `
+          <div class="page-rank-item">
+            <span class="page-rank-number">#${index + 1}</span>
+            <span class="page-rank-title" title="${escapeHTML(book.title)}">${escapeHTML(book.title)}</span>
+            <span class="page-rank-meta" title="${escapeHTML(getPageSourceTitle(book))}">${escapeHTML(formatPages(getBookPages(book)))}</span>
+          </div>
+        `).join("")}
+      </div>
+    `;
+  }
+
   function renderStats() {
     const view = $("#statsView");
     const years = [...new Set(BOOKS.map(book => book.year))].sort((a, b) => a - b);
     const authors = new Set(BOOKS.map(book => book.author));
     const countries = new Set(BOOKS.map(book => book.country));
     const current = BOOKS.find(book => book.current);
+    const booksWithPages = BOOKS.filter(book => getBookPages(book));
+    const readBooksWithPages = booksWithPages.filter(book => !book.current);
+    const totalPages = readBooksWithPages.reduce((sum, book) => sum + getBookPages(book), 0);
 
     const yearCounts = countBy(BOOKS, book => String(book.year));
     const countryCounts = countBy(BOOKS, book => book.country);
@@ -1004,6 +1136,10 @@
           <p class="stat-label">${escapeHTML(t().totalBooks)}</p>
         </article>
         <article class="stat-card">
+          <p class="stat-value">${totalPages.toLocaleString(state.lang === "de" ? "de-DE" : "en-GB")}</p>
+          <p class="stat-label">${escapeHTML(t().totalPages)} · ${escapeHTML(t().knownPageCounts(readBooksWithPages.length))}</p>
+        </article>
+        <article class="stat-card">
           <p class="stat-value">${years[0]}–${years.at(-1)}</p>
           <p class="stat-label">${escapeHTML(t().yearsCovered)}</p>
         </article>
@@ -1021,7 +1157,12 @@
         <article class="chart-card">
           <h3>${escapeHTML(t().currentBook)}</h3>
           <p class="title">${escapeHTML(current?.title || "—")}</p>
-          <p class="author">${current ? escapeHTML(`${getMonthName(current.month)} ${current.year} · ${current.author}`) : ""}</p>
+          <p class="author">${current ? escapeHTML([
+            `${getMonthName(current.month)} ${current.year}`,
+            current.author,
+            getBookPages(current) ? formatPages(getBookPages(current)) : null,
+            current.meetingDate ? t().meetingDate(formatMeetingDate(current.meetingDate)) : null
+          ].filter(Boolean).join(" · ")) : ""}</p>
         </article>
         <article class="chart-card">
           <h3>${escapeHTML(t().booksByYear)}</h3>
@@ -1043,6 +1184,10 @@
         <article class="chart-card">
           <h3>${escapeHTML(t().recurringAuthors)}</h3>
           ${Object.keys(repeatingAuthors).length ? renderBarList(repeatingAuthors, 8) : `<p class="author">${escapeHTML(t().noRepeatingAuthors)}</p>`}
+        </article>
+        <article class="chart-card chart-card-wide">
+          <h3>${escapeHTML(t().longestBooks)}</h3>
+          ${renderPageRanking(12)}
         </article>
         <article class="chart-card chart-card-wide">
           <h3>${escapeHTML(t().publicationTimeline)}</h3>

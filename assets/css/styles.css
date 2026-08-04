@@ -294,6 +294,7 @@ h1 {
 }
 
 .current-art {
+  position: relative;
   display: grid;
   place-items: center;
   width: 66px;
@@ -309,11 +310,39 @@ h1 {
   box-shadow: inset 0 1px 0 rgb(255 255 255 / .26);
 }
 
+.current-art img {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: none;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.current-art.has-img {
+  aspect-ratio: 2 / 3;
+  height: 96px;
+  background: var(--card-strong);
+  border: 1px solid rgb(255 255 255 / .18);
+  box-shadow: 0 12px 26px rgb(0 0 0 / .28);
+}
+
+.current-art.has-img img {
+  display: block;
+}
+
 .current-art span {
+  position: relative;
+  z-index: 2;
   font-size: .56rem;
   font-weight: 900;
   letter-spacing: .18em;
   transform: rotate(-9deg);
+}
+
+.current-art.has-img span {
+  display: none;
 }
 
 .current-main {
@@ -339,6 +368,22 @@ h1 {
   margin: .2rem 0 0;
   color: var(--muted);
   font-size: .84rem;
+}
+
+.current-main .current-meeting {
+  color: var(--muted-strong);
+  font-weight: 760;
+}
+
+.current-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-left: 14px;
+}
+
+.current-actions .button {
+  white-space: nowrap;
 }
 
 /* ---------- Controls ---------- */
@@ -787,6 +832,7 @@ main {
 
 .meta {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
@@ -802,6 +848,10 @@ main {
   border: 1px solid var(--line);
   border-radius: 999px;
   font-size: .7rem;
+}
+
+.tag-muted {
+  color: var(--muted);
 }
 
 .empty-state {
@@ -846,7 +896,7 @@ main {
 
 .stat-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 14px;
   margin-bottom: 17px;
 }
@@ -1003,6 +1053,43 @@ main {
   margin: 14px 0 0;
   color: var(--muted);
   font-size: .78rem;
+}
+
+.page-ranking {
+  display: grid;
+  gap: 10px;
+}
+
+.page-rank-item {
+  display: grid;
+  grid-template-columns: 2.2rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.page-rank-item:last-child {
+  border-bottom: 0;
+}
+
+.page-rank-number {
+  color: var(--accent);
+  font-size: .78rem;
+  font-weight: 900;
+}
+
+.page-rank-title {
+  overflow: hidden;
+  font-weight: 820;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.page-rank-meta {
+  color: var(--muted);
+  font-size: .78rem;
+  text-align: right;
 }
 
 /* ---------- Map ---------- */

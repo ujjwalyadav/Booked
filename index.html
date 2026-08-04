@@ -45,14 +45,19 @@
 
       <section class="current" id="current" aria-label="Currently reading">
         <div class="current-art" aria-hidden="true">
+          <img id="currentCoverImage" alt="">
           <span>BOOKED</span>
         </div>
         <div class="current-main">
           <div class="current-label" id="currentLabel">Currently reading</div>
           <h2 id="currentTitle"></h2>
           <p id="currentMeta"></p>
+          <p class="current-meeting" id="currentMeeting"></p>
         </div>
-        <button class="button button-primary current-btn" id="currentBtn" type="button">Jump to book ↓</button>
+        <div class="current-actions">
+          <button class="button button-primary current-btn" id="currentBtn" type="button">Jump to book ↓</button>
+          <a class="button button-secondary current-open-link" id="currentOpenLink" href="#" target="_blank" rel="noopener noreferrer" hidden>Read open access ↗</a>
+        </div>
       </section>
     </div>
   </header>

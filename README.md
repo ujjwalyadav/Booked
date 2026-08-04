@@ -45,6 +45,9 @@ Open `assets/js/data.js`.
 - Add, remove, or edit books inside `books`.
 - Put `current: true` on the current book.
 - Keep only one book marked as current.
+- Add `openAccess` only when you have verified a legal public/open-access copy.
+- Add `pages`, `pageSourceName`, and `pageSourceUrl` from a legitimate original-language/original-edition source when available.
+- Add `meetingDate: "YYYY-MM-DD"` to the current book when a club date is scheduled.
 - Change the WhatsApp invitation under `links.whatsapp`.
 - Change the Google Forms endpoint and field IDs under `googleForm` when needed.
 
@@ -59,12 +62,22 @@ Each book follows this structure:
   country: "Country",
   published: 1999,
   current: true,
+  meetingDate: "2026-08-30",
+  pages: 240,
+  pageSourceName: "Library or publisher source, original-language edition",
+  pageSourceUrl: "https://example.com/catalog-record",
+  openAccess: {
+    url: "https://www.gutenberg.org/ebooks/example",
+    label: "Read open access ↗",
+    verifiedOn: "2026-08-04"
+  },
   tags: ["Tag one", "Tag two"],
   note: "Short description."
 }
 ```
 
 Use English month names in the data file. The interface translates them automatically.
+For open-access links, prefer sources such as Project Gutenberg, Standard Ebooks, Wikisource, Internet Archive public-domain texts, university/library repositories, or an official author/publisher page. Do not link pirated PDFs, preview-only pages, borrow-only pages, or sources with regional copyright warnings.
 
 ## Edit translations
 
