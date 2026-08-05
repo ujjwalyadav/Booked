@@ -335,6 +335,7 @@ window.BOOKED_DATA = Object.freeze({
       country: "United States",
       published: null,
       pages: null,
+      pageStatus: "varies",
       tags: ["Sci-fi", "Fantasy", "Speculative", "Author focus"],
       note: "Author month: any novel by Ursula K. Le Guin is allowed. Each reader may choose their own book."
     },

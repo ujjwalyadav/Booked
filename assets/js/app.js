@@ -201,6 +201,11 @@
     return Number.isFinite(pages) ? t().pageCount(pages) : t().pageCountUnknown;
   }
 
+  function getPageLabel(book) {
+    if (book?.pageStatus === "varies") return t().pageCountVaries;
+    return formatPages(getBookPages(book));
+  }
+
   function getPageSourceTitle(book) {
     return book?.pageSourceName
       ? t().pageSourceTitle(book.pageSourceName)
@@ -408,7 +413,7 @@
     const pages = getBookPages(book);
     const pageTag = pages
       ? `<span class="tag" title="${escapeHTML(getPageSourceTitle(book))}">${escapeHTML(formatPages(pages))}</span>`
-      : `<span class="tag tag-muted" title="${escapeHTML(getPageSourceTitle(book))}">${escapeHTML(t().pageCountUnknown)}</span>`;
+      : `<span class="tag tag-muted" title="${escapeHTML(getPageSourceTitle(book))}">${escapeHTML(getPageLabel(book))}</span>`;
 
     card.innerHTML = `
       <div class="cover skeleton" style="--h:${hue}">
@@ -748,7 +753,6 @@
     $("#feedbackSubtitle").textContent = t().feedbackSubtitle;
     $("#feedbackCategoryLabel").textContent = t().feedbackCategoryLabel;
     $("#feedbackMessageLabel").textContent = t().feedbackMessageLabel;
-    $("#feedbackMessage").placeholder = t().feedbackMessagePlaceholder;
     $("#feedbackNameLabel").textContent = t().feedbackNameLabel;
     $("#feedbackName").placeholder = t().feedbackNamePlaceholder;
     $("#feedbackSubmitButton").textContent = t().feedbackSubmit;
@@ -759,6 +763,7 @@
       <option value="website">${escapeHTML(t().feedbackCategoryWebsite)}</option>
       <option value="meeting">${escapeHTML(t().feedbackCategoryMeeting)}</option>
     `;
+    updateFeedbackMessagePrompt();
 
     $("#toTop").textContent = t().backToTop;
     $("#toTop").title = t().backToTopTitle;
@@ -955,10 +960,17 @@
 
   /* ---------------- Feedback form ---------------- */
 
+  function updateFeedbackMessagePrompt() {
+    const category = $("#feedbackCategory")?.value || "general";
+    const prompts = t().feedbackMessagePlaceholders || {};
+    $("#feedbackMessage").placeholder = prompts[category] || t().feedbackMessagePlaceholder;
+  }
+
   function initializeFeedbackForm() {
     const form = $("#feedbackForm");
     const status = $("#feedbackStatus");
     const submit = $("#feedbackSubmitButton");
+    $("#feedbackCategory").addEventListener("change", updateFeedbackMessagePrompt);
 
     form.addEventListener("submit", async event => {
       event.preventDefault();
@@ -980,7 +992,12 @@
       }
 
       const payload = new FormData();
-      payload.append(configuration.fields.message, `Type: ${categoryLabel}\n\n${message}`);
+      payload.append(configuration.fields.message, [
+        `Type: ${categoryLabel}`,
+        name ? `Name/contact: ${name}` : null,
+        "",
+        message
+      ].filter(line => line !== null).join("\n"));
       if (configuration.fields.name) payload.append(configuration.fields.name, name);
 
       submit.disabled = true;
@@ -1077,7 +1094,7 @@
     `;
   }
 
-  function renderPageRanking(maxItems = 10) {
+  function renderPageRanking(maxItems = Infinity) {
     const books = BOOKS
       .filter(book => getBookPages(book) && !book.current)
       .slice()
@@ -1086,15 +1103,40 @@
 
     if (!books.length) return `<p class="author">${escapeHTML(t().pageCountUnknown)}</p>`;
 
+    const maximum = getBookPages(books[0]) || 1;
+    const featured = books.slice(0, 6);
+    const compact = books.slice(6);
+
     return `
       <div class="page-ranking">
-        ${books.map((book, index) => `
-          <div class="page-rank-item">
-            <span class="page-rank-number">#${index + 1}</span>
-            <span class="page-rank-title" title="${escapeHTML(book.title)}">${escapeHTML(book.title)}</span>
-            <span class="page-rank-meta" title="${escapeHTML(getPageSourceTitle(book))}">${escapeHTML(formatPages(getBookPages(book)))}</span>
+        <div class="page-rank-featured">
+          ${featured.map((book, index) => {
+            const pages = getBookPages(book);
+            const percentage = Math.max(10, Math.round((pages / maximum) * 100));
+            return `
+              <div class="page-rank-bar" title="${escapeHTML(`${book.title} · ${getPageSourceTitle(book)}`)}">
+                <div class="page-rank-head">
+                  <span class="page-rank-title">#${index + 1} ${escapeHTML(book.title)}</span>
+                  <span class="page-rank-meta">${escapeHTML(formatPages(pages))}</span>
+                </div>
+                <span class="page-rank-track" aria-hidden="true">
+                  <span class="page-rank-fill" style="--pct:${percentage}%"></span>
+                </span>
+              </div>
+            `;
+          }).join("")}
+        </div>
+        ${compact.length ? `
+          <div class="page-rank-shelf" aria-label="${escapeHTML(t().remainingPageCounts)}">
+            ${compact.map((book, index) => `
+              <span class="page-rank-chip" title="${escapeHTML(`#${index + featured.length + 1} · ${book.title} · ${formatPages(getBookPages(book))} · ${getPageSourceTitle(book)}`)}">
+                <span>#${index + featured.length + 1}</span>
+                <strong>${escapeHTML(book.title)}</strong>
+                <em>${escapeHTML(formatPages(getBookPages(book)))}</em>
+              </span>
+            `).join("")}
           </div>
-        `).join("")}
+        ` : ""}
       </div>
     `;
   }
@@ -1187,7 +1229,7 @@
         </article>
         <article class="chart-card chart-card-wide">
           <h3>${escapeHTML(t().longestBooks)}</h3>
-          ${renderPageRanking(12)}
+          ${renderPageRanking()}
         </article>
         <article class="chart-card chart-card-wide">
           <h3>${escapeHTML(t().publicationTimeline)}</h3>
