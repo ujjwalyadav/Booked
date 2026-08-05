@@ -738,6 +738,8 @@
     $("#themeLabel").textContent = t().themeLabel;
     $("#themeBtn").title = t().themeTitle;
     $("#langSwitch").title = t().langSwitchTitle;
+    $("#contactText").textContent = t().contact;
+    $("#contactBtn").title = t().contactTitle;
     $("#joinText").textContent = t().joinWhatsapp;
     $("#joinBtn").title = t().joinWhatsappTitle;
 
