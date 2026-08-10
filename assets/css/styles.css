@@ -391,29 +391,52 @@ h1 {
 .toolbox {
   position: relative;
   z-index: 40;
-  margin-top: -22px;
+  margin-top: -18px;
 }
 
 .toolbox-inner {
-  padding: 12px;
-  background: color-mix(in srgb, var(--card) 80%, transparent);
-  border: 1px solid var(--line-strong);
-  border-radius: 27px;
-  box-shadow: var(--shadow);
-  backdrop-filter: blur(22px) saturate(1.2);
+  display: grid;
+  gap: 12px;
 }
 
 .view-tabs,
-.controls {
+.site-actions,
+.filter-bar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: center;
   gap: 8px;
 }
 
+.toolbox-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px;
+  background: color-mix(in srgb, var(--card) 82%, transparent);
+  border: 1px solid var(--line-strong);
+  border-radius: 22px;
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(20px) saturate(1.16);
+}
+
 .view-tabs {
-  margin-bottom: 9px;
+  justify-content: flex-start;
+}
+
+.site-actions {
+  justify-content: flex-end;
+}
+
+.filter-bar {
+  justify-content: center;
+  padding: 11px 12px;
+  background: color-mix(in srgb, var(--bg-elevated) 68%, transparent);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(16px);
 }
 
 .button,
@@ -599,12 +622,6 @@ h1 {
   text-decoration: none;
 }
 
-.compact-filters {
-  display: flex;
-  justify-content: center;
-  margin-top: 9px;
-}
-
 .filter-menu {
   position: relative;
 }
@@ -657,7 +674,8 @@ h1 {
 }
 
 .result-count {
-  margin: .62rem 0 .1rem;
+  flex-basis: 100%;
+  margin: .12rem 0 0;
   color: var(--muted);
   text-align: center;
   font-size: .82rem;
