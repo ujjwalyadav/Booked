@@ -252,6 +252,34 @@
     ogDescription?.setAttribute("content", t().pageDescription);
   }
 
+  function initializeAnalytics() {
+    const config = source.analytics || {};
+    if (!config.enabled || !config.scriptUrl) return;
+
+    try {
+      const scriptUrl = new URL(config.scriptUrl, window.location.href);
+      if (!["http:", "https:"].includes(scriptUrl.protocol)) return;
+
+      const provider = String(config.provider || "").toLowerCase();
+      const script = document.createElement("script");
+      script.async = true;
+      script.defer = true;
+      script.src = scriptUrl.href;
+
+      if (provider === "umami" && config.websiteId) {
+        script.dataset.websiteId = config.websiteId;
+      }
+
+      if (provider === "plausible" && config.domain) {
+        script.dataset.domain = config.domain;
+      }
+
+      document.head.appendChild(script);
+    } catch (error) {
+      console.warn("Analytics script was not loaded.", error);
+    }
+  }
+
   /* ---------------- Theme ---------------- */
 
   function setTheme(mode) {
@@ -1525,6 +1553,7 @@
   /* ---------------- Boot ---------------- */
 
   function boot() {
+    initializeAnalytics();
     initializeTheme();
     initializeViewFromHash();
     initializeTopButton();

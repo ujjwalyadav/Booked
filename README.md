@@ -92,6 +92,20 @@ The site remains static, but it connects to these public services from the visit
 - jsDelivr for D3, TopoJSON, and Natural Earth map data
 - WhatsApp for the club invitation
 
+Optional analytics can be enabled in `assets/js/data.js` under `analytics`. It is disabled by default. For private ownership of visit data, point it at a self-hosted analytics service such as Umami:
+
+```js
+analytics: {
+  enabled: true,
+  provider: "umami",
+  scriptUrl: "https://analytics.example.com/script.js",
+  websiteId: "your-website-id",
+  domain: ""
+}
+```
+
+For a hosted service such as Plausible, use `provider: "plausible"`, set its script URL, and fill `domain` instead of `websiteId`.
+
 Do not place private API keys, passwords, or secrets in these files. GitHub Pages exposes all frontend code to visitors.
 
 ## Local testing

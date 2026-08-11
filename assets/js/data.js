@@ -433,5 +433,13 @@ window.BOOKED_DATA = Object.freeze({
       message: "entry.2103806539",
       name: "entry.2116861404"
     }
+  },
+
+  analytics: {
+    enabled: true,
+    provider: "umami",
+    scriptUrl: "https://cloud.umami.is/script.js",
+    websiteId: "a593ec6c-3468-4d35-a447-9b1bfc73abd8",
+    domain: ""
   }
 });
