@@ -746,7 +746,6 @@
     updateDocumentMetadata();
 
     $("#skipLink").textContent = t().skipLink;
-    $("#brandTagline").textContent = t().brandTagline;
     $("#siteBadge").textContent = t().badge;
     $("#heroTitle").textContent = t().heroTitle;
     $("#heroSub").textContent = t().heroSub;
@@ -798,16 +797,7 @@
 
     $("#toTop").textContent = t().backToTop;
     $("#toTop").title = t().backToTopTitle;
-    $("#aboutBadge").textContent = t().aboutBadge;
-    $("#aboutTitle").textContent = t().aboutTitle;
-    $("#aboutText").textContent = t().aboutText;
-    $("#aboutCadenceLabel").textContent = t().aboutCadenceLabel;
-    $("#aboutCadenceText").textContent = t().aboutCadenceText;
-    $("#aboutArchiveLabel").textContent = t().aboutArchiveLabel;
-    $("#aboutArchiveText").textContent = t().aboutArchiveText;
     $("#footerText").innerHTML = t().footerHtml;
-    $("#footerTopLink").textContent = t().footerTop;
-    $("#footerContactLink").textContent = t().contact;
 
     setPressed($$(".lang-chip"), button => button.dataset.lang === state.lang);
   }
@@ -849,10 +839,7 @@
       window.history.replaceState(null, "", url);
     }
 
-    if (focus) {
-      $("#main")?.focus({ preventScroll: true });
-      $("#main")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
+    if (focus) $("#main")?.focus({ preventScroll: true });
   }
 
   function initializeViewFromHash() {

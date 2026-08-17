@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#15101f"/>
+      <stop offset=".55" stop-color="#0b0c10"/>
+      <stop offset="1" stop-color="#081b23"/>
+    </linearGradient>
+    <radialGradient id="a" cx="0" cy="0" r="1" gradientTransform="translate(255 100) rotate(35) scale(520 390)">
+      <stop stop-color="#965cff" stop-opacity=".7"/>
+      <stop offset="1" stop-color="#965cff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="b" cx="0" cy="0" r="1" gradientTransform="translate(1050 120) rotate(140) scale(500 360)">
+      <stop stop-color="#38c8ff" stop-opacity=".55"/>
+      <stop offset="1" stop-color="#38c8ff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#a)"/>
+  <rect width="1200" height="630" fill="url(#b)"/>
+  <g transform="translate(115 138)">
+    <rect width="180" height="250" rx="28" fill="#11131a" stroke="#ffffff" stroke-opacity=".18"/>
+    <path d="M30 38h55c24 0 43 19 43 43v126c-10-16-27-25-50-25H30V38Z" fill="#9b6cff"/>
+    <path d="M150 38H95c-24 0-43 19-43 43v126c10-16 27-25 50-25h48V38Z" fill="#f2f2f7" fill-opacity=".94"/>
+  </g>
+  <text x="355" y="245" fill="#a877ff" font-family="Arial, sans-serif" font-size="34" font-weight="700" letter-spacing="8">BOOKED · BOOK CLUB</text>
+  <text x="350" y="345" fill="#f5f4fa" font-family="Arial, sans-serif" font-size="76" font-weight="800">Our Reading Journey</text>
+  <text x="355" y="418" fill="#b9b8c8" font-family="Arial, sans-serif" font-size="32">Every book we’ve read since 2023.</text>
+</svg>

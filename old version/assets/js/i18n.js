@@ -18,10 +18,9 @@ window.BOOKED_I18N = Object.freeze({
       pageTitle: "Booked — Our Reading Journey",
       pageDescription: "Booked: our book club's reads since 2023.",
       skipLink: "Skip to books",
-      brandTagline: "reading club",
-      badge: "Reading together since 2023",
-      heroTitle: "A living archive of what we read together.",
-      heroSub: "Browse the archive, explore the stats and map, or join the WhatsApp group where we suggest poll options, vote for each month’s book, and meet later to discuss it.",
+      badge: "Booked · book club",
+      heroTitle: "Our Reading Journey",
+      heroSub: "Every book we’ve read since we began. Filter, search, explore stats, and browse the map.",
       metaSummary: (total, first, last) => `${total} books · ${first}–${last}`,
       currentlyReading: "Currently reading",
       jumpToBook: "Jump to book ↓",
@@ -61,7 +60,7 @@ window.BOOKED_I18N = Object.freeze({
       contact: "Contact",
       contactTitle: "Jump to the contact form",
       joinWhatsapp: "Join WhatsApp",
-      joinWhatsappTitle: "Join our WhatsApp group for polls, book choices, and monthly discussion details",
+      joinWhatsappTitle: "Join our WhatsApp group",
       resultAll: total => `${total} books · all years`,
       resultFiltered: (visible, total) => `${visible} of ${total} books shown`,
       resultNone: "No books found. Try a different search, year, or tag.",
@@ -133,26 +132,16 @@ window.BOOKED_I18N = Object.freeze({
       mapSource: "Map data from Natural Earth",
       backToTop: "↑ Top",
       backToTopTitle: "Back to top",
-      footerHtml: "Built with ♥ for <strong>Booked</strong> · 2023–present"
-      ,
-      aboutBadge: "About Booked",
-      aboutTitle: "A small club with a wide reading map.",
-      aboutText: "Booked keeps track of the novels, essays, plays, and strange little masterpieces our group reads together. We collect suggestions during the monthly meet, vote in WhatsApp, read the chosen book over the next month, and meet again to discuss it.",
-      aboutCadenceLabel: "Cadence",
-      aboutCadenceText: "Suggest, vote, read, discuss",
-      aboutArchiveLabel: "Archive",
-      aboutArchiveText: "Covers, countries, pages, stats, and club memory",
-      footerTop: "Top"
+      footerHtml: "Built with ♥ for <strong>Booked</strong>."
     },
 
     de: {
       pageTitle: "Booked — Unsere Lese-Reise",
       pageDescription: "Booked: alle Bücher unseres Buchclubs seit 2023.",
       skipLink: "Zu den Büchern springen",
-      brandTagline: "Buchclub",
-      badge: "Gemeinsam lesen seit 2023",
-      heroTitle: "Ein lebendiges Archiv unserer gemeinsamen Lektüre.",
-      heroSub: "Stöbere im Archiv, erkunde Statistik und Karte oder tritt der WhatsApp-Gruppe bei, in der wir Vorschläge sammeln, monatlich abstimmen und später über das gewählte Buch sprechen.",
+      badge: "Booked · Buchclub",
+      heroTitle: "Unsere Lese-Reise",
+      heroSub: "Alle Bücher, die wir seit dem Start gelesen haben. Filtern, suchen, Statistiken ansehen und die Karte entdecken.",
       metaSummary: (total, first, last) => `${total} Bücher · ${first}–${last}`,
       currentlyReading: "Gerade lesen",
       jumpToBook: "Zum Buch springen ↓",
@@ -192,7 +181,7 @@ window.BOOKED_I18N = Object.freeze({
       contact: "Kontakt",
       contactTitle: "Zum Kontaktformular springen",
       joinWhatsapp: "WhatsApp-Gruppe",
-      joinWhatsappTitle: "Tritt unserer WhatsApp-Gruppe für Abstimmungen, Buchauswahl und Treffen-Infos bei",
+      joinWhatsappTitle: "Tritt unserer WhatsApp-Gruppe bei",
       resultAll: total => `${total} Bücher · alle Jahre`,
       resultFiltered: (visible, total) => `${visible} von ${total} Büchern`,
       resultNone: "Keine Bücher gefunden. Ändere Suche, Jahr oder Tag.",
@@ -264,16 +253,7 @@ window.BOOKED_I18N = Object.freeze({
       mapSource: "Kartendaten von Natural Earth",
       backToTop: "↑ Hoch",
       backToTopTitle: "Nach oben",
-      footerHtml: "Mit ♥ für <strong>Booked</strong> gebaut · seit 2023"
-      ,
-      aboutBadge: "Über Booked",
-      aboutTitle: "Ein kleiner Club mit einer weiten Lesekarte.",
-      aboutText: "Booked sammelt die Romane, Essays, Theaterstücke und eigenartigen kleinen Meisterwerke, die unsere Gruppe gemeinsam liest. Beim monatlichen Treffen sammeln wir Vorschläge, stimmen in WhatsApp ab, lesen das gewählte Buch im nächsten Monat und treffen uns dann zur Diskussion.",
-      aboutCadenceLabel: "Rhythmus",
-      aboutCadenceText: "Vorschlagen, abstimmen, lesen, diskutieren",
-      aboutArchiveLabel: "Archiv",
-      aboutArchiveText: "Cover, Länder, Seiten, Statistiken und Club-Erinnerung",
-      footerTop: "Hoch"
+      footerHtml: "Mit ♥ für <strong>Booked</strong> gebaut."
     }
   }
 });
