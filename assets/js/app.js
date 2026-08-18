@@ -55,6 +55,7 @@
     sort: "reading",
     view: "library",
     mobileLibraryMode: getStored("booked_mobile_library_mode", "list"),
+    statsSelection: { type: "all", value: "" },
     currentBookIndex: BOOKS.findIndex(book => book.current),
     selectedMapCountry: null,
     lastFocusedElement: null
@@ -1083,7 +1084,11 @@
 
   /* ---------------- Statistics ---------------- */
 
-  function renderBarList(counts, maxItems = 8) {
+  function getBookIndex(book) {
+    return BOOKS.indexOf(book);
+  }
+
+  function renderBarList(counts, maxItems = 8, filterType = "") {
     const entries = sortedEntriesFromCount(counts).slice(0, maxItems);
     const maximum = entries[0]?.[1] || 1;
     if (!entries.length) return "";
@@ -1092,14 +1097,18 @@
       <div class="bar-list">
         ${entries.map(([name, count]) => {
           const percentage = Math.max(8, Math.round((count / maximum) * 100));
+          const openTag = filterType
+            ? `button type="button" data-stats-filter="${escapeHTML(filterType)}" data-stats-value="${escapeHTML(name)}"`
+            : "div";
+          const closeTag = filterType ? "button" : "div";
           return `
-            <div class="bar-row">
+            <${openTag} class="bar-row stats-pick">
               <span class="bar-name" title="${escapeHTML(name)}">${escapeHTML(name)}</span>
               <span class="bar-track" aria-hidden="true">
                 <span class="bar-fill" style="--pct:${percentage}%"></span>
               </span>
               <span class="bar-count">${count}</span>
-            </div>
+            </${closeTag}>
           `;
         }).join("")}
       </div>
@@ -1139,13 +1148,13 @@
         ${books.map(book => {
           const position = Math.round(((book.published - minimum) / span) * 100);
           return `
-            <div class="timeline-item">
+            <button class="timeline-item stats-pick" type="button" data-stats-book-index="${getBookIndex(book)}">
               <span class="timeline-year">${book.published}</span>
               <div>
                 <div class="timeline-track"><span class="timeline-dot" style="--x:${position}%"></span></div>
                 <div class="timeline-title">${escapeHTML(book.title)} · ${escapeHTML(book.author)}</div>
               </div>
-            </div>
+            </button>
           `;
         }).join("")}
       </div>
@@ -1166,7 +1175,7 @@
     const compact = books.slice(6);
 
     return `
-      <div class="page-ranking">
+      <button class="page-ranking stats-pick" type="button" data-stats-filter="pages">
         <div class="page-rank-featured">
           ${featured.map((book, index) => {
             const pages = getBookPages(book);
@@ -1195,8 +1204,178 @@
             `).join("")}
           </div>
         ` : ""}
+      </button>
+    `;
+  }
+
+  function getBooksForStatsSelection(selection = state.statsSelection) {
+    const value = selection?.value || "";
+
+    switch (selection?.type) {
+      case "year":
+        return BOOKS.filter(book => String(book.year) === value);
+      case "tag":
+        return BOOKS.filter(book => (book.tags || []).includes(value));
+      case "country":
+        return BOOKS.filter(book => book.country === value);
+      case "author":
+        return BOOKS.filter(book => book.author === value);
+      case "period":
+        return BOOKS.filter(book => getPublicationPeriod(book.published) === value);
+      case "pages":
+        return BOOKS
+          .filter(book => getBookPages(book) && !book.current)
+          .slice()
+          .sort((a, b) => getBookPages(b) - getBookPages(a) || a.title.localeCompare(b.title));
+      case "current":
+        return BOOKS.filter(book => book.current);
+      case "years":
+      case "authors":
+      case "countries":
+        return BOOKS;
+      case "book":
+        return BOOKS[Number(value)] ? [BOOKS[Number(value)]] : [];
+      case "all":
+      default:
+        return BOOKS;
+    }
+  }
+
+  function getStatsSelectionTitle(selection = state.statsSelection) {
+    const value = selection?.value || "";
+    switch (selection?.type) {
+      case "year":
+        return t().statsDetailYear(value);
+      case "tag":
+        return t().statsDetailTag(value);
+      case "country":
+        return t().statsDetailCountry(value);
+      case "author":
+        return t().statsDetailAuthor(value);
+      case "period":
+        return t().statsDetailPeriod(value);
+      case "pages":
+        return t().statsDetailPages;
+      case "current":
+        return t().statsDetailCurrent;
+      case "years":
+        return t().statsDetailYears;
+      case "authors":
+        return t().statsDetailAuthors;
+      case "countries":
+        return t().statsDetailCountries;
+      case "book":
+        return BOOKS[Number(value)]?.title || t().statsInspectorTitle;
+      case "all":
+      default:
+        return t().statsDetailAll;
+    }
+  }
+
+  function renderStatsInspector(selection = state.statsSelection) {
+    const books = getBooksForStatsSelection(selection);
+    const booksWithPages = books.filter(book => getBookPages(book));
+    const totalPages = booksWithPages.reduce((sum, book) => sum + getBookPages(book), 0);
+    const averagePages = booksWithPages.length ? Math.round(totalPages / booksWithPages.length) : null;
+    const oldest = books.filter(book => Number.isFinite(book.published)).sort((a, b) => a.published - b.published)[0];
+    const newest = books.filter(book => Number.isFinite(book.published)).sort((a, b) => b.published - a.published)[0];
+    const previewBooks = books.slice(0, 8);
+
+    return `
+      <div class="stats-inspector-copy">
+        <span class="eyebrow">${escapeHTML(t().statsInspectorTitle)}</span>
+        <h3>${escapeHTML(getStatsSelectionTitle(selection))}</h3>
+        <p>${escapeHTML(t().statsInspectorHint)}</p>
+        <div class="stats-facts">
+          <span>${escapeHTML(t().statsBookCount(books.length))}</span>
+          <span>${escapeHTML(t().statsPagesKnown(booksWithPages.length, totalPages))}</span>
+          ${averagePages ? `<span>${escapeHTML(t().statsAveragePages(averagePages))}</span>` : ""}
+          ${oldest ? `<span>${escapeHTML(t().statsOldest(oldest.title, oldest.published))}</span>` : ""}
+          ${newest && newest !== oldest ? `<span>${escapeHTML(t().statsNewest(newest.title, newest.published))}</span>` : ""}
+        </div>
+      </div>
+      <div class="stats-mini-books" aria-label="${escapeHTML(t().statsRelatedBooks)}">
+        ${previewBooks.map(book => {
+          const index = getBookIndex(book);
+          const hue = hashHue(`${book.title}${book.author}`);
+          return `
+            <button class="stats-mini-book stats-pick" type="button" data-stats-book-index="${index}">
+              <span class="stats-mini-cover" data-stats-cover-index="${index}" style="--h:${hue}">
+                ${book.coverUrl ? `<img src="${escapeHTML(book.coverUrl)}" alt="">` : ""}
+              </span>
+              <span>
+                <strong>${escapeHTML(book.title)}</strong>
+                <em>${escapeHTML([
+                  book.author,
+                  `${getMonthName(book.month)} ${book.year}`,
+                  getBookPages(book) ? formatPages(getBookPages(book)) : null
+                ].filter(Boolean).join(" | "))}</em>
+              </span>
+            </button>
+          `;
+        }).join("")}
       </div>
     `;
+  }
+
+  async function hydrateStatsInspectorCovers() {
+    const inspector = $("#statsInspector");
+    if (!inspector) return;
+
+    await Promise.all($$("[data-stats-cover-index]", inspector).map(async cover => {
+      const index = Number(cover.dataset.statsCoverIndex);
+      const book = BOOKS[index];
+      if (!book || cover.querySelector("img")) return;
+
+      try {
+        const result = await fetchCoverCached(book);
+        if (!result.coverUrl || cover.dataset.statsCoverIndex !== String(index)) return;
+        book.coverUrl = result.coverUrl;
+        book.link = result.link || book.link;
+        cover.innerHTML = `<img src="${escapeHTML(result.coverUrl)}" alt="">`;
+      } catch {
+        // The generated color cover remains in place if a thumbnail cannot load.
+      }
+    }));
+  }
+
+  function selectStatsDetail(type, value = "") {
+    state.statsSelection = { type, value };
+    const inspector = $("#statsInspector");
+    if (!inspector) return;
+    inspector.innerHTML = renderStatsInspector(state.statsSelection);
+    hydrateStatsInspectorCovers();
+  }
+
+  function bindStatsInteractions(view) {
+    if (view.dataset.statsBound === "true") return;
+    view.dataset.statsBound = "true";
+
+    const preview = target => {
+      const item = target.closest("[data-stats-filter], [data-stats-book-index]");
+      if (!item || !view.contains(item)) return;
+
+      if (item.dataset.statsBookIndex) {
+        selectStatsDetail("book", item.dataset.statsBookIndex);
+        return;
+      }
+
+      selectStatsDetail(item.dataset.statsFilter, item.dataset.statsValue || "");
+    };
+
+    view.addEventListener("pointerenter", event => preview(event.target), true);
+    view.addEventListener("focusin", event => preview(event.target));
+    view.addEventListener("click", event => {
+      const item = event.target.closest("[data-stats-filter], [data-stats-book-index]");
+      if (!item || !view.contains(item)) return;
+
+      if (item.dataset.statsBookIndex) {
+        openOverlay(Number(item.dataset.statsBookIndex), item);
+        return;
+      }
+
+      selectStatsDetail(item.dataset.statsFilter, item.dataset.statsValue || "");
+    });
   }
 
   function renderStats() {
@@ -1231,30 +1410,34 @@
       </div>
 
       <div class="stat-grid">
-        <article class="stat-card">
+        <button class="stat-card stats-pick" type="button" data-stats-filter="years">
           <p class="stat-value">${BOOKS.length}</p>
           <p class="stat-label">${escapeHTML(t().totalBooks)}</p>
-        </article>
-        <article class="stat-card">
+        </button>
+        <button class="stat-card stats-pick" type="button" data-stats-filter="pages">
           <p class="stat-value">${totalPages.toLocaleString(state.lang === "de" ? "de-DE" : "en-GB")}</p>
           <p class="stat-label">${escapeHTML(t().totalPages)} · ${escapeHTML(t().knownPageCounts(readBooksWithPages.length))}</p>
-        </article>
-        <article class="stat-card">
+        </button>
+        <button class="stat-card stats-pick" type="button" data-stats-filter="authors">
           <p class="stat-value">${years[0]}–${years.at(-1)}</p>
           <p class="stat-label">${escapeHTML(t().yearsCovered)}</p>
-        </article>
-        <article class="stat-card">
+        </button>
+        <button class="stat-card stats-pick" type="button" data-stats-filter="countries">
           <p class="stat-value">${authors.size}</p>
           <p class="stat-label">${escapeHTML(t().uniqueAuthors)}</p>
-        </article>
-        <article class="stat-card">
+        </button>
+        <button class="stat-card stats-pick" type="button" data-stats-filter="all">
           <p class="stat-value">${countries.size}</p>
           <p class="stat-label">${escapeHTML(t().countriesRead)}</p>
-        </article>
+        </button>
       </div>
 
+      <aside class="stats-inspector" id="statsInspector" aria-live="polite">
+        ${renderStatsInspector(state.statsSelection)}
+      </aside>
+
       <div class="charts">
-        <article class="chart-card">
+        <article class="chart-card stats-pick" data-stats-filter="current" tabindex="0">
           <h3>${escapeHTML(t().currentBook)}</h3>
           <p class="title">${escapeHTML(current?.title || "—")}</p>
           <p class="author">${current ? escapeHTML([
@@ -1266,24 +1449,24 @@
         </article>
         <article class="chart-card">
           <h3>${escapeHTML(t().booksByYear)}</h3>
-          ${renderBarList(yearCounts, 10)}
+          ${renderBarList(yearCounts, 10, "year")}
         </article>
         <article class="chart-card">
           <h3>${escapeHTML(t().topTags)}</h3>
-          ${renderBarList(tagCounts, 10)}
+          ${renderBarList(tagCounts, 10, "tag")}
         </article>
         <article class="chart-card">
           <h3>${escapeHTML(t().booksByCountry)}</h3>
-          ${renderBarList(countryCounts, 10)}
+          ${renderBarList(countryCounts, 10, "country")}
         </article>
         <article class="chart-card">
           <h3>${escapeHTML(t().booksByPeriod)}</h3>
-          ${renderBarList(periodCounts, 10)}
+          ${renderBarList(periodCounts, 10, "period")}
           ${topPeriod ? `<p class="period-summary">${escapeHTML(t().mostReadPeriod(topPeriod[0], topPeriod[1]))}</p>` : ""}
         </article>
         <article class="chart-card">
           <h3>${escapeHTML(t().recurringAuthors)}</h3>
-          ${Object.keys(repeatingAuthors).length ? renderBarList(repeatingAuthors, 8) : `<p class="author">${escapeHTML(t().noRepeatingAuthors)}</p>`}
+          ${Object.keys(repeatingAuthors).length ? renderBarList(repeatingAuthors, 8, "author") : `<p class="author">${escapeHTML(t().noRepeatingAuthors)}</p>`}
         </article>
         <article class="chart-card chart-card-wide">
           <h3>${escapeHTML(t().longestBooks)}</h3>
@@ -1295,6 +1478,9 @@
         </article>
       </div>
     `;
+
+    bindStatsInteractions(view);
+    hydrateStatsInspectorCovers();
   }
 
   /* ---------------- Map ---------------- */
