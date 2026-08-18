@@ -1161,7 +1161,7 @@
     `;
   }
 
-  function renderPageRanking(maxItems = Infinity) {
+  function renderPageRankingLegacy(maxItems = Infinity) {
     const books = BOOKS
       .filter(book => getBookPages(book) && !book.current)
       .slice()
@@ -1205,6 +1205,41 @@
           </div>
         ` : ""}
       </button>
+    `;
+  }
+
+  function getBooksByPages() {
+    return BOOKS
+      .filter(book => getBookPages(book) && !book.current)
+      .slice()
+      .sort((a, b) => getBookPages(b) - getBookPages(a) || a.title.localeCompare(b.title));
+  }
+
+  function renderPageRanking() {
+    const books = getBooksByPages();
+    if (!books.length) return `<p class="author">${escapeHTML(t().pageCountUnknown)}</p>`;
+
+    const selected = books[0];
+    const selectedIndex = getBookIndex(selected);
+    const highestPages = getBookPages(books[0]);
+    const lowestPages = getBookPages(books.at(-1));
+
+    return `
+      <div class="page-ranking page-slider-explorer" data-page-slider-root>
+        <div class="page-slider-main">
+          <div>
+            <p class="page-slider-kicker" id="pageSliderPosition">#1 ${escapeHTML(t().ofCount(books.length))}</p>
+            <h4 id="pageSliderTitle">${escapeHTML(selected.title)}</h4>
+            <p id="pageSliderMeta">${escapeHTML([selected.author, formatPages(getBookPages(selected)), getPageSourceTitle(selected)].join(" | "))}</p>
+          </div>
+          <button class="button button-secondary page-slider-open stats-pick" type="button" data-stats-book-index="${selectedIndex}" id="pageSliderOpen">${escapeHTML(t().openBookDetails)}</button>
+        </div>
+        <label class="page-slider-control" for="pageSliderRange">
+          <span>${escapeHTML(formatPages(highestPages))}</span>
+          <input id="pageSliderRange" type="range" min="0" max="${books.length - 1}" value="0" step="1" data-page-slider aria-label="${escapeHTML(t().pageSliderLabel)}">
+          <span>${escapeHTML(formatPages(lowestPages))}</span>
+        </label>
+      </div>
     `;
   }
 
@@ -1324,10 +1359,40 @@
     }
   }
 
+  function getPreviewBooksForStatsSelection(selection, books) {
+    switch (selection?.type) {
+      case "pages":
+        return getBooksByPages().slice(0, 8);
+      case "years": {
+        const years = [...new Set(BOOKS.map(book => book.year))].sort((a, b) => b - a);
+        return years
+          .map(year => BOOKS.find(book => book.year === year))
+          .filter(Boolean)
+          .slice(0, 8);
+      }
+      case "authors": {
+        const topAuthors = sortedEntriesFromCount(countBy(BOOKS, book => book.author)).map(([author]) => author);
+        return topAuthors
+          .flatMap(author => BOOKS.filter(book => book.author === author))
+          .slice(0, 8);
+      }
+      case "countries": {
+        const topCountries = sortedEntriesFromCount(countBy(BOOKS, book => book.country)).map(([country]) => country);
+        return topCountries
+          .flatMap(country => BOOKS.filter(book => book.country === country))
+          .slice(0, 8);
+      }
+      case "all":
+        return BOOKS.slice().sort((a, b) => bookDateValue(b) - bookDateValue(a)).slice(0, 8);
+      default:
+        return books.slice(0, 8);
+    }
+  }
+
   function renderStatsInspector(selection = state.statsSelection) {
     const books = getBooksForStatsSelection(selection);
     const facts = getStatsFacts(selection, books);
-    const previewBooks = books.slice(0, 8);
+    const previewBooks = getPreviewBooksForStatsSelection(selection, books);
 
     return `
       <div class="stats-inspector-copy">
@@ -1391,9 +1456,29 @@
     hydrateStatsInspectorCovers();
   }
 
+  function updatePageSlider(input) {
+    const root = input.closest("[data-page-slider-root]");
+    if (!root) return;
+
+    const books = getBooksByPages();
+    const sliderIndex = Math.min(Math.max(Number(input.value) || 0, 0), books.length - 1);
+    const book = books[sliderIndex];
+    if (!book) return;
+
+    const index = getBookIndex(book);
+    $("#pageSliderPosition", root).textContent = `#${sliderIndex + 1} ${t().ofCount(books.length)}`;
+    $("#pageSliderTitle", root).textContent = book.title;
+    $("#pageSliderMeta", root).textContent = [book.author, formatPages(getBookPages(book)), getPageSourceTitle(book)].join(" | ");
+    $("#pageSliderOpen", root).dataset.statsBookIndex = String(index);
+  }
+
   function bindStatsInteractions(view) {
     if (view.dataset.statsBound === "true") return;
     view.dataset.statsBound = "true";
+
+    view.addEventListener("input", event => {
+      if (event.target.matches("[data-page-slider]")) updatePageSlider(event.target);
+    });
 
     view.addEventListener("click", event => {
       const item = event.target.closest("[data-stats-filter], [data-stats-book-index]");

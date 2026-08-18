@@ -1366,6 +1366,70 @@ button.timeline-item:focus-visible {
   font: inherit;
 }
 
+.page-slider-explorer {
+  padding: 16px;
+  background:
+    linear-gradient(135deg, var(--accent-soft), transparent 46%),
+    var(--glass);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+}
+
+.page-slider-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+}
+
+.page-slider-kicker {
+  margin: 0 0 5px;
+  color: var(--accent);
+  font-size: .72rem;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.page-slider-main h4 {
+  margin: 0;
+  overflow: hidden;
+  font-size: clamp(1.35rem, 3.2vw, 2.2rem);
+  line-height: 1.08;
+  letter-spacing: -.035em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.page-slider-main p:last-child {
+  margin: 8px 0 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: .82rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.page-slider-open {
+  white-space: nowrap;
+}
+
+.page-slider-control {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  margin-top: 18px;
+  color: var(--muted);
+  font-size: .74rem;
+  font-weight: 800;
+}
+
+.page-slider-control input {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
 .page-rank-featured {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2458,9 +2522,18 @@ button.timeline-item:focus-visible {
 
   .stat-grid,
   .stats-mini-books,
+  .page-slider-main,
   .page-rank-featured,
   .page-rank-shelf,
   .country-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .page-slider-open {
+    width: 100%;
+  }
+
+  .page-slider-control {
     grid-template-columns: 1fr;
   }
 
