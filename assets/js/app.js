@@ -54,6 +54,7 @@
     activeTag: "all",
     sort: "reading",
     view: "library",
+    mobileLibraryMode: getStored("booked_mobile_library_mode", "list"),
     currentBookIndex: BOOKS.findIndex(book => book.current),
     selectedMapCountry: null,
     lastFocusedElement: null
@@ -292,6 +293,14 @@
     $("#sun").hidden = dark;
     $("#themeBtn").setAttribute("aria-pressed", dark ? "true" : "false");
     $('meta[name="theme-color"]')?.setAttribute("content", dark ? "#090a0f" : "#f7f5fc");
+  }
+
+  function setMobileLibraryMode(mode) {
+    const nextMode = mode === "covers" ? "covers" : "list";
+    state.mobileLibraryMode = nextMode;
+    document.body.dataset.mobileLibraryMode = nextMode;
+    setStored("booked_mobile_library_mode", nextMode);
+    setPressed($$("[data-mobile-library-mode]"), button => button.dataset.mobileLibraryMode === nextMode);
   }
 
   function initializeTheme() {
@@ -767,6 +776,9 @@
     $("#searchPill").title = t().searchTitle;
     $("#sortPill").title = t().sortTitle;
     $("#tagSummaryLabel").textContent = t().tagsLabel;
+    $("#mobileLibraryMode")?.setAttribute("aria-label", t().mobileLibraryMode);
+    $("#mobileModeList").textContent = t().mobileLibraryList;
+    $("#mobileModeCovers").textContent = t().mobileLibraryCovers;
     $("#themeLabel").textContent = t().themeLabel;
     $("#themeBtn").title = t().themeTitle;
     $("#langSwitch").title = t().langSwitchTitle;
@@ -1536,6 +1548,11 @@
       button.addEventListener("click", () => setView(button.dataset.view, { focus: true }));
     });
 
+    $("#brandHome")?.addEventListener("click", event => {
+      event.preventDefault();
+      setView("library", { focus: true });
+    });
+
     $("#search").addEventListener("input", debounce(applyFilters, 100));
     $("#searchClear").addEventListener("click", () => {
       $("#search").value = "";
@@ -1554,6 +1571,10 @@
 
     $$(".lang-chip").forEach(button => {
       button.addEventListener("click", () => setLanguage(button.dataset.lang));
+    });
+
+    $$("[data-mobile-library-mode]").forEach(button => {
+      button.addEventListener("click", () => setMobileLibraryMode(button.dataset.mobileLibraryMode));
     });
 
     window.addEventListener("hashchange", () => {
@@ -1578,6 +1599,7 @@
     initializeOverlay();
     initializeFeedbackForm();
     bindPrimaryControls();
+    setMobileLibraryMode(state.mobileLibraryMode);
 
     const savedLang = getStored("booked_lang", "en");
     const savedView = state.view;

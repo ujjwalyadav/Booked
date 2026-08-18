@@ -33,7 +33,7 @@
   <a class="skip-link" id="skipLink" href="#main">Skip to books</a>
 
   <header class="site-header shell">
-    <a class="brand" href="#top" aria-label="Booked home">
+    <a class="brand" id="brandHome" href="#libraryView" aria-label="Booked home">
       <span class="brand-mark" aria-hidden="true">B</span>
       <span class="brand-copy">
         <strong>Booked</strong>
@@ -148,6 +148,11 @@
           </summary>
           <div class="tag-filter-row" id="tagFilters" aria-label="Filter by tag"></div>
         </details>
+
+        <div class="pill mobile-library-mode library-only" id="mobileLibraryMode" role="group" aria-label="Mobile library layout">
+          <button class="mode-chip" id="mobileModeList" type="button" data-mobile-library-mode="list" data-active="true" aria-pressed="true">List</button>
+          <button class="mode-chip" id="mobileModeCovers" type="button" data-mobile-library-mode="covers" data-active="false" aria-pressed="false">Covers</button>
+        </div>
 
         <p class="result-count library-only" id="resultCount" aria-live="polite"></p>
       </div>

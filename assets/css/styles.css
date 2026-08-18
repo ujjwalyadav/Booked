@@ -528,6 +528,7 @@ h1 {
 .pill,
 .chip,
 .lang-chip,
+.mode-chip,
 .search-clear,
 .overlay-close,
 .country-card,
@@ -540,7 +541,8 @@ h1 {
 .button,
 .pill,
 .chip,
-.lang-chip {
+.lang-chip,
+.mode-chip {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -558,14 +560,16 @@ h1 {
 .button:hover,
 .pill:hover,
 .chip:hover,
-.lang-chip:hover {
+.lang-chip:hover,
+.mode-chip:hover {
   transform: translateY(-1px);
 }
 
 .button:active,
 .pill:active,
 .chip:active,
-.lang-chip:active {
+.lang-chip:active,
+.mode-chip:active {
   transform: translateY(0) scale(.98);
 }
 
@@ -603,7 +607,8 @@ h1 {
 .chip[data-active="true"],
 .view-chip[data-active="true"],
 .lang-chip[data-active="true"],
-.tag-chip[data-active="true"] {
+.tag-chip[data-active="true"],
+.mode-chip[data-active="true"] {
   color: var(--accent);
   background: var(--accent-soft);
   border-color: var(--accent-border);
@@ -695,6 +700,23 @@ h1 {
 
 .lang-chip {
   min-height: 34px;
+  padding: .35rem .58rem;
+  color: var(--muted-strong);
+  background: transparent;
+  border: 1px solid transparent;
+  font-size: .74rem;
+  font-weight: 850;
+}
+
+.mobile-library-mode {
+  display: none;
+  gap: 4px;
+  padding: 4px;
+}
+
+.mode-chip {
+  min-height: 34px;
+  min-width: 74px;
   padding: .35rem .58rem;
   color: var(--muted-strong);
   background: transparent;
@@ -1975,6 +1997,13 @@ main {
   .filter-bar {
     justify-content: flex-start;
     padding: 12px;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .filter-bar > * {
+    min-width: 0;
+    max-width: 100%;
   }
 
   .search-pill {
@@ -1990,6 +2019,11 @@ main {
     flex: 1 1 100%;
     overflow-x: auto;
     justify-content: flex-start;
+    max-width: 100%;
+  }
+
+  .year-filter .chip {
+    flex: 0 0 auto;
   }
 
   .sort-pill,
@@ -2117,13 +2151,32 @@ main {
   }
 
   .filter-bar {
+    display: grid;
+    grid-template-columns: 1fr;
     gap: 8px;
     border-radius: 15px;
   }
 
+  .search-pill,
+  .year-filter,
   .sort-pill,
-  .filter-menu {
-    flex-basis: 100%;
+  .filter-menu,
+  .mobile-library-mode,
+  .result-count {
+    width: 100%;
+  }
+
+  .mobile-library-mode {
+    display: flex;
+  }
+
+  .mode-chip {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .sort-pill {
+    justify-content: space-between;
   }
 
   .sort-select {
@@ -2161,7 +2214,7 @@ main {
     border-radius: 14px;
   }
 
-  .book .cover {
+  body:not([data-mobile-library-mode="covers"]) .book .cover {
     display: none;
   }
 
@@ -2179,6 +2232,52 @@ main {
 
   .meta {
     justify-content: flex-start;
+  }
+
+  body[data-mobile-library-mode="covers"] .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  body[data-mobile-library-mode="covers"] .book {
+    display: block;
+    border-radius: 15px;
+  }
+
+  body[data-mobile-library-mode="covers"] .book .cover {
+    display: block;
+  }
+
+  body[data-mobile-library-mode="covers"] .book .info {
+    padding: 10px;
+  }
+
+  body[data-mobile-library-mode="covers"] .title {
+    display: -webkit-box;
+    min-height: 2.55em;
+    overflow: hidden;
+    font-size: .84rem;
+    line-height: 1.28;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  body[data-mobile-library-mode="covers"] .author {
+    overflow: hidden;
+    margin-bottom: .46rem;
+    font-size: .72rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  body[data-mobile-library-mode="covers"] .meta {
+    gap: 5px;
+  }
+
+  body[data-mobile-library-mode="covers"] .tag {
+    min-height: 22px;
+    padding: .15rem .36rem;
+    font-size: .62rem;
   }
 
   .stat-grid,
