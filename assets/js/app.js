@@ -1227,7 +1227,7 @@
     return `
       <div class="page-ranking page-slider-explorer" data-page-slider-root>
         <div class="page-slider-main">
-          <div>
+          <div class="page-slider-detail">
             <p class="page-slider-kicker" id="pageSliderPosition">#1 ${escapeHTML(t().ofCount(books.length))}</p>
             <h4 id="pageSliderTitle">${escapeHTML(selected.title)}</h4>
             <p id="pageSliderMeta">${escapeHTML([selected.author, formatPages(getBookPages(selected)), getPageSourceTitle(selected)].join(" | "))}</p>
@@ -1236,7 +1236,7 @@
         </div>
         <label class="page-slider-control" for="pageSliderRange">
           <span>${escapeHTML(formatPages(highestPages))}</span>
-          <input id="pageSliderRange" type="range" min="0" max="${books.length - 1}" value="0" step="1" data-page-slider aria-label="${escapeHTML(t().pageSliderLabel)}">
+          <input id="pageSliderRange" type="range" min="0" max="${books.length - 1}" value="0" step="1" orient="vertical" data-page-slider aria-label="${escapeHTML(t().pageSliderLabel)}">
           <span>${escapeHTML(formatPages(lowestPages))}</span>
         </label>
       </div>
@@ -1485,6 +1485,10 @@
     view.addEventListener("input", event => {
       if (event.target.matches("[data-page-slider]")) updatePageSlider(event.target);
     });
+
+    view.addEventListener("touchmove", event => {
+      if (event.target.matches("[data-page-slider]")) event.preventDefault();
+    }, { passive: false });
 
     view.addEventListener("click", event => {
       const item = event.target.closest("[data-stats-filter], [data-stats-book-index]");

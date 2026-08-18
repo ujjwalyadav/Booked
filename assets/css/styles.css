@@ -1381,6 +1381,11 @@ button.timeline-item:focus-visible {
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 18px;
   align-items: center;
+  min-width: 0;
+}
+
+.page-slider-detail {
+  min-width: 0;
 }
 
 .page-slider-kicker {
@@ -1429,6 +1434,7 @@ button.timeline-item:focus-visible {
 .page-slider-control input {
   width: 100%;
   accent-color: var(--accent);
+  touch-action: none;
 }
 
 .page-rank-featured {
@@ -2531,9 +2537,10 @@ button.timeline-item:focus-visible {
   }
 
   .page-slider-explorer {
-    grid-template-columns: 42px minmax(0, 1fr);
-    gap: 14px;
+    grid-template-columns: 36px minmax(0, 1fr);
+    gap: 12px;
     align-items: stretch;
+    overflow: hidden;
     padding: 14px;
   }
 
@@ -2544,20 +2551,31 @@ button.timeline-item:focus-visible {
     min-width: 0;
   }
 
+  .page-slider-main h4,
+  .page-slider-main p:last-child {
+    white-space: normal;
+  }
+
   .page-slider-control {
     grid-column: 1;
     grid-row: 1;
-    grid-template-rows: auto minmax(164px, 1fr) auto;
+    display: grid;
+    grid-template-rows: auto minmax(188px, 1fr) auto;
     grid-template-columns: 1fr;
     justify-items: center;
+    align-items: center;
+    gap: 10px;
     margin-top: 0;
     text-align: center;
   }
 
   .page-slider-control input {
-    width: 164px;
-    transform: rotate(-90deg);
-    transform-origin: center;
+    width: 30px;
+    height: 188px;
+    writing-mode: vertical-lr;
+    direction: rtl;
+    -webkit-appearance: slider-vertical;
+    appearance: slider-vertical;
   }
 
   .page-slider-open {
