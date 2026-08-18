@@ -1456,6 +1456,12 @@
     hydrateStatsInspectorCovers();
   }
 
+  function scrollStatsInspectorIntoView() {
+    const inspector = $("#statsInspector");
+    if (!inspector) return;
+    inspector.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   function updatePageSlider(input) {
     const root = input.closest("[data-page-slider-root]");
     if (!root) return;
@@ -1490,6 +1496,7 @@
       }
 
       selectStatsDetail(item.dataset.statsFilter, item.dataset.statsValue || "");
+      scrollStatsInspectorIntoView();
     });
   }
 
