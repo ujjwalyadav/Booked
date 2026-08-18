@@ -696,7 +696,9 @@
     ].filter(Boolean).join(" · ");
 
     const meetingDate = formatMeetingDate(current.meetingDate);
-    $("#currentMeeting").textContent = meetingDate ? t().meetingDate(meetingDate) : "";
+    $("#currentNextPanel").hidden = !meetingDate;
+    $("#currentMeeting").textContent = meetingDate || "";
+    $("#currentNextDetail").textContent = t().nextMeetingDetail(current.title);
 
     const openLink = $("#currentOpenLink");
     const openAccess = getOpenAccessLink(current);
@@ -753,6 +755,7 @@
     $("#currentLabel").textContent = t().currentlyReading;
     $("#currentBtn").textContent = t().jumpToBook;
     $("#currentOpenLink").textContent = t().readOpenAccess;
+    $("#currentNextLabel").textContent = t().nextMeeting;
 
     $("#viewTabs").setAttribute("aria-label", t().viewsAria);
     $("#controlsGroup").setAttribute("aria-label", t().controlsAria);

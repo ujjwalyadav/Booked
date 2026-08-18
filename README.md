@@ -137,4 +137,4 @@ http://localhost:8000
 - Country-to-library filtering
 - Google Forms feedback form
 - WhatsApp invitation
-- Desktop-first layout on all devices, keyboard support, reduced-motion support, and a custom 404 page
+- Responsive desktop and phone layouts, mobile list-first library, keyboard support, reduced-motion support, and a custom 404 page

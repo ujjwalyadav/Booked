@@ -2,7 +2,7 @@
 <html lang="en" id="top" data-theme="dark">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=1180, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Booked — Our Reading Journey</title>
   <meta name="description" content="Booked: our book club's reads since 2023.">
   <meta name="theme-color" content="#0b0c10">
@@ -108,7 +108,11 @@
           <div class="current-label" id="currentLabel">Currently reading</div>
           <h2 id="currentTitle"></h2>
           <p id="currentMeta"></p>
-          <p class="current-meeting" id="currentMeeting"></p>
+          <div class="current-next" id="currentNextPanel">
+            <span id="currentNextLabel">Next meeting</span>
+            <strong id="currentMeeting"></strong>
+            <small id="currentNextDetail">Discussing this month’s book. Join WhatsApp for polls and meeting details.</small>
+          </div>
         </div>
         <div class="current-actions">
           <button class="button button-primary current-btn" id="currentBtn" type="button">Jump to book ↓</button>
