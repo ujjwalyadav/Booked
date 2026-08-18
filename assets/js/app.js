@@ -1272,13 +1272,61 @@
     }
   }
 
-  function renderStatsInspector(selection = state.statsSelection) {
-    const books = getBooksForStatsSelection(selection);
+  function getStatsFacts(selection, books) {
     const booksWithPages = books.filter(book => getBookPages(book));
     const totalPages = booksWithPages.reduce((sum, book) => sum + getBookPages(book), 0);
     const averagePages = booksWithPages.length ? Math.round(totalPages / booksWithPages.length) : null;
     const oldest = books.filter(book => Number.isFinite(book.published)).sort((a, b) => a.published - b.published)[0];
     const newest = books.filter(book => Number.isFinite(book.published)).sort((a, b) => b.published - a.published)[0];
+    const years = [...new Set(BOOKS.map(book => book.year))].sort((a, b) => a - b);
+    const yearEntries = sortedEntriesFromCount(countBy(BOOKS, book => String(book.year)));
+    const authorEntries = sortedEntriesFromCount(countBy(BOOKS, book => book.author));
+    const countryEntries = sortedEntriesFromCount(countBy(BOOKS, book => book.country));
+    const repeatingAuthors = authorEntries.filter(([, count]) => count > 1);
+    const longest = BOOKS.filter(book => getBookPages(book) && !book.current)
+      .slice()
+      .sort((a, b) => getBookPages(b) - getBookPages(a))[0];
+
+    switch (selection?.type) {
+      case "pages":
+        return [
+          t().statsPagesKnown(booksWithPages.length, totalPages),
+          averagePages ? t().statsAveragePages(averagePages) : "",
+          longest ? t().statsLongestFact(longest.title, getBookPages(longest)) : ""
+        ].filter(Boolean);
+      case "years":
+        return [
+          t().statsYearsFact(years.length),
+          years.length ? t().statsFirstYear(years[0]) : "",
+          years.length ? t().statsLatestYear(years.at(-1)) : "",
+          yearEntries[0] ? t().statsBusiestYear(yearEntries[0][0], yearEntries[0][1]) : ""
+        ].filter(Boolean);
+      case "authors":
+        return [
+          t().statsAuthorsFact(authorEntries.length),
+          t().statsRepeatingAuthorsFact(repeatingAuthors.length),
+          authorEntries[0] ? t().statsTopAuthor(authorEntries[0][0], authorEntries[0][1]) : ""
+        ].filter(Boolean);
+      case "countries":
+        return [
+          t().statsCountriesFact(countryEntries.length),
+          countryEntries[0] ? t().statsTopCountry(countryEntries[0][0], countryEntries[0][1]) : "",
+          t().statsBookCount(BOOKS.length)
+        ].filter(Boolean);
+      default:
+        return [
+          t().statsBookCount(books.length),
+          t().statsPagesKnown(booksWithPages.length, totalPages),
+          averagePages ? t().statsAveragePages(averagePages) : "",
+          oldest ? t().statsOldest(oldest.title, oldest.published) : "",
+          newest && newest !== oldest ? t().statsNewest(newest.title, newest.published) : ""
+        ].filter(Boolean);
+    }
+  }
+
+  function renderStatsInspector(selection = state.statsSelection) {
+    const books = getBooksForStatsSelection(selection);
+    const facts = getStatsFacts(selection, books);
     const previewBooks = books.slice(0, 8);
 
     return `
@@ -1287,11 +1335,7 @@
         <h3>${escapeHTML(getStatsSelectionTitle(selection))}</h3>
         <p>${escapeHTML(t().statsInspectorHint)}</p>
         <div class="stats-facts">
-          <span>${escapeHTML(t().statsBookCount(books.length))}</span>
-          <span>${escapeHTML(t().statsPagesKnown(booksWithPages.length, totalPages))}</span>
-          ${averagePages ? `<span>${escapeHTML(t().statsAveragePages(averagePages))}</span>` : ""}
-          ${oldest ? `<span>${escapeHTML(t().statsOldest(oldest.title, oldest.published))}</span>` : ""}
-          ${newest && newest !== oldest ? `<span>${escapeHTML(t().statsNewest(newest.title, newest.published))}</span>` : ""}
+          ${facts.map(fact => `<span>${escapeHTML(fact)}</span>`).join("")}
         </div>
       </div>
       <div class="stats-mini-books" aria-label="${escapeHTML(t().statsRelatedBooks)}">
@@ -1351,20 +1395,6 @@
     if (view.dataset.statsBound === "true") return;
     view.dataset.statsBound = "true";
 
-    const preview = target => {
-      const item = target.closest("[data-stats-filter], [data-stats-book-index]");
-      if (!item || !view.contains(item)) return;
-
-      if (item.dataset.statsBookIndex) {
-        selectStatsDetail("book", item.dataset.statsBookIndex);
-        return;
-      }
-
-      selectStatsDetail(item.dataset.statsFilter, item.dataset.statsValue || "");
-    };
-
-    view.addEventListener("pointerenter", event => preview(event.target), true);
-    view.addEventListener("focusin", event => preview(event.target));
     view.addEventListener("click", event => {
       const item = event.target.closest("[data-stats-filter], [data-stats-book-index]");
       if (!item || !view.contains(item)) return;
@@ -1410,7 +1440,7 @@
       </div>
 
       <div class="stat-grid">
-        <button class="stat-card stats-pick" type="button" data-stats-filter="years">
+        <button class="stat-card stats-pick" type="button" data-stats-filter="all">
           <p class="stat-value">${BOOKS.length}</p>
           <p class="stat-label">${escapeHTML(t().totalBooks)}</p>
         </button>
@@ -1418,15 +1448,15 @@
           <p class="stat-value">${totalPages.toLocaleString(state.lang === "de" ? "de-DE" : "en-GB")}</p>
           <p class="stat-label">${escapeHTML(t().totalPages)} · ${escapeHTML(t().knownPageCounts(readBooksWithPages.length))}</p>
         </button>
-        <button class="stat-card stats-pick" type="button" data-stats-filter="authors">
+        <button class="stat-card stats-pick" type="button" data-stats-filter="years">
           <p class="stat-value">${years[0]}–${years.at(-1)}</p>
           <p class="stat-label">${escapeHTML(t().yearsCovered)}</p>
         </button>
-        <button class="stat-card stats-pick" type="button" data-stats-filter="countries">
+        <button class="stat-card stats-pick" type="button" data-stats-filter="authors">
           <p class="stat-value">${authors.size}</p>
           <p class="stat-label">${escapeHTML(t().uniqueAuthors)}</p>
         </button>
-        <button class="stat-card stats-pick" type="button" data-stats-filter="all">
+        <button class="stat-card stats-pick" type="button" data-stats-filter="countries">
           <p class="stat-value">${countries.size}</p>
           <p class="stat-label">${escapeHTML(t().countriesRead)}</p>
         </button>
