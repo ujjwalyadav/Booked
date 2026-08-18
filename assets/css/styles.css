@@ -1081,7 +1081,7 @@ main {
   align-items: start;
   margin: 0 0 18px;
   padding: 18px;
-  scroll-margin-top: calc(var(--header-offset) + 18px);
+  scroll-margin-top: calc(var(--header-offset) + 54px);
   background:
     linear-gradient(135deg, color-mix(in srgb, var(--accent-soft) 46%, transparent), transparent 44%),
     linear-gradient(180deg, var(--card-strong), var(--card));
