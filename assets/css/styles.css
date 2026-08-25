@@ -2673,6 +2673,17 @@ button.timeline-item:focus-visible {
 
   .site-header {
     border-radius: 16px;
+    gap: 7px;
+    padding: 8px;
+  }
+
+  .brand-mark {
+    width: 32px;
+    border-radius: 9px;
+  }
+
+  .brand-copy strong {
+    font-size: .82rem;
   }
 
   .brand-copy small {
@@ -2687,17 +2698,41 @@ button.timeline-item:focus-visible {
 
   .view-chip {
     min-width: 0;
-    padding-inline: .45rem;
+    min-height: 38px;
+    padding: .4rem .45rem;
+    font-size: .82rem;
   }
 
   .site-actions {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 44px minmax(92px, 108px) 44px 44px;
+    justify-content: center;
     width: 100%;
   }
 
   .site-actions > * {
-    width: 100%;
+    width: auto;
+    min-height: 38px;
+    padding: .42rem .52rem;
+  }
+
+  .contact-btn span,
+  .join-btn span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .theme-toggle,
+  .contact-btn,
+  .join-btn {
+    justify-content: center;
   }
 
   .hero {
