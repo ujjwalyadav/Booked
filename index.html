@@ -120,7 +120,14 @@
         </div>
         <div class="current-actions">
           <button class="button button-primary current-btn" id="currentBtn" type="button">Jump to book ↓</button>
+          <button class="button button-secondary current-rsvp-btn" id="rsvpYesBtn" type="button" hidden><span aria-hidden="true">👍</span> Joining</button>
+          <button class="button button-secondary current-rsvp-btn" id="rsvpNoBtn" type="button" hidden><span aria-hidden="true">👎</span> Can't join</button>
+          <button class="button button-secondary current-calendar-btn" id="currentCalendarBtn" type="button" hidden>Add to calendar</button>
           <a class="button button-secondary current-open-link" id="currentOpenLink" href="#" target="_blank" rel="noopener noreferrer" hidden>Read open access ↗</a>
+        </div>
+        <div class="current-rsvp-note" id="rsvpYesNote" role="status" aria-live="polite" hidden>
+          <span id="rsvpYesMessage">Great, see you there.</span>
+          <button class="button button-secondary" id="rsvpCalendarBtn" type="button">Add it to calendar?</button>
         </div>
       </section>
     </div>

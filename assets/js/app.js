@@ -288,6 +288,122 @@
     return t().countdownLeft(days, hours, minutes, seconds);
   }
 
+  function formatCalendarDate(date) {
+    return date.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
+  }
+
+  function escapeCalendarText(value) {
+    return String(value ?? "")
+      .replace(/\\/g, "\\\\")
+      .replace(/\n/g, "\\n")
+      .replace(/,/g, "\\,")
+      .replace(/;/g, "\\;");
+  }
+
+  function getCalendarInvite(current) {
+    if (!current?.meetingDate) return null;
+    const meetingWindow = getMeetingWindow(current.meetingDate);
+    if (!meetingWindow) return null;
+
+    const whatsapp = source.links?.whatsapp || "";
+    const title = `Booked: ${current.title}`;
+    const description = t().calendarDescription(current.title, current.author, whatsapp);
+    const lines = [
+      "BEGIN:VCALENDAR",
+      "VERSION:2.0",
+      "PRODID:-//Booked//Reading Club//EN",
+      "CALSCALE:GREGORIAN",
+      "METHOD:PUBLISH",
+      "BEGIN:VEVENT",
+      `UID:${getBookId(current)}-${current.meetingDate}@booked`,
+      `DTSTAMP:${formatCalendarDate(new Date())}`,
+      `DTSTART:${formatCalendarDate(meetingWindow.start)}`,
+      `DTEND:${formatCalendarDate(meetingWindow.end)}`,
+      `SUMMARY:${escapeCalendarText(title)}`,
+      `DESCRIPTION:${escapeCalendarText(description)}`,
+      `LOCATION:${escapeCalendarText(t().calendarLocation)}`,
+      "BEGIN:VALARM",
+      "TRIGGER:-P1D",
+      "ACTION:DISPLAY",
+      `DESCRIPTION:${escapeCalendarText(title)}`,
+      "END:VALARM",
+      "END:VEVENT",
+      "END:VCALENDAR"
+    ];
+
+    return {
+      content: `${lines.join("\r\n")}\r\n`,
+      fileName: `${t().calendarFileName(current.title) || "booked-meeting"}.ics`
+    };
+  }
+
+  function downloadCalendarInvite() {
+    const invite = getCalendarInvite(BOOKS[state.currentBookIndex]);
+    if (!invite) return;
+
+    const blob = new Blob([invite.content], { type: "text/calendar;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = invite.fileName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function setCurrentResponseButtons(current) {
+    const available = Boolean(current?.meetingDate);
+    const yesButton = $("#rsvpYesBtn");
+    const noButton = $("#rsvpNoBtn");
+    const calendarPrompt = $("#rsvpCalendarBtn");
+    [yesButton, noButton].forEach(button => {
+      if (button) button.hidden = !available;
+    });
+    if (yesButton) {
+      yesButton.textContent = t().rsvpYes;
+      yesButton.title = t().rsvpYesTitle;
+    }
+    if (noButton) {
+      noButton.textContent = t().rsvpNo;
+      noButton.title = t().rsvpNoTitle;
+    }
+    if (calendarPrompt) {
+      calendarPrompt.textContent = t().rsvpCalendarPrompt;
+      calendarPrompt.title = t().addToCalendarTitle;
+    }
+  }
+
+  function acknowledgeJoining() {
+    const note = $("#rsvpYesNote");
+    if (!note) return;
+    $("#rsvpYesMessage").textContent = t().rsvpYesMessage;
+    $("#rsvpCalendarBtn").textContent = t().rsvpCalendarPrompt;
+    note.hidden = false;
+    note.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
+  function promptMeetingFeedback() {
+    const current = BOOKS[state.currentBookIndex];
+    const form = $("#feedbackForm");
+    const category = $("#feedbackCategory");
+    const message = $("#feedbackMessage");
+    const status = $("#feedbackStatus");
+    if (!form || !category || !message) return;
+
+    category.value = "meeting";
+    updateFeedbackMessagePrompt();
+    if (!message.value.trim()) message.value = t().rsvpNoPrompt(current?.title || "");
+    if (status) status.textContent = t().rsvpNoStatus;
+
+    window.location.hash = "feedback";
+    window.requestAnimationFrame(() => {
+      form.scrollIntoView({ behavior: "smooth", block: "center" });
+      message.focus({ preventScroll: true });
+      message.setSelectionRange(message.value.length, message.value.length);
+    });
+  }
+
   function getOpenAccessLink(book) {
     if (!book?.openAccess?.url) return null;
 
@@ -965,6 +1081,14 @@
     updateMeetingCountdown();
     meetingTimerId = window.setInterval(updateMeetingCountdown, 1000);
     renderCurrentMemory(current);
+    setCurrentResponseButtons(current);
+
+    const calendarButton = $("#currentCalendarBtn");
+    if (calendarButton) {
+      calendarButton.hidden = !current.meetingDate;
+      calendarButton.textContent = t().addToCalendar;
+      calendarButton.title = t().addToCalendarTitle;
+    }
 
     const openLink = $("#currentOpenLink");
     const openAccess = getOpenAccessLink(current);
@@ -1020,6 +1144,9 @@
     $("#heroSub").textContent = t().heroSub;
     $("#currentLabel").textContent = t().currentlyReading;
     $("#currentBtn").textContent = t().jumpToBook;
+    setCurrentResponseButtons(BOOKS[state.currentBookIndex]);
+    $("#currentCalendarBtn").textContent = t().addToCalendar;
+    $("#currentCalendarBtn").title = t().addToCalendarTitle;
     $("#currentOpenLink").textContent = t().readOpenAccess;
     $("#currentNextLabel").textContent = t().nextMeeting;
 
@@ -1154,6 +1281,10 @@
     });
 
     $("#currentMemory")?.addEventListener("click", navigateToCurrentMemory);
+    $("#rsvpYesBtn")?.addEventListener("click", acknowledgeJoining);
+    $("#rsvpCalendarBtn")?.addEventListener("click", downloadCalendarInvite);
+    $("#rsvpNoBtn")?.addEventListener("click", promptMeetingFeedback);
+    $("#currentCalendarBtn")?.addEventListener("click", downloadCalendarInvite);
   }
 
   /* ---------------- Dialog and private notes ---------------- */

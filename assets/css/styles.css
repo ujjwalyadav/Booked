@@ -455,6 +455,27 @@ h1 {
   white-space: nowrap;
 }
 
+.current-rsvp-btn {
+  gap: .42rem;
+}
+
+.current-rsvp-note {
+  display: flex;
+  grid-column: 2;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  color: var(--muted-strong);
+  font-size: .82rem;
+}
+
+.current-rsvp-note .button {
+  min-height: 34px;
+  padding: .48rem .72rem;
+  font-size: .76rem;
+}
+
 .current-next {
   display: grid;
   gap: 3px;
@@ -2433,6 +2454,10 @@ button.timeline-item:focus-visible {
   .current-actions {
     display: grid;
     grid-template-columns: 1fr;
+  }
+
+  .current-rsvp-note {
+    grid-column: 1 / -1;
   }
 
   .filter-bar {
