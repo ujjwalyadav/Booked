@@ -198,6 +198,10 @@
     return `https://openlibrary.org/search?q=${encodeURIComponent(`${book.title} ${book.author}`)}`;
   }
 
+  function goodreadsAuthorSearchLink(author) {
+    return `https://www.goodreads.com/search?q=${encodeURIComponent(author)}&search_type=books&search%5Bfield%5D=author`;
+  }
+
   function getBookPages(book) {
     return Number.isFinite(book?.pages) && book.pages > 0 ? book.pages : null;
   }
@@ -1166,7 +1170,7 @@
     $("#mobileLibraryMode")?.setAttribute("aria-label", t().mobileLibraryMode);
     $("#mobileModeList").textContent = t().mobileLibraryList;
     $("#mobileModeCovers").textContent = t().mobileLibraryCovers;
-    $("#themeLabel").textContent = t().themeLabel;
+    $("#themeLabel").textContent = t().themeTitle;
     $("#themeBtn").title = t().themeTitle;
     $("#langSwitch").title = t().langSwitchTitle;
     $("#contactText").textContent = t().contact;
@@ -1337,7 +1341,10 @@
 
     $("#overlayMonth").textContent = `${getMonthName(book.month)} ${book.year}`;
     $("#overlayTitle").textContent = book.title;
-    $("#overlayAuthor").textContent = book.author;
+    const authorLink = $("#overlayAuthor");
+    authorLink.textContent = book.author;
+    authorLink.href = goodreadsAuthorSearchLink(book.author);
+    authorLink.title = t().goodreadsAuthorTitle(book.author);
     $("#overlayNote").textContent = book.note || "";
     const pages = getBookPages(book);
     $("#overlayPublished").textContent = [
