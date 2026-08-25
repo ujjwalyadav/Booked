@@ -1905,6 +1905,7 @@
     const cards = [
       {
         title: t().totalBooks,
+        compact: true,
         body: `<button class="stat-card stats-pick" type="button" data-stats-filter="all">
           <p class="stat-value">${BOOKS.length}</p>
           <p class="stat-label">${escapeHTML(t().totalBooks)}</p>
@@ -1912,6 +1913,7 @@
       },
       {
         title: t().totalPages,
+        compact: true,
         body: `<button class="stat-card stats-pick" type="button" data-stats-filter="pages">
           <p class="stat-value">${totalPages.toLocaleString(state.lang === "de" ? "de-DE" : "en-GB")}</p>
           <p class="stat-label">${escapeHTML(t().knownPageCounts(readBooksWithPages.length))}</p>
@@ -1919,6 +1921,7 @@
       },
       {
         title: t().yearsCovered,
+        compact: true,
         body: `<button class="stat-card stats-pick" type="button" data-stats-filter="years">
           <p class="stat-value">${years[0]}-${years.at(-1)}</p>
           <p class="stat-label">${escapeHTML(t().yearsCovered)}</p>
@@ -1926,6 +1929,7 @@
       },
       {
         title: t().uniqueAuthors,
+        compact: true,
         body: `<button class="stat-card stats-pick" type="button" data-stats-filter="authors">
           <p class="stat-value">${authors.size}</p>
           <p class="stat-label">${escapeHTML(t().uniqueAuthors)}</p>
@@ -1933,6 +1937,7 @@
       },
       {
         title: t().countriesRead,
+        compact: true,
         body: `<button class="stat-card stats-pick" type="button" data-stats-filter="countries">
           <p class="stat-value">${countries.size}</p>
           <p class="stat-label">${escapeHTML(t().countriesRead)}</p>
@@ -1991,8 +1996,9 @@
         </div>
         <div class="mobile-stats-stage" data-mobile-stats-stage>
           ${cards.map((card, index) => `
-            <section class="mobile-stats-card" data-mobile-stats-card data-state="hidden" aria-label="${escapeHTML(card.title)}">
+            <section class="mobile-stats-card" data-mobile-stats-card data-compact="${card.compact ? "true" : "false"}" data-state="hidden" aria-label="${escapeHTML(card.title)}">
               ${card.body}
+              <span class="mobile-card-hint">${escapeHTML(t().tapToExplore)} <span aria-hidden="true">↗</span></span>
             </section>
           `).join("")}
         </div>

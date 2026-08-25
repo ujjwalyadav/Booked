@@ -2462,6 +2462,8 @@ button.timeline-item:focus-visible {
     position: absolute;
     inset: 0;
     display: grid;
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: 10px;
     min-width: 0;
     opacity: 0;
     pointer-events: none;
@@ -2492,6 +2494,7 @@ button.timeline-item:focus-visible {
 
   .mobile-stats-card .stat-card,
   .mobile-stats-card .chart-card {
+    position: relative;
     display: grid;
     align-content: start;
     width: 100%;
@@ -2503,6 +2506,49 @@ button.timeline-item:focus-visible {
 
   .mobile-stats-card .stat-card {
     align-content: center;
+    overflow: hidden;
+  }
+
+  .mobile-stats-card[data-compact="true"] .stat-card {
+    min-height: 100%;
+    max-height: none;
+  }
+
+  .mobile-stats-card .stats-pick {
+    border-color: color-mix(in srgb, var(--accent-border) 58%, var(--line));
+  }
+
+  .mobile-stats-card > .stats-pick::before {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 9px;
+    aspect-ratio: 1;
+    content: "";
+    border-top: 2px solid currentColor;
+    border-right: 2px solid currentColor;
+    opacity: .45;
+    transform: rotate(45deg);
+  }
+
+  .mobile-stats-card > .stats-pick:active {
+    transform: scale(.985);
+  }
+
+  .mobile-card-hint {
+    display: inline-flex;
+    align-items: center;
+    justify-self: center;
+    min-height: 30px;
+    padding: .32rem .66rem;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border: 1px solid var(--accent-border);
+    border-radius: 999px;
+    font-size: .7rem;
+    font-weight: 860;
+    letter-spacing: .04em;
+    text-transform: uppercase;
   }
 
   .mobile-stats-controls {
