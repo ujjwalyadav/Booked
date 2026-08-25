@@ -469,10 +469,10 @@
     setStored("booked_theme", theme);
 
     const dark = theme === "dark";
-    $("#moon").hidden = !dark;
-    $("#sun").hidden = dark;
-    $("#mobileDockThemeMoon").hidden = !dark;
-    $("#mobileDockThemeSun").hidden = dark;
+    $("#moon")?.toggleAttribute("hidden", !dark);
+    $("#sun")?.toggleAttribute("hidden", dark);
+    $("#mobileDockThemeMoon")?.toggleAttribute("hidden", !dark);
+    $("#mobileDockThemeSun")?.toggleAttribute("hidden", dark);
     $("#themeBtn").setAttribute("aria-pressed", dark ? "true" : "false");
     $('meta[name="theme-color"]')?.setAttribute("content", dark ? "#090a0f" : "#f7f5fc");
   }
