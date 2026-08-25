@@ -52,7 +52,11 @@ window.BOOKED_DATA = Object.freeze({
       pageSourceName: "Open Library, Hogarth Press 1928 edition",
       pageSourceUrl: "https://openlibrary.org/books/OL2811937M/Orlando",
       tags: ["Classic", "Queer", "Modernist", "Fantasy"],
-      note: "A playful, time-traveling life story of a character who changes gender and crosses centuries."
+      note: "A playful, time-traveling life story of a character who changes gender and crosses centuries.",
+      openAccess: {
+        url: "https://standardebooks.org/ebooks/virginia-woolf/orlando",
+        verifiedOn: "2026-08-25"
+      }
     },
     {
       year: 2024,
@@ -130,7 +134,11 @@ window.BOOKED_DATA = Object.freeze({
       pageSourceName: "National Electronic Library, 1866 Russian book edition",
       pageSourceUrl: "https://rusneb.ru/catalog/000199_000009_003568290/",
       tags: ["Classic", "Russian", "Existential"],
-      note: "A bitter, self-sabotaging narrator dismantles himself in a confession full of spite and clarity."
+      note: "A bitter, self-sabotaging narrator dismantles himself in a confession full of spite and clarity.",
+      openAccess: {
+        url: "https://www.gutenberg.org/ebooks/600",
+        verifiedOn: "2026-08-25"
+      }
     },
     {
       year: 2024,
@@ -156,7 +164,11 @@ window.BOOKED_DATA = Object.freeze({
       pageSourceName: "Open Library, Ward Lock 1891 book edition",
       pageSourceUrl: "https://openlibrary.org/books/OL14034381M/The_Picture_of_Dorian_Gray",
       tags: ["Classic", "Gothic", "Aestheticism"],
-      note: "A young man never ages while his hidden portrait bears the marks of his corruption."
+      note: "A young man never ages while his hidden portrait bears the marks of his corruption.",
+      openAccess: {
+        url: "https://www.gutenberg.org/ebooks/174",
+        verifiedOn: "2026-08-25"
+      }
     },
     {
       year: 2024,
@@ -169,7 +181,11 @@ window.BOOKED_DATA = Object.freeze({
       pageSourceName: "BramStoker.org, 1897 Archibald Constable edition",
       pageSourceUrl: "https://bramstoker.org/novels/05dracula.html",
       tags: ["Classic", "Gothic", "Horror"],
-      note: "The original vampire novel: diaries, letters, and sea logs trace an ancient evil crossing into England."
+      note: "The original vampire novel: diaries, letters, and sea logs trace an ancient evil crossing into England.",
+      openAccess: {
+        url: "https://www.gutenberg.org/ebooks/345",
+        verifiedOn: "2026-08-25"
+      }
     },
     {
       year: 2024,
@@ -182,7 +198,11 @@ window.BOOKED_DATA = Object.freeze({
       pageSourceName: "Russian State Library, 1865 Russian book edition",
       pageSourceUrl: "https://search.rsl.ru/ru/record/01003567550",
       tags: ["Russian", "Romantic", "Short"],
-      note: "A dreamy, lonely narrator wanders St. Petersburg and falls into a brief, intense connection."
+      note: "A dreamy, lonely narrator wanders St. Petersburg and falls into a brief, intense connection.",
+      openAccess: {
+        url: "https://www.gutenberg.org/ebooks/36034",
+        verifiedOn: "2026-08-25"
+      }
     },
     {
       year: 2025,
@@ -195,7 +215,11 @@ window.BOOKED_DATA = Object.freeze({
       pageSourceName: "Open Library, Harper & Brothers 1851 edition",
       pageSourceUrl: "https://openlibrary.org/books/OL6984724M/Moby-Dick_or_the_Whale?v=7",
       tags: ["Classic", "American", "Adventure", "Sea"],
-      note: "A sprawling, obsessive hunt for a white whale that becomes an encyclopedia of the sea and the soul."
+      note: "A sprawling, obsessive hunt for a white whale that becomes an encyclopedia of the sea and the soul.",
+      openAccess: {
+        url: "https://www.gutenberg.org/ebooks/2701",
+        verifiedOn: "2026-08-25"
+      }
     },
     {
       year: 2025,
@@ -247,7 +271,11 @@ window.BOOKED_DATA = Object.freeze({
       pageSourceName: "Morgan Library, Hogarth Press 1929 first edition",
       pageSourceUrl: "https://www.themorgan.org/printed-books/417538",
       tags: ["Essay", "Feminist", "Nonfiction"],
-      note: "A foundational essay on women, money, space, and the conditions needed to write."
+      note: "A foundational essay on women, money, space, and the conditions needed to write.",
+      openAccess: {
+        url: "https://en.wikisource.org/wiki/A_Room_of_One%27s_Own_(Hogarth_1929)",
+        verifiedOn: "2026-08-25"
+      }
     },
     {
       year: 2025,
@@ -273,7 +301,11 @@ window.BOOKED_DATA = Object.freeze({
       pageSourceName: "Open Library, Longmans Green 1886 edition",
       pageSourceUrl: "https://openlibrary.org/books/OL7243520M/Strange_case_of_Dr._Jekyll_and_Mr._Hyde.",
       tags: ["Classic", "Gothic", "Horror", "Short"],
-      note: "A respectable doctor hides a violent alter ego, embodying a split between public virtue and private vice."
+      note: "A respectable doctor hides a violent alter ego, embodying a split between public virtue and private vice.",
+      openAccess: {
+        url: "https://www.gutenberg.org/ebooks/43",
+        verifiedOn: "2026-08-25"
+      }
     },
     {
       year: 2025,
@@ -390,7 +422,11 @@ window.BOOKED_DATA = Object.freeze({
       pageSourceName: "Kent School catalog, Hogarth Press 1925 first edition",
       pageSourceUrl: "https://catalog.kent-school.edu/bib/8390",
       tags: ["Modernist", "Stream of Consciousness", "Psychological"],
-      note: "A modernist novel following Clarissa Dalloway over the course of a single day in London, exploring memory, social life, trauma, time, and the hidden depths of inner consciousness."
+      note: "A modernist novel following Clarissa Dalloway over the course of a single day in London, exploring memory, social life, trauma, time, and the hidden depths of inner consciousness.",
+      openAccess: {
+        url: "https://standardebooks.org/ebooks/virginia-woolf/mrs-dalloway",
+        verifiedOn: "2026-08-25"
+      }
     },
     {
       year: 2026,
@@ -404,7 +440,11 @@ window.BOOKED_DATA = Object.freeze({
       pageSourceName: "Open Library, G. P. Putnam's Sons 1905 edition",
       pageSourceUrl: "https://openlibrary.org/books/OL7127808M",
       tags: ["Epistolary", "Autobiographical", "Philosophical"],
-      note: "A deeply personal letter written during Wilde’s imprisonment, reflecting on suffering, love, betrayal, spiritual growth, and his relationship with Lord Alfred Douglas."
+      note: "A deeply personal letter written during Wilde’s imprisonment, reflecting on suffering, love, betrayal, spiritual growth, and his relationship with Lord Alfred Douglas.",
+      openAccess: {
+        url: "https://en.wikisource.org/wiki/De_Profundis_(Wilde,_1915)",
+        verifiedOn: "2026-08-25"
+      }
     },
      {
   year: 2026,

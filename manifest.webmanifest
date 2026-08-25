@@ -9,9 +9,9 @@
   "theme_color": "#090a0f",
   "icons": [
     {
-      "src": "assets/icons/favicon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "assets/icons/booked-fragonard-square.jpg",
+      "sizes": "960x960",
+      "type": "image/jpeg",
       "purpose": "any"
     }
   ]

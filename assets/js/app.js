@@ -633,6 +633,10 @@
     const currentRibbon = book.current
       ? `<span class="current-ribbon">${escapeHTML(t().currentlyReading)}</span>`
       : "";
+    const openAccess = getOpenAccessLink(book);
+    const openAccessBadge = openAccess
+      ? `<span class="open-access-badge" title="${escapeHTML(openAccess.verifiedOn ? t().openAccessVerified(openAccess.verifiedOn) : t().openAccessTitle)}">${escapeHTML(t().openAccessBadge)}</span>`
+      : "";
     const pages = getBookPages(book);
     const pageTag = pages
       ? `<span class="tag" title="${escapeHTML(getPageSourceTitle(book))}">${escapeHTML(formatPages(pages))}</span>`
@@ -643,6 +647,7 @@
         <img class="cover-img" alt="${escapeHTML(t().coverAlt(book.title, book.author))}" loading="lazy" decoding="async">
         <span class="corner">${escapeHTML(book.year)}</span>
         ${currentRibbon}
+        ${openAccessBadge}
       </div>
       <div class="info">
         <h3 class="title">${escapeHTML(book.title)}</h3>
@@ -651,6 +656,7 @@
           <span class="tag" title="${escapeHTML(t().tagMonthTitle)}">${escapeHTML(getMonthName(book.month))}</span>
           <span class="tag" title="${escapeHTML(t().tagIndexTitle)}">#${index + 1}</span>
           ${pageTag}
+          ${openAccess ? `<span class="tag open-access-meta" title="${escapeHTML(openAccess.verifiedOn ? t().openAccessVerified(openAccess.verifiedOn) : t().openAccessTitle)}">${escapeHTML(t().openAccessBadge)}</span>` : ""}
         </div>
       </div>
     `;
@@ -1322,7 +1328,8 @@
 
     book.link = result.link || fallbackOpenLibraryLink(book);
     book.coverUrl = result.coverUrl || null;
-    $("#overlayLink").href = book.link;
+    const openAccess = getOpenAccessLink(book);
+    $("#overlayLink").href = openAccess?.url || book.link;
 
     if (result.coverUrl && $("#overlay").dataset.id === getBookId(book)) {
       image.src = result.coverUrl;
@@ -1365,7 +1372,19 @@
     const meta = loadBookMeta(book);
     $("#overlayNoteEditable").value = meta.note || "";
     $("#overlayRatingInput").value = meta.rating || "";
-    $("#overlayLink").href = book.link || fallbackOpenLibraryLink(book);
+    const openAccess = getOpenAccessLink(book);
+    const overlayLink = $("#overlayLink");
+    if (openAccess) {
+      overlayLink.href = openAccess.url;
+      $("#overlayOpenLibText").textContent = openAccess.label;
+      overlayLink.title = openAccess.verifiedOn
+        ? t().openAccessVerified(openAccess.verifiedOn)
+        : t().openAccessTitle;
+    } else {
+      overlayLink.href = book.link || fallbackOpenLibraryLink(book);
+      $("#overlayOpenLibText").textContent = t().overlayOpenLib;
+      overlayLink.title = "";
+    }
     const mapButton = $("#overlayMapButton");
     mapButton.hidden = !book.country;
     mapButton.dataset.country = book.country || "";
