@@ -1992,13 +1992,12 @@
       <div class="mobile-stats-app" data-mobile-stats-app>
         <div class="mobile-stats-topline">
           <span id="mobileStatsCounter">${state.mobileStatsIndex + 1} / ${cards.length}</span>
-          <span>${escapeHTML(t().statsSwipeHint)}</span>
+          <span>${escapeHTML(t().statsSwipeHint)} · ${escapeHTML(t().tapToExplore)}</span>
         </div>
         <div class="mobile-stats-stage" data-mobile-stats-stage>
           ${cards.map((card, index) => `
             <section class="mobile-stats-card" data-mobile-stats-card data-compact="${card.compact ? "true" : "false"}" data-state="hidden" aria-label="${escapeHTML(card.title)}">
               ${card.body}
-              <span class="mobile-card-hint">${escapeHTML(t().tapToExplore)} <span aria-hidden="true">↗</span></span>
             </section>
           `).join("")}
         </div>

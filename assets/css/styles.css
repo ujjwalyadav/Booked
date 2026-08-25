@@ -2462,8 +2462,6 @@ button.timeline-item:focus-visible {
     position: absolute;
     inset: 0;
     display: grid;
-    grid-template-rows: minmax(0, 1fr) auto;
-    gap: 10px;
     min-width: 0;
     opacity: 0;
     pointer-events: none;
@@ -2533,22 +2531,6 @@ button.timeline-item:focus-visible {
 
   .mobile-stats-card > .stats-pick:active {
     transform: scale(.985);
-  }
-
-  .mobile-card-hint {
-    display: inline-flex;
-    align-items: center;
-    justify-self: center;
-    min-height: 30px;
-    padding: .32rem .66rem;
-    color: var(--accent);
-    background: var(--accent-soft);
-    border: 1px solid var(--accent-border);
-    border-radius: 999px;
-    font-size: .7rem;
-    font-weight: 860;
-    letter-spacing: .04em;
-    text-transform: uppercase;
   }
 
   .mobile-stats-controls {
