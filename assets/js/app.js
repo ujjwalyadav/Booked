@@ -55,6 +55,7 @@
     sort: "reading",
     view: "library",
     mobileLibraryMode: getStored("booked_mobile_library_mode", "list"),
+    mobileStatsIndex: 0,
     statsSelection: { type: "all", value: "" },
     currentBookIndex: BOOKS.findIndex(book => book.current),
     currentMemory: null,
@@ -470,6 +471,8 @@
     const dark = theme === "dark";
     $("#moon").hidden = !dark;
     $("#sun").hidden = dark;
+    $("#mobileDockThemeMoon").hidden = !dark;
+    $("#mobileDockThemeSun").hidden = dark;
     $("#themeBtn").setAttribute("aria-pressed", dark ? "true" : "false");
     $('meta[name="theme-color"]')?.setAttribute("content", dark ? "#090a0f" : "#f7f5fc");
   }
@@ -1208,6 +1211,7 @@
     $("#footerText").innerHTML = t().footerHtml;
     $("#footerTopLink").textContent = t().footerTop;
     $("#footerContactLink").textContent = t().contact;
+    $("#mobileDockLang").textContent = state.lang.toUpperCase();
 
     setPressed($$(".lang-chip"), button => button.dataset.lang === state.lang);
   }
@@ -1234,11 +1238,13 @@
     const nextView = ["library", "stats", "map"].includes(view) ? view : "library";
     state.view = nextView;
     document.body.dataset.view = nextView;
+    $("#statsView")?.removeAttribute("data-mobile-detail-open");
 
     $("#libraryView").hidden = nextView !== "library";
     $("#statsView").hidden = nextView !== "stats";
     $("#mapView").hidden = nextView !== "map";
     setPressed($$(".view-chip"), button => button.dataset.view === nextView);
+    setPressed($$("[data-dock-view]"), button => button.dataset.dockView === nextView);
 
     if (nextView === "stats") renderStats();
     if (nextView === "map") renderMap();
@@ -1627,15 +1633,15 @@
       <div class="page-ranking page-slider-explorer" data-page-slider-root>
         <div class="page-slider-main">
           <div class="page-slider-detail">
-            <p class="page-slider-kicker" id="pageSliderPosition">#1 ${escapeHTML(t().ofCount(books.length))}</p>
-            <h4 id="pageSliderTitle">${escapeHTML(selected.title)}</h4>
-            <p id="pageSliderMeta">${escapeHTML([selected.author, formatPages(getBookPages(selected)), getPageSourceTitle(selected)].join(" | "))}</p>
+            <p class="page-slider-kicker" data-page-slider-position>#1 ${escapeHTML(t().ofCount(books.length))}</p>
+            <h4 data-page-slider-title>${escapeHTML(selected.title)}</h4>
+            <p data-page-slider-meta>${escapeHTML([selected.author, formatPages(getBookPages(selected)), getPageSourceTitle(selected)].join(" | "))}</p>
           </div>
-          <button class="button button-secondary page-slider-open stats-pick" type="button" data-stats-book-index="${selectedIndex}" id="pageSliderOpen">${escapeHTML(t().openBookDetails)}</button>
+          <button class="button button-secondary page-slider-open stats-pick" type="button" data-stats-book-index="${selectedIndex}" data-page-slider-open>${escapeHTML(t().openBookDetails)}</button>
         </div>
-        <label class="page-slider-control" for="pageSliderRange">
+        <label class="page-slider-control">
           <span>${escapeHTML(formatPages(highestPages))}</span>
-          <input id="pageSliderRange" type="range" min="0" max="${books.length - 1}" value="0" step="1" orient="vertical" data-page-slider aria-label="${escapeHTML(t().pageSliderLabel)}">
+          <input type="range" min="0" max="${books.length - 1}" value="0" step="1" orient="vertical" data-page-slider aria-label="${escapeHTML(t().pageSliderLabel)}">
           <span>${escapeHTML(formatPages(lowestPages))}</span>
         </label>
       </div>
@@ -1851,14 +1857,154 @@
     state.statsSelection = { type, value };
     const inspector = $("#statsInspector");
     if (!inspector) return;
-    inspector.innerHTML = renderStatsInspector(state.statsSelection);
+    inspector.innerHTML = `
+      <button class="stats-inspector-close" type="button" data-stats-inspector-close aria-label="${escapeHTML(t().closeStatsInspector)}">×</button>
+      ${renderStatsInspector(state.statsSelection)}
+    `;
+    $("#statsView")?.setAttribute("data-mobile-detail-open", "true");
     hydrateStatsInspectorCovers();
   }
 
   function scrollStatsInspectorIntoView() {
     const inspector = $("#statsInspector");
     if (!inspector) return;
+    if (window.matchMedia("(max-width: 900px)").matches) return;
     inspector.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function setMobileStatsIndex(index) {
+    const cards = $$("[data-mobile-stats-card]");
+    if (!cards.length) return;
+    state.mobileStatsIndex = (index + cards.length) % cards.length;
+
+    cards.forEach((card, cardIndex) => {
+      const distance = (cardIndex - state.mobileStatsIndex + cards.length) % cards.length;
+      const reverseDistance = (state.mobileStatsIndex - cardIndex + cards.length) % cards.length;
+      const stateName = cardIndex === state.mobileStatsIndex
+        ? "active"
+        : distance === 1
+          ? "next"
+          : reverseDistance === 1
+            ? "prev"
+            : "hidden";
+      card.dataset.state = stateName;
+      card.setAttribute("aria-hidden", stateName === "active" ? "false" : "true");
+      card.toggleAttribute("inert", stateName !== "active");
+    });
+
+    $$(".mobile-stats-dot").forEach((dot, dotIndex) => {
+      dot.dataset.active = dotIndex === state.mobileStatsIndex ? "true" : "false";
+      dot.setAttribute("aria-pressed", dotIndex === state.mobileStatsIndex ? "true" : "false");
+    });
+
+    const counter = $("#mobileStatsCounter");
+    if (counter) counter.textContent = `${state.mobileStatsIndex + 1} / ${cards.length}`;
+  }
+
+  function renderMobileStatsDeck({ years, authors, countries, totalPages, readBooksWithPages, yearCounts, countryCounts, tagCounts, periodCounts, topPeriod, repeatingAuthors, current }) {
+    const cards = [
+      {
+        title: t().totalBooks,
+        body: `<button class="stat-card stats-pick" type="button" data-stats-filter="all">
+          <p class="stat-value">${BOOKS.length}</p>
+          <p class="stat-label">${escapeHTML(t().totalBooks)}</p>
+        </button>`
+      },
+      {
+        title: t().totalPages,
+        body: `<button class="stat-card stats-pick" type="button" data-stats-filter="pages">
+          <p class="stat-value">${totalPages.toLocaleString(state.lang === "de" ? "de-DE" : "en-GB")}</p>
+          <p class="stat-label">${escapeHTML(t().knownPageCounts(readBooksWithPages.length))}</p>
+        </button>`
+      },
+      {
+        title: t().yearsCovered,
+        body: `<button class="stat-card stats-pick" type="button" data-stats-filter="years">
+          <p class="stat-value">${years[0]}-${years.at(-1)}</p>
+          <p class="stat-label">${escapeHTML(t().yearsCovered)}</p>
+        </button>`
+      },
+      {
+        title: t().uniqueAuthors,
+        body: `<button class="stat-card stats-pick" type="button" data-stats-filter="authors">
+          <p class="stat-value">${authors.size}</p>
+          <p class="stat-label">${escapeHTML(t().uniqueAuthors)}</p>
+        </button>`
+      },
+      {
+        title: t().countriesRead,
+        body: `<button class="stat-card stats-pick" type="button" data-stats-filter="countries">
+          <p class="stat-value">${countries.size}</p>
+          <p class="stat-label">${escapeHTML(t().countriesRead)}</p>
+        </button>`
+      },
+      {
+        title: t().currentBook,
+        body: `<article class="chart-card stats-pick" data-stats-filter="current" tabindex="0">
+          <h3>${escapeHTML(t().currentBook)}</h3>
+          <p class="title">${escapeHTML(current?.title || "-")}</p>
+          <p class="author">${current ? escapeHTML([
+            `${getMonthName(current.month)} ${current.year}`,
+            current.author,
+            getBookPages(current) ? formatPages(getBookPages(current)) : null,
+            current.meetingDate ? t().meetingDate(formatMeetingDate(current.meetingDate)) : null
+          ].filter(Boolean).join(" | ")) : ""}</p>
+        </article>`
+      },
+      {
+        title: t().booksByYear,
+        body: `<article class="chart-card"><h3>${escapeHTML(t().booksByYear)}</h3>${renderBarList(yearCounts, 10, "year")}</article>`
+      },
+      {
+        title: t().topTags,
+        body: `<article class="chart-card"><h3>${escapeHTML(t().topTags)}</h3>${renderBarList(tagCounts, 10, "tag")}</article>`
+      },
+      {
+        title: t().booksByCountry,
+        body: `<article class="chart-card"><h3>${escapeHTML(t().booksByCountry)}</h3>${renderBarList(countryCounts, 10, "country")}</article>`
+      },
+      {
+        title: t().booksByPeriod,
+        body: `<article class="chart-card"><h3>${escapeHTML(t().booksByPeriod)}</h3>${renderBarList(periodCounts, 10, "period")}${topPeriod ? `<p class="period-summary">${escapeHTML(t().mostReadPeriod(topPeriod[0], topPeriod[1]))}</p>` : ""}</article>`
+      },
+      {
+        title: t().recurringAuthors,
+        body: `<article class="chart-card"><h3>${escapeHTML(t().recurringAuthors)}</h3>${Object.keys(repeatingAuthors).length ? renderBarList(repeatingAuthors, 8, "author") : `<p class="author">${escapeHTML(t().noRepeatingAuthors)}</p>`}</article>`
+      },
+      {
+        title: t().longestBooks,
+        body: `<article class="chart-card chart-card-wide"><h3>${escapeHTML(t().longestBooks)}</h3>${renderPageRanking()}</article>`
+      },
+      {
+        title: t().publicationTimeline,
+        body: `<article class="chart-card chart-card-wide"><h3>${escapeHTML(t().publicationTimeline)}</h3>${renderPublicationTimeline()}</article>`
+      }
+    ];
+
+    state.mobileStatsIndex = Math.min(state.mobileStatsIndex, cards.length - 1);
+
+    return `
+      <div class="mobile-stats-app" data-mobile-stats-app>
+        <div class="mobile-stats-topline">
+          <span id="mobileStatsCounter">${state.mobileStatsIndex + 1} / ${cards.length}</span>
+          <span>${escapeHTML(t().statsSwipeHint)}</span>
+        </div>
+        <div class="mobile-stats-stage" data-mobile-stats-stage>
+          ${cards.map((card, index) => `
+            <section class="mobile-stats-card" data-mobile-stats-card data-state="hidden" aria-label="${escapeHTML(card.title)}">
+              ${card.body}
+            </section>
+          `).join("")}
+        </div>
+        <div class="mobile-stats-controls">
+          <button type="button" data-mobile-stats-dir="-1" aria-label="${escapeHTML(t().previousStat)}">‹</button>
+          <div class="mobile-stats-dots" aria-hidden="true">
+            ${cards.map((_, index) => `<button class="mobile-stats-dot" type="button" data-mobile-stats-dot="${index}" aria-label="${index + 1}"></button>`).join("")}
+          </div>
+          <button type="button" data-mobile-stats-dir="1" aria-label="${escapeHTML(t().nextStat)}">›</button>
+        </div>
+      </div>
+    `;
   }
 
   function updatePageSlider(input) {
@@ -1871,10 +2017,10 @@
     if (!book) return;
 
     const index = getBookIndex(book);
-    $("#pageSliderPosition", root).textContent = `#${sliderIndex + 1} ${t().ofCount(books.length)}`;
-    $("#pageSliderTitle", root).textContent = book.title;
-    $("#pageSliderMeta", root).textContent = [book.author, formatPages(getBookPages(book)), getPageSourceTitle(book)].join(" | ");
-    $("#pageSliderOpen", root).dataset.statsBookIndex = String(index);
+    $("[data-page-slider-position]", root).textContent = `#${sliderIndex + 1} ${t().ofCount(books.length)}`;
+    $("[data-page-slider-title]", root).textContent = book.title;
+    $("[data-page-slider-meta]", root).textContent = [book.author, formatPages(getBookPages(book)), getPageSourceTitle(book)].join(" | ");
+    $("[data-page-slider-open]", root).dataset.statsBookIndex = String(index);
   }
 
   function bindStatsInteractions(view) {
@@ -1890,6 +2036,24 @@
     }, { passive: false });
 
     view.addEventListener("click", event => {
+      const closeInspector = event.target.closest("[data-stats-inspector-close]");
+      if (closeInspector) {
+        view.removeAttribute("data-mobile-detail-open");
+        return;
+      }
+
+      const mobileDirection = event.target.closest("[data-mobile-stats-dir]");
+      if (mobileDirection) {
+        setMobileStatsIndex(state.mobileStatsIndex + Number(mobileDirection.dataset.mobileStatsDir));
+        return;
+      }
+
+      const mobileDot = event.target.closest("[data-mobile-stats-dot]");
+      if (mobileDot) {
+        setMobileStatsIndex(Number(mobileDot.dataset.mobileStatsDot));
+        return;
+      }
+
       const item = event.target.closest("[data-stats-filter], [data-stats-book-index]");
       if (!item || !view.contains(item)) return;
 
@@ -1901,6 +2065,24 @@
       selectStatsDetail(item.dataset.statsFilter, item.dataset.statsValue || "");
       scrollStatsInspectorIntoView();
     });
+
+    let touchStartX = 0;
+    let touchStartY = 0;
+    view.addEventListener("touchstart", event => {
+      if (!event.target.closest("[data-mobile-stats-stage]")) return;
+      touchStartX = event.touches[0]?.clientX || 0;
+      touchStartY = event.touches[0]?.clientY || 0;
+    }, { passive: true });
+
+    view.addEventListener("touchend", event => {
+      if (!event.target.closest("[data-mobile-stats-stage]")) return;
+      const touch = event.changedTouches[0];
+      if (!touch) return;
+      const deltaX = touch.clientX - touchStartX;
+      const deltaY = touch.clientY - touchStartY;
+      if (Math.abs(deltaX) < 46 || Math.abs(deltaX) < Math.abs(deltaY) * 1.2) return;
+      setMobileStatsIndex(state.mobileStatsIndex + (deltaX < 0 ? 1 : -1));
+    }, { passive: true });
   }
 
   function renderStats() {
@@ -1957,7 +2139,10 @@
         </button>
       </div>
 
+      ${renderMobileStatsDeck({ years, authors, countries, totalPages, readBooksWithPages, yearCounts, countryCounts, tagCounts, periodCounts, topPeriod, repeatingAuthors, current })}
+
       <aside class="stats-inspector" id="statsInspector" aria-live="polite">
+        <button class="stats-inspector-close" type="button" data-stats-inspector-close aria-label="${escapeHTML(t().closeStatsInspector)}">×</button>
         ${renderStatsInspector(state.statsSelection)}
       </aside>
 
@@ -2005,6 +2190,7 @@
     `;
 
     bindStatsInteractions(view);
+    setMobileStatsIndex(state.mobileStatsIndex);
     hydrateStatsInspectorCovers();
   }
 
@@ -2251,6 +2437,31 @@
     update();
   }
 
+  function initializeMobileDock() {
+    const dock = $("#mobileDock");
+    if (!dock) return;
+    dock.hidden = false;
+
+    const update = () => {
+      document.body.dataset.mobileDock = window.scrollY > 260 ? "visible" : "hidden";
+    };
+
+    $$("[data-dock-view]", dock).forEach(button => {
+      button.addEventListener("click", () => setView(button.dataset.dockView, { focus: true }));
+    });
+
+    $("[data-dock-action='language']", dock)?.addEventListener("click", () => {
+      setLanguage(state.lang === "en" ? "de" : "en");
+    });
+
+    $("[data-dock-action='theme']", dock)?.addEventListener("click", () => {
+      setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
+    });
+
+    window.addEventListener("scroll", update, { passive: true });
+    update();
+  }
+
   function initializeTagMenu() {
     document.addEventListener("click", event => {
       const menu = $("#tagMenu");
@@ -2315,6 +2526,7 @@
     initializeTheme();
     initializeViewFromHash();
     initializeTopButton();
+    initializeMobileDock();
     initializeTagMenu();
     initializeCurrentBook();
     initializeOverlay();
@@ -2328,6 +2540,7 @@
     setView(savedView, { updateHash: false, focus: false });
 
     if (source.links?.whatsapp) $("#joinBtn").href = source.links.whatsapp;
+    if (source.links?.whatsapp) $("#mobileDockWhatsapp").href = source.links.whatsapp;
   }
 
   document.addEventListener("DOMContentLoaded", boot, { once: true });
