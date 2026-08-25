@@ -113,6 +113,10 @@
             <strong id="currentMeeting"></strong>
             <small id="currentNextDetail">Discussing this month’s book. Join WhatsApp for polls and meeting details.</small>
           </div>
+          <button class="current-memory" id="currentMemory" type="button" hidden>
+            <span id="currentMemoryLabel">Booked memory</span>
+            <strong id="currentMemoryText"></strong>
+          </button>
         </div>
         <div class="current-actions">
           <button class="button button-primary current-btn" id="currentBtn" type="button">Jump to book ↓</button>
@@ -252,6 +256,9 @@
 
       <div class="overlay-footer">
         <span id="overlayPublished"></span>
+        <button class="button button-secondary" id="overlayMapButton" type="button">
+          <span id="overlayMapText">See country on map</span>
+        </button>
         <a class="button button-secondary" id="overlayLink" href="#" target="_blank" rel="noopener noreferrer">
           <span id="overlayOpenLibText">View on Open Library ↗</span>
         </a>

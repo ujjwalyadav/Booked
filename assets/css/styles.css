@@ -484,6 +484,44 @@ h1 {
   line-height: 1.45;
 }
 
+.current-memory {
+  display: grid;
+  width: 100%;
+  gap: 3px;
+  margin-top: 9px;
+  padding: 11px 13px;
+  color: var(--fg);
+  text-align: left;
+  font-family: inherit;
+  background: color-mix(in srgb, var(--accent-soft) 54%, transparent);
+  border: 1px solid var(--accent-border);
+  border-radius: 14px;
+  transition:
+    transform var(--transition),
+    border-color var(--transition),
+    box-shadow var(--transition);
+}
+
+.current-memory:hover,
+.current-memory:focus-visible {
+  border-color: color-mix(in srgb, var(--accent) 52%, var(--line));
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
+}
+
+.current-memory span {
+  color: var(--accent);
+  font-size: .66rem;
+  font-weight: 900;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.current-memory strong {
+  font-size: .8rem;
+  line-height: 1.35;
+}
+
 /* ---------- Controls ---------- */
 
 .toolbox {

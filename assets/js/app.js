@@ -57,6 +57,7 @@
     mobileLibraryMode: getStored("booked_mobile_library_mode", "list"),
     statsSelection: { type: "all", value: "" },
     currentBookIndex: BOOKS.findIndex(book => book.current),
+    currentMemory: null,
     selectedMapCountry: null,
     lastFocusedElement: null
   };
@@ -65,6 +66,7 @@
   let worldFeatures = null;
   let worldMapDataPromise = null;
   let renderGeneration = 0;
+  let meetingTimerId = null;
 
   const $ = (selector, context = document) => context.querySelector(selector);
   const $$ = (selector, context = document) => Array.from(context.querySelectorAll(selector));
@@ -224,6 +226,66 @@
       month: "long",
       year: "numeric"
     }).format(date);
+  }
+
+  function getTimeZoneOffsetMs(date, timeZone) {
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false
+    }).formatToParts(date);
+    const values = Object.fromEntries(parts.map(part => [part.type, part.value]));
+    return Date.UTC(
+      Number(values.year),
+      Number(values.month) - 1,
+      Number(values.day),
+      Number(values.hour),
+      Number(values.minute),
+      Number(values.second)
+    ) - date.getTime();
+  }
+
+  function zonedTimeToDate(value, hour, minute = 0, timeZone = "Europe/Berlin") {
+    if (!value) return null;
+    const [year, month, day] = value.split("-").map(Number);
+    if (![year, month, day].every(Number.isFinite)) return null;
+    const guess = new Date(Date.UTC(year, month - 1, day, hour, minute, 0));
+    const offset = getTimeZoneOffsetMs(guess, timeZone);
+    return new Date(guess.getTime() - offset);
+  }
+
+  function getMeetingWindow(value) {
+    const start = zonedTimeToDate(value, 18);
+    const end = zonedTimeToDate(value, 20);
+    return start && end ? { start, end } : null;
+  }
+
+  function formatMeetingDateTime(value) {
+    const start = zonedTimeToDate(value, 18);
+    if (!start) return "";
+    const locale = state.lang === "de" ? "de-DE" : "en-GB";
+    return `${new Intl.DateTimeFormat(locale, {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "Europe/Berlin"
+    }).format(start)} ${t().germanyTime}`;
+  }
+
+  function formatCountdown(ms) {
+    const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    return t().countdownLeft(days, hours, minutes, seconds);
   }
 
   function getOpenAccessLink(book) {
@@ -687,6 +749,200 @@
     $("#metaSummary").textContent = t().metaSummary(BOOKS.length, years[0], years.at(-1));
   }
 
+  function updateMeetingCountdown() {
+    const current = BOOKS[state.currentBookIndex];
+    const panel = $("#currentNextPanel");
+    if (!current?.meetingDate || !panel) {
+      if (panel) panel.hidden = true;
+      return;
+    }
+
+    const meetingWindow = getMeetingWindow(current.meetingDate);
+    if (!meetingWindow) {
+      panel.hidden = true;
+      return;
+    }
+
+    const now = new Date();
+    const dateTime = formatMeetingDateTime(current.meetingDate);
+    panel.hidden = false;
+
+    if (now < meetingWindow.start) {
+      $("#currentNextLabel").textContent = t().nextMeeting;
+      $("#currentMeeting").textContent = dateTime;
+      $("#currentNextDetail").textContent = formatCountdown(meetingWindow.start.getTime() - now.getTime());
+      return;
+    }
+
+    if (now < meetingWindow.end) {
+      $("#currentNextLabel").textContent = t().meetingStatusLabel;
+      $("#currentMeeting").textContent = t().meetingNow;
+      $("#currentNextDetail").textContent = t().meetingNowDetail;
+      return;
+    }
+
+    $("#currentNextLabel").textContent = t().lastMeeting;
+    $("#currentMeeting").textContent = dateTime;
+    $("#currentNextDetail").textContent = t().meetingPastDetail;
+  }
+
+  function getBerlinTodayParts() {
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: "Europe/Berlin",
+      year: "numeric",
+      month: "numeric"
+    }).formatToParts(new Date());
+    const values = Object.fromEntries(parts.map(part => [part.type, part.value]));
+    return { year: Number(values.year), month: Number(values.month) };
+  }
+
+  function chooseRandom(items) {
+    return items[Math.floor(Math.random() * items.length)] || null;
+  }
+
+  function createCurrentMemory(current) {
+    const candidates = [];
+    const today = getBerlinTodayParts();
+
+    BOOKS
+      .filter(book => MONTH_ORDER[book.month] === today.month && book.year < today.year)
+      .sort((a, b) => b.year - a.year)
+      .slice(0, 2)
+      .forEach(book => {
+        candidates.push({
+          type: "anniversary",
+          year: book.year,
+          yearsAgo: today.year - book.year,
+          bookIndex: getBookIndex(book)
+        });
+      });
+
+    const sameAuthor = BOOKS.find(book => book !== current && book.author === current.author);
+    if (sameAuthor) {
+      candidates.push({
+        type: "sameAuthor",
+        author: current.author,
+        bookIndex: getBookIndex(sameAuthor)
+      });
+    }
+
+    const sameCountryCount = BOOKS.filter(book => book.country === current.country).length;
+    if (current.country && sameCountryCount > 1) {
+      candidates.push({
+        type: "sameCountry",
+        country: current.country,
+        count: sameCountryCount
+      });
+    }
+
+    const yearBooks = BOOKS.filter(book => book.year === current.year && !book.current);
+    const longestThisYear = yearBooks
+      .filter(getBookPages)
+      .slice()
+      .sort((a, b) => getBookPages(b) - getBookPages(a))[0];
+    if (longestThisYear) {
+      candidates.push({
+        type: "longestYear",
+        year: current.year,
+        bookIndex: getBookIndex(longestThisYear),
+        pages: getBookPages(longestThisYear)
+      });
+    }
+
+    const tagCounts = yearBooks.reduce((counts, book) => {
+      (book.tags || []).forEach(tag => {
+        counts[tag] = (counts[tag] || 0) + 1;
+      });
+      return counts;
+    }, {});
+    const topTag = sortedEntriesFromCount(tagCounts)[0];
+    if (topTag) {
+      candidates.push({
+        type: "topTagYear",
+        year: current.year,
+        tag: topTag[0],
+        count: topTag[1]
+      });
+    }
+
+    const fallback = getBooksByPages()[0];
+    if (fallback) {
+      candidates.push({
+        type: "longestOverall",
+        bookIndex: getBookIndex(fallback),
+        pages: getBookPages(fallback)
+      });
+    }
+
+    return chooseRandom(candidates);
+  }
+
+  function getCurrentMemoryText(memory) {
+    const book = Number.isFinite(memory?.bookIndex) ? BOOKS[memory.bookIndex] : null;
+    switch (memory?.type) {
+      case "anniversary":
+        return book ? t().memoryAnniversary(memory.yearsAgo, book.title) : "";
+      case "sameAuthor":
+        return book ? t().memorySameAuthor(memory.author, book.title) : "";
+      case "sameCountry":
+        return t().memorySameCountry(memory.country, memory.count);
+      case "longestYear":
+        return book ? t().memoryLongestYear(memory.year, book.title, memory.pages) : "";
+      case "topTagYear":
+        return t().memoryTopTagYear(memory.year, memory.tag, memory.count);
+      case "longestOverall":
+        return book ? t().memoryLongestOverall(book.title, memory.pages) : "";
+      default:
+        return "";
+    }
+  }
+
+  function renderCurrentMemory(current) {
+    const button = $("#currentMemory");
+    if (!button || !current) return;
+    state.currentMemory ||= createCurrentMemory(current);
+    const text = getCurrentMemoryText(state.currentMemory);
+    button.hidden = !text;
+    $("#currentMemoryLabel").textContent = t().bookedMemory;
+    $("#currentMemoryText").textContent = text;
+  }
+
+  function navigateToCurrentMemory() {
+    const memory = state.currentMemory;
+    if (!memory) return;
+
+    if (memory.type === "sameCountry") {
+      showCountryOnMap(memory.country);
+      return;
+    }
+
+    const book = Number.isFinite(memory.bookIndex) ? BOOKS[memory.bookIndex] : null;
+    if (memory.type === "anniversary" && book) {
+      setView("stats", { focus: true });
+      selectStatsDetail("year", String(book.year));
+      scrollStatsInspectorIntoView();
+      return;
+    }
+
+    if (memory.type === "sameAuthor" && memory.author) {
+      setView("stats", { focus: true });
+      selectStatsDetail("author", memory.author);
+      scrollStatsInspectorIntoView();
+      return;
+    }
+
+    if (memory.type === "topTagYear" && memory.tag) {
+      setView("stats", { focus: true });
+      selectStatsDetail("tag", memory.tag);
+      scrollStatsInspectorIntoView();
+      return;
+    }
+
+    setView("stats", { focus: true });
+    selectStatsDetail("pages");
+    scrollStatsInspectorIntoView();
+  }
+
   function updateCurrentText() {
     const current = BOOKS[state.currentBookIndex];
     const section = $("#current");
@@ -705,10 +961,10 @@
       currentPages ? formatPages(currentPages) : null
     ].filter(Boolean).join(" · ");
 
-    const meetingDate = formatMeetingDate(current.meetingDate);
-    $("#currentNextPanel").hidden = !meetingDate;
-    $("#currentMeeting").textContent = meetingDate || "";
-    $("#currentNextDetail").textContent = t().nextMeetingDetail(current.title);
+    window.clearInterval(meetingTimerId);
+    updateMeetingCountdown();
+    meetingTimerId = window.setInterval(updateMeetingCountdown, 1000);
+    renderCurrentMemory(current);
 
     const openLink = $("#currentOpenLink");
     const openAccess = getOpenAccessLink(current);
@@ -795,6 +1051,7 @@
     $("#overlayRatingLabelText").textContent = t().overlayRatingLabel;
     $("#overlayRatingInput").placeholder = t().overlayRatingPlaceholder;
     $("#overlayOpenLibText").textContent = t().overlayOpenLib;
+    $("#overlayMapText").textContent = t().overlayMap;
 
     $("#feedbackTitle").textContent = t().feedbackTitle;
     $("#feedbackSubtitle").textContent = t().feedbackSubtitle;
@@ -895,6 +1152,8 @@
         window.setTimeout(() => openOverlay(state.currentBookIndex, card), 260);
       });
     });
+
+    $("#currentMemory")?.addEventListener("click", navigateToCurrentMemory);
   }
 
   /* ---------------- Dialog and private notes ---------------- */
@@ -963,6 +1222,9 @@
     $("#overlayNoteEditable").value = meta.note || "";
     $("#overlayRatingInput").value = meta.rating || "";
     $("#overlayLink").href = book.link || fallbackOpenLibraryLink(book);
+    const mapButton = $("#overlayMapButton");
+    mapButton.hidden = !book.country;
+    mapButton.dataset.country = book.country || "";
 
     document.body.style.overflow = "hidden";
     if (typeof overlay.showModal === "function" && !overlay.open) {
@@ -993,6 +1255,12 @@
   function initializeOverlay() {
     const overlay = $("#overlay");
     $("#overlayClose").addEventListener("click", closeOverlay);
+    $("#overlayMapButton").addEventListener("click", event => {
+      const country = event.currentTarget.dataset.country;
+      if (!country) return;
+      closeOverlay();
+      showCountryOnMap(country);
+    });
 
     overlay.addEventListener("click", event => {
       if (event.target === overlay) closeOverlay();
@@ -1623,6 +1891,16 @@
   function selectMapCountry(country) {
     state.selectedMapCountry = country;
     renderMap();
+  }
+
+  function showCountryOnMap(country) {
+    if (!country) return;
+    state.selectedMapCountry = country;
+    setView("map", { focus: true });
+    renderMap();
+    window.requestAnimationFrame(() => {
+      $("#mapView")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
   }
 
   function showCountryInLibrary(country) {
