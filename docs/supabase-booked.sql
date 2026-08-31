@@ -86,8 +86,8 @@ revoke all on public.booked_comments from anon;
 revoke all on public.booked_comment_likes from anon;
 
 grant select, insert, update on public.booked_profiles to authenticated;
-grant select, insert, update on public.booked_ratings to authenticated;
-grant select, insert, update on public.booked_comments to authenticated;
+grant select, insert, update, delete on public.booked_ratings to authenticated;
+grant select, insert, update, delete on public.booked_comments to authenticated;
 grant select, insert, delete on public.booked_comment_likes to authenticated;
 grant usage, select on sequence public.booked_comments_id_seq to authenticated;
 
@@ -151,6 +151,12 @@ to authenticated
 using (public.booked_is_member() and (select auth.uid()) = user_id)
 with check (public.booked_is_member() and (select auth.uid()) = user_id);
 
+drop policy if exists "Members can delete their own ratings" on public.booked_ratings;
+create policy "Members can delete their own ratings"
+on public.booked_ratings for delete
+to authenticated
+using (public.booked_is_member() and (select auth.uid()) = user_id);
+
 drop policy if exists "Members can read public comments and their own private comments" on public.booked_comments;
 create policy "Members can read public comments and their own private comments"
 on public.booked_comments for select
@@ -169,6 +175,12 @@ on public.booked_comments for update
 to authenticated
 using (public.booked_is_member() and (select auth.uid()) = user_id)
 with check (public.booked_is_member() and (select auth.uid()) = user_id);
+
+drop policy if exists "Members can delete their own comments" on public.booked_comments;
+create policy "Members can delete their own comments"
+on public.booked_comments for delete
+to authenticated
+using (public.booked_is_member() and (select auth.uid()) = user_id);
 
 drop policy if exists "Members can read likes on public comments" on public.booked_comment_likes;
 create policy "Members can read likes on public comments"

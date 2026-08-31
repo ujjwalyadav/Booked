@@ -969,7 +969,7 @@
     }
 
     const bookId = getBookId(book);
-    const rating = Number($("[data-rating][data-active='true']", $("#ratingButtons"))?.dataset.rating || 0);
+    const rating = getSelectedRating();
     const comment = $("#overlayNoteEditable").value.trim();
     const visibility = state.member.commentVisibility === "private" ? "private" : "public";
     if (status) status.textContent = t().memberSaving;
@@ -999,6 +999,70 @@
     } catch (error) {
       console.warn("Booked member entry could not be saved.", error);
       if (status) status.textContent = t().memberSaveError;
+    }
+  }
+
+  async function clearMemberRating() {
+    const overlay = $("#overlay");
+    const user = getCurrentUser();
+    const book = BOOKS[Number(overlay?.dataset.index)];
+    const status = $("#memberStatus");
+    if (!state.member.client || !user || !book || !userEmailAllowed(user)) return;
+
+    const bookId = getBookId(book);
+    if (status) status.textContent = t().memberRemoving;
+
+    try {
+      const { error } = await state.member.client
+        .from("booked_ratings")
+        .delete()
+        .eq("book_id", bookId)
+        .eq("user_id", user.id);
+      if (error) throw error;
+      delete state.member.myRatings[bookId];
+      setRatingButtons(0);
+      await loadMemberScores();
+      refreshOverlayMemberUI(book);
+      renderBookRatingBadges();
+      if (state.view === "stats") renderStats();
+      if (status) status.textContent = t().memberRatingCleared;
+    } catch (error) {
+      console.warn("Booked rating could not be removed.", error);
+      if (status) status.textContent = t().memberRemoveError;
+    }
+  }
+
+  async function removeMemberComment() {
+    const overlay = $("#overlay");
+    const user = getCurrentUser();
+    const book = BOOKS[Number(overlay?.dataset.index)];
+    const status = $("#memberStatus");
+    if (!state.member.client || !user || !book || !userEmailAllowed(user)) return;
+
+    const bookId = getBookId(book);
+    const visibility = state.member.commentVisibility === "private" ? "private" : "public";
+    if (status) status.textContent = t().memberRemoving;
+
+    try {
+      const { error } = await state.member.client
+        .from("booked_comments")
+        .delete()
+        .eq("book_id", bookId)
+        .eq("user_id", user.id)
+        .eq("visibility", visibility);
+      if (error) throw error;
+      state.member.myComments[bookId] = {
+        ...(state.member.myComments[bookId] || {}),
+        [visibility]: ""
+      };
+      $("#overlayNoteEditable").value = "";
+      await Promise.all([loadMemberCommunityStats(), loadBookComments(book)]);
+      refreshOverlayMemberUI(book);
+      if (state.view === "stats") renderStats();
+      if (status) status.textContent = t().memberCommentRemoved;
+    } catch (error) {
+      console.warn("Booked comment could not be removed.", error);
+      if (status) status.textContent = t().memberRemoveError;
     }
   }
 
@@ -1053,6 +1117,13 @@
     });
   }
 
+  function getSelectedRating() {
+    return $$("[data-rating][data-active='true']", $("#ratingButtons"))
+      .map(button => Number(button.dataset.rating))
+      .filter(Number.isFinite)
+      .reduce((highest, rating) => Math.max(highest, rating), 0);
+  }
+
   function refreshOpenOverlayMemberData() {
     const overlay = $("#overlay");
     if (!overlay?.open && !overlay?.hasAttribute("open")) return;
@@ -1077,8 +1148,10 @@
     $("#memberChangePasswordBtn")?.toggleAttribute("hidden", true);
     $("#memberRatingGroup")?.toggleAttribute("hidden", !signedIn);
     $("#commentVisibilityGroup")?.toggleAttribute("hidden", !signedIn);
-    $("#memberSaveBtn")?.toggleAttribute("hidden", !signedIn);
+    $("#memberWriteActions")?.toggleAttribute("hidden", !signedIn);
     $("#overlayLocalRatingLabel")?.toggleAttribute("hidden", configured);
+    $("#memberClearRatingBtn")?.toggleAttribute("hidden", !signedIn || !state.member.myRatings[bookId]);
+    $("#memberRemoveCommentBtn")?.toggleAttribute("hidden", !signedIn || !comment.trim());
 
     if (configured) {
       $("#overlayLocalHint").textContent = signedIn
@@ -1990,6 +2063,8 @@
     $("[data-comment-visibility='public']").textContent = t().commentPublic;
     $("[data-comment-visibility='private']").textContent = t().commentPrivate;
     $("#memberSaveBtn").textContent = t().memberSaveButton;
+    $("#memberClearRatingBtn").textContent = t().memberClearRating;
+    $("#memberRemoveCommentBtn").textContent = t().memberRemoveComment;
     $("#publicCommentsTitle").textContent = t().publicCommentsTitle;
     $("#memberDialogBadge").textContent = t().memberDialogBadge;
     $("#memberLoginTab").textContent = t().memberLoginTab;
@@ -2265,6 +2340,12 @@
     };
 
     $("#overlayNoteEditable").addEventListener("input", debounce(persist, 120));
+    $("#overlayNoteEditable").addEventListener("click", () => {
+      if (membersConfigured() && !getCurrentUser()) openMemberDialog("login");
+    });
+    $("#overlayNoteEditable").addEventListener("focus", () => {
+      if (membersConfigured() && !getCurrentUser()) openMemberDialog("login");
+    });
     $("#overlayRatingInput").addEventListener("input", debounce(persist, 120));
     $("#overlayMemberAuthBtn")?.addEventListener("click", () => {
       if (getCurrentUser()) signOutMember();
@@ -2272,6 +2353,8 @@
     });
     $("#memberChangePasswordBtn")?.addEventListener("click", () => openMemberDialog("change"));
     $("#memberSaveBtn")?.addEventListener("click", saveMemberEntry);
+    $("#memberClearRatingBtn")?.addEventListener("click", clearMemberRating);
+    $("#memberRemoveCommentBtn")?.addEventListener("click", removeMemberComment);
     $$("[data-rating]", $("#ratingButtons")).forEach(button => {
       button.addEventListener("click", () => setRatingButtons(Number(button.dataset.rating)));
     });

@@ -328,6 +328,7 @@
             <button type="button" data-rating="4" aria-label="4 stars">★</button>
             <button type="button" data-rating="5" aria-label="5 stars">★</button>
           </div>
+          <button class="member-clear" id="memberClearRatingBtn" type="button" hidden>Clear rating</button>
         </div>
 
         <div class="comment-visibility" id="commentVisibilityGroup" hidden>
@@ -348,7 +349,10 @@
           <input id="overlayRatingInput" class="overlay-input" maxlength="100" placeholder="e.g. ★★★★☆ or 😭❤️">
         </label>
 
-        <button class="button button-primary member-save" id="memberSaveBtn" type="button" hidden>Save member note</button>
+        <div class="member-write-actions" id="memberWriteActions" hidden>
+          <button class="button button-primary member-save" id="memberSaveBtn" type="button">Save member note</button>
+          <button class="button button-secondary member-remove" id="memberRemoveCommentBtn" type="button">Remove note</button>
+        </div>
 
         <section class="public-comments" id="publicCommentsPanel" hidden>
           <h3 id="publicCommentsTitle">Member comments</h3>

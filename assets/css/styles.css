@@ -2332,9 +2332,36 @@ button.timeline-item:focus-visible {
 }
 
 .member-inline-auth,
-.member-save {
+.member-save,
+.member-remove {
   flex: 0 0 auto;
   white-space: nowrap;
+}
+
+.member-write-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.member-clear {
+  padding: .2rem .45rem;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  font: inherit;
+  font-size: .7rem;
+  font-weight: 850;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 3px;
+}
+
+.member-clear:hover,
+.member-clear:focus-visible {
+  color: var(--fg);
+  text-decoration-color: currentColor;
 }
 
 .member-inline-auth:not([hidden]) {
@@ -2349,6 +2376,15 @@ button.timeline-item:focus-visible {
 
 .overlay-personal[data-member-state="signed-out"] .overlay-label {
   opacity: .88;
+}
+
+.overlay-personal[data-member-state="signed-out"] .overlay-textarea {
+  cursor: pointer;
+}
+
+.overlay-personal[data-member-state="signed-out"] .overlay-textarea:focus {
+  border-color: var(--accent-border);
+  box-shadow: 0 0 0 4px var(--accent-soft);
 }
 
 .club-rating-summary {
@@ -3330,9 +3366,14 @@ button.timeline-item:focus-visible {
   }
 
   .member-inline-auth,
-  .member-save {
+  .member-save,
+  .member-remove {
     width: 100%;
     justify-content: center;
+  }
+
+  .member-write-actions {
+    display: grid;
   }
 
   .member-rating,
