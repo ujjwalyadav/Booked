@@ -130,6 +130,8 @@ members: {
 
 Use `allowedEmailDomains` only if every member signs in with the same email domain. Otherwise leave it empty and manage membership through `booked_allowed_members`. Ratings are averaged for the public library cards; public comments are visible only to logged-in members; private notes are visible only to the person who wrote them; members can like public comments.
 
+Forgot-password and change-password flows are handled by Supabase Auth. Keep your GitHub Pages URL in the Auth redirect allow list. If Supabase requires custom SMTP before template editing, configure SMTP first, then use `docs/supabase-confirm-signup-email.html` for confirm signup and `docs/supabase-reset-password-email.html` for password recovery.
+
 ## Local testing
 
 Opening `index.html` directly works for most features. A small local web server gives a closer match to GitHub Pages:

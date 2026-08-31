@@ -459,6 +459,31 @@
     return user.user_metadata?.full_name || user.user_metadata?.name || user.email || t().memberAnonymous;
   }
 
+  function getUserFirstName(user = getCurrentUser()) {
+    if (!user) return "";
+    return user.user_metadata?.first_name || getUserDisplayName(user).split(/\s+/)[0] || user.email || "";
+  }
+
+  function updateMemberHeader() {
+    const button = $("#memberAuthBtn");
+    const label = $("#memberAuthText");
+    if (!button || !label) return;
+
+    const configured = membersConfigured();
+    const user = getCurrentUser();
+    button.hidden = !configured;
+    button.dataset.signedIn = user ? "true" : "false";
+
+    if (user && userEmailAllowed(user)) {
+      const name = getUserFirstName(user);
+      label.textContent = t().memberLoggedInButton(name);
+      button.title = t().memberLoggedInTitle(getUserDisplayName(user));
+    } else {
+      label.textContent = t().memberSignInShort;
+      button.title = t().memberSignIn;
+    }
+  }
+
   function getBookScore(book) {
     return state.member.scores[getBookId(book)] || null;
   }
@@ -523,14 +548,42 @@
   }
 
   function setMemberAuthMode(mode) {
-    state.member.authMode = mode === "signup" ? "signup" : "login";
+    state.member.authMode = ["signup", "forgot", "change"].includes(mode) ? mode : "login";
     const signingUp = state.member.authMode === "signup";
+    const forgotPassword = state.member.authMode === "forgot";
+    const changingPassword = state.member.authMode === "change";
+    const passwordOnly = changingPassword;
     $("#memberNameFields")?.toggleAttribute("hidden", !signingUp);
-    $("#memberPassword")?.setAttribute("autocomplete", signingUp ? "new-password" : "current-password");
-    $("#memberSubmitBtn").textContent = signingUp ? t().memberSignupSubmit : t().memberLoginSubmit;
-    $("#memberDialogTitle").textContent = signingUp ? t().memberSignupTitle : t().memberLoginTitle;
-    $("#memberDialogSubtitle").textContent = signingUp ? t().memberSignupSubtitle : t().memberLoginSubtitle;
+    $("#memberEmail")?.closest("label")?.toggleAttribute("hidden", passwordOnly);
+    $("#memberPassword")?.closest("label")?.toggleAttribute("hidden", forgotPassword);
+    $("#memberPassword")?.toggleAttribute("required", !forgotPassword);
+    $("#memberPassword")?.setAttribute("autocomplete", signingUp || changingPassword ? "new-password" : "current-password");
+    $("#memberForgotPasswordBtn")?.toggleAttribute("hidden", state.member.authMode !== "login");
+
+    const submitLabel = {
+      login: t().memberLoginSubmit,
+      signup: t().memberSignupSubmit,
+      forgot: t().memberForgotSubmit,
+      change: t().memberChangeSubmit
+    }[state.member.authMode];
+    const title = {
+      login: t().memberLoginTitle,
+      signup: t().memberSignupTitle,
+      forgot: t().memberForgotTitle,
+      change: t().memberChangeTitle
+    }[state.member.authMode];
+    const subtitle = {
+      login: t().memberLoginSubtitle,
+      signup: t().memberSignupSubtitle,
+      forgot: t().memberForgotSubtitle,
+      change: t().memberChangeSubtitle
+    }[state.member.authMode];
+
+    $("#memberSubmitBtn").textContent = submitLabel;
+    $("#memberDialogTitle").textContent = title;
+    $("#memberDialogSubtitle").textContent = subtitle;
     setPressed($$("[data-member-auth-mode]"), button => button.dataset.memberAuthMode === state.member.authMode);
+    $(".member-auth-tabs")?.toggleAttribute("hidden", changingPassword);
   }
 
   function openMemberDialog(mode = "login") {
@@ -538,12 +591,14 @@
     if (!dialog || !membersConfigured()) return;
     setMemberAuthMode(mode);
     $("#memberAuthStatus").textContent = "";
+    $("#memberPassword").value = "";
     if (typeof dialog.showModal === "function" && !dialog.open) {
       dialog.showModal();
     } else {
       dialog.setAttribute("open", "");
     }
-    $("#memberEmail")?.focus();
+    const focusTarget = mode === "change" ? $("#memberPassword") : $("#memberEmail");
+    focusTarget?.focus();
   }
 
   function closeMemberDialog() {
@@ -570,6 +625,23 @@
     if (status) status.textContent = t().memberAuthWorking;
 
     try {
+      if (state.member.authMode === "forgot") {
+        const { error } = await client.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.href.split("#")[0]
+        });
+        if (error) throw error;
+        if (status) status.textContent = t().memberResetSent;
+        return;
+      }
+
+      if (state.member.authMode === "change") {
+        const { error } = await client.auth.updateUser({ password });
+        if (error) throw error;
+        if (status) status.textContent = t().memberPasswordChanged;
+        $("#memberPassword").value = "";
+        return;
+      }
+
       if (state.member.authMode === "signup") {
         if (!firstName || !lastName) {
           if (status) status.textContent = t().memberNameRequired;
@@ -871,8 +943,9 @@
     const myComments = state.member.myComments[bookId] || {};
     const comment = myComments[state.member.commentVisibility] || "";
 
-    $("#memberAuthBtn")?.toggleAttribute("hidden", !configured);
+    updateMemberHeader();
     $("#overlayMemberAuthBtn")?.toggleAttribute("hidden", !configured);
+    $("#memberChangePasswordBtn")?.toggleAttribute("hidden", !signedIn);
     $("#memberRatingGroup")?.toggleAttribute("hidden", !signedIn);
     $("#commentVisibilityGroup")?.toggleAttribute("hidden", !signedIn);
     $("#memberSaveBtn")?.toggleAttribute("hidden", !signedIn);
@@ -890,8 +963,6 @@
         : t().overlayNotePlaceholder;
       $("#overlayNoteEditable").disabled = !signedIn;
       $("#overlayMemberAuthBtn").textContent = user ? t().memberSignOut : t().memberSignIn;
-      $("#memberAuthText").textContent = user ? t().memberAccount : t().memberSignInShort;
-      $("#memberAuthBtn").title = user ? t().memberSignOut : t().memberSignIn;
       if (signedIn) $("#overlayNoteEditable").value = comment;
     } else {
       $("#overlayLocalHint").textContent = t().overlayLocalHint;
@@ -912,7 +983,7 @@
 
   async function initializeMembers() {
     const configured = membersConfigured();
-    $("#memberAuthBtn")?.toggleAttribute("hidden", !configured);
+    updateMemberHeader();
     if (!configured) return;
 
     try {
@@ -923,8 +994,11 @@
       state.member.ready = true;
       await upsertMemberProfile();
       await Promise.all([loadMemberScores(), loadMyRatings()]);
-      client.auth.onAuthStateChange(async (_event, session) => {
+      client.auth.onAuthStateChange(async (event, session) => {
         state.member.session = session;
+        if (event === "PASSWORD_RECOVERY") {
+          openMemberDialog("change");
+        }
         if (!session) {
           state.member.allowed = false;
           state.member.myRatings = {};
@@ -961,6 +1035,7 @@
       closeMemberDialog();
     });
     $("#memberAuthForm")?.addEventListener("submit", handleMemberAuthSubmit);
+    $("#memberForgotPasswordBtn")?.addEventListener("click", () => setMemberAuthMode("forgot"));
     $$("[data-member-auth-mode]").forEach(button => {
       button.addEventListener("click", () => setMemberAuthMode(button.dataset.memberAuthMode));
     });
@@ -1732,8 +1807,7 @@
     $("#overlayNoteEditable").placeholder = t().overlayNotePlaceholder;
     $("#overlayRatingLabelText").textContent = t().overlayRatingLabel;
     $("#overlayRatingInput").placeholder = t().overlayRatingPlaceholder;
-    $("#memberAuthText").textContent = getCurrentUser() ? t().memberAccount : t().memberSignInShort;
-    $("#memberAuthBtn").title = getCurrentUser() ? t().memberSignOut : t().memberSignIn;
+    updateMemberHeader();
     $("#overlayMemberAuthBtn").textContent = getCurrentUser() ? t().memberSignOut : t().memberSignIn;
     $("#memberRatingLabel").textContent = t().memberRatingLabel;
     $("#commentVisibilityLabel").textContent = t().commentVisibilityLabel;
@@ -1748,6 +1822,8 @@
     $("#memberLastNameLabel").textContent = t().memberLastName;
     $("#memberEmailLabel").textContent = t().memberEmail;
     $("#memberPasswordLabel").textContent = t().memberPassword;
+    $("#memberForgotPasswordBtn").textContent = t().memberForgotPassword;
+    $("#memberChangePasswordBtn").textContent = t().memberChangeButton;
     setMemberAuthMode(state.member.authMode);
     $("#overlayOpenLibText").textContent = t().overlayOpenLib;
     $("#overlayMapText").textContent = t().overlayMap;
@@ -2017,6 +2093,7 @@
       if (getCurrentUser()) signOutMember();
       else openMemberDialog("login");
     });
+    $("#memberChangePasswordBtn")?.addEventListener("click", () => openMemberDialog("change"));
     $("#memberSaveBtn")?.addEventListener("click", saveMemberEntry);
     $$("[data-rating]", $("#ratingButtons")).forEach(button => {
       button.addEventListener("click", () => setRatingButtons(Number(button.dataset.rating)));

@@ -687,6 +687,12 @@ h1 {
   font-weight: 720;
 }
 
+.member-btn[data-signed-in="true"] {
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-color: var(--accent-border);
+}
+
 .chip[data-active="true"],
 .view-chip[data-active="true"],
 .lang-chip[data-active="true"],
@@ -2130,6 +2136,22 @@ button.timeline-item:focus-visible {
   font-size: .76rem;
 }
 
+.member-link-button {
+  justify-self: start;
+  padding: 0;
+  color: var(--accent);
+  text-align: left;
+  background: transparent;
+  border: 0;
+  font: inherit;
+  font-size: .78rem;
+  font-weight: 800;
+}
+
+.member-link-button:hover {
+  text-decoration: underline;
+}
+
 .overlay-close {
   position: sticky;
   z-index: 8;
@@ -2957,7 +2979,7 @@ button.timeline-item:focus-visible {
 
   .site-actions {
     display: grid;
-    grid-template-columns: 42px minmax(86px, 104px) 42px 42px 42px;
+    grid-template-columns: 38px minmax(70px, 78px) minmax(78px, 1fr) 38px 38px;
     justify-content: center;
     width: 100%;
   }
@@ -2965,10 +2987,9 @@ button.timeline-item:focus-visible {
   .site-actions > * {
     width: auto;
     min-height: 38px;
-    padding: .42rem .52rem;
+    padding: .42rem .48rem;
   }
 
-  .member-btn span,
   .contact-btn span,
   .join-btn span {
     position: absolute;
@@ -2987,6 +3008,18 @@ button.timeline-item:focus-visible {
   .contact-btn,
   .join-btn {
     justify-content: center;
+  }
+
+  .member-btn {
+    overflow: hidden;
+  }
+
+  .member-btn span {
+    max-width: 96px;
+    overflow: hidden;
+    font-size: .72rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .hero {
