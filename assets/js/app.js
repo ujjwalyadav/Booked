@@ -518,6 +518,14 @@
       || url.search.includes("type=recovery");
   }
 
+  function isExistingAccountSignupResponse(data, error) {
+    const message = String(error?.message || "").toLowerCase();
+    return message.includes("already registered")
+      || message.includes("already exists")
+      || message.includes("user already")
+      || (data?.user && Array.isArray(data.user.identities) && data.user.identities.length === 0);
+  }
+
   function getCurrentUser() {
     return state.member.session?.user || null;
   }
@@ -525,6 +533,14 @@
   function getUserDisplayName(user = getCurrentUser()) {
     if (!user) return "";
     return user.user_metadata?.full_name || user.user_metadata?.name || user.email || t().memberAnonymous;
+  }
+
+  function getMemberContactLine(user = getCurrentUser()) {
+    if (!user) return "";
+    const name = getUserDisplayName(user);
+    const email = user.email || "";
+    if (name && email && name !== email) return `${name} <${email}>`;
+    return name || email;
   }
 
   function getUserFirstName(user = getCurrentUser()) {
@@ -705,8 +721,10 @@
       if (state.member.authMode === "change") {
         const { error } = await client.auth.updateUser({ password });
         if (error) throw error;
-        if (status) status.textContent = t().memberPasswordChanged;
         $("#memberPassword").value = "";
+        await signOutMember({ keepStatus: true });
+        setMemberAuthMode("login");
+        if (status) status.textContent = t().memberPasswordChanged;
         return;
       }
 
@@ -728,6 +746,13 @@
             }
           }
         });
+        if (isExistingAccountSignupResponse(data, error)) {
+          $("#memberPassword").value = "";
+          setMemberAuthMode("login");
+          $("#memberEmail").value = email;
+          if (status) status.textContent = t().memberAccountExists;
+          return;
+        }
         if (error) throw error;
 
         if (data.session) {
@@ -1974,6 +1999,7 @@
     $("#feedbackNameLabel").textContent = t().feedbackNameLabel;
     $("#feedbackName").placeholder = t().feedbackNamePlaceholder;
     $("#feedbackSubmitButton").textContent = t().feedbackSubmit;
+    updateFeedbackIdentityField();
 
     $("#feedbackCategory").innerHTML = `
       <option value="general">${escapeHTML(t().feedbackCategoryGeneral)}</option>
@@ -2254,6 +2280,16 @@
     $("#feedbackMessage").placeholder = prompts[category] || t().feedbackMessagePlaceholder;
   }
 
+  function updateFeedbackIdentityField() {
+    const field = $("#feedbackName");
+    const label = field?.closest("label");
+    const signedIn = Boolean(membersConfigured() && state.member.allowed && getCurrentUser());
+    if (!field || !label) return;
+    label.hidden = signedIn;
+    field.disabled = signedIn;
+    if (signedIn) field.value = "";
+  }
+
   function initializeFeedbackForm() {
     const form = $("#feedbackForm");
     const status = $("#feedbackStatus");
@@ -2270,7 +2306,8 @@
       }
 
       const message = $("#feedbackMessage").value.trim();
-      const name = $("#feedbackName").value.trim();
+      const signedInContact = membersConfigured() && state.member.allowed ? getMemberContactLine() : "";
+      const name = signedInContact || $("#feedbackName").value.trim();
       const category = $("#feedbackCategory");
       const categoryLabel = category.selectedOptions[0]?.textContent || category.value;
 
