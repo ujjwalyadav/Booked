@@ -96,6 +96,15 @@
         </svg>
         <span id="joinText">Join WhatsApp</span>
       </a>
+
+      <a class="pill instagram-btn" id="instagramBtn" href="#" target="_blank" rel="noopener noreferrer" title="Follow us on Instagram" hidden>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <rect x="4" y="4" width="16" height="16" rx="5" stroke="currentColor" stroke-width="1.8"></rect>
+          <circle cx="12" cy="12" r="3.5" stroke="currentColor" stroke-width="1.8"></circle>
+          <circle cx="17" cy="7" r="1" fill="currentColor"></circle>
+        </svg>
+        <span id="instagramText">Instagram</span>
+      </a>
     </div>
   </header>
 
@@ -119,9 +128,19 @@
     <a href="#feedback" data-dock-action="contact" aria-label="Contact">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4z"></path><path d="M4.5 6l7.5 6 7.5-6"></path></svg>
     </a>
-    <a id="mobileDockWhatsapp" href="https://chat.whatsapp.com/EStsFPtmF2PJy6HX54eLat" target="_blank" rel="noopener noreferrer" aria-label="Join WhatsApp">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 00-7.8 13.5L3 21l4.7-1.2A9 9 0 1012 3z"></path><path d="M9.5 8.8c-.2-.5-.4-.5-.7-.5h-.6c-.2 0-.5.1-.7.3-.2.3-.9.9-.9 2.2 0 1.3.9 2.6 1 2.8.1.2 1.8 2.8 4.4 3.8.6.2 1 .3 1.3.4.5.1.9.1 1.3.1.4 0 1.2-.4 1.4-.9.2-.5.2-.9.2-1-.1-.1-.2-.2-.5-.3l-1.5-.7c-.3-.1-.6-.2-.9.2l-.6.7c-.1.1-.3.2-.6.1-.3-.1-1.3-.5-2.5-1.6-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.4.1-.5l.4-.5c.1-.2.2-.4.3-.6.1-.2 0-.4 0-.5l-.7-1.6z"></path></svg>
-    </a>
+    <div class="mobile-social" id="mobileSocial">
+      <button type="button" data-dock-action="social" aria-label="Social links" aria-expanded="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a3 3 0 10-2.8-4"></path><path d="M6 13a3 3 0 100-6 3 3 0 000 6z"></path><path d="M18 22a3 3 0 100-6 3 3 0 000 6z"></path><path d="M8.7 11.6l6.6 4.8"></path><path d="M15.3 7.6l-6.6 2.8"></path></svg>
+      </button>
+      <div class="mobile-social-menu" id="mobileSocialMenu" hidden>
+        <a id="mobileDockWhatsapp" href="https://chat.whatsapp.com/EStsFPtmF2PJy6HX54eLat" target="_blank" rel="noopener noreferrer" aria-label="Join WhatsApp">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 00-7.8 13.5L3 21l4.7-1.2A9 9 0 1012 3z"></path><path d="M9.5 8.8c-.2-.5-.4-.5-.7-.5h-.6c-.2 0-.5.1-.7.3-.2.3-.9.9-.9 2.2 0 1.3.9 2.6 1 2.8.1.2 1.8 2.8 4.4 3.8.6.2 1 .3 1.3.4.5.1.9.1 1.3.1.4 0 1.2-.4 1.4-.9.2-.5.2-.9.2-1-.1-.1-.2-.2-.5-.3l-1.5-.7c-.3-.1-.6-.2-.9.2l-.6.7c-.1.1-.3.2-.6.1-.3-.1-1.3-.5-2.5-1.6-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.4.1-.5l.4-.5c.1-.2.2-.4.3-.6.1-.2 0-.4 0-.5l-.7-1.6z"></path></svg>
+        </a>
+        <a id="mobileDockInstagram" href="#" target="_blank" rel="noopener noreferrer" aria-label="Instagram" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="5"></rect><circle cx="12" cy="12" r="3.5"></circle><circle cx="17" cy="7" r="1"></circle></svg>
+        </a>
+      </div>
+    </div>
   </nav>
 
   <header class="hero">

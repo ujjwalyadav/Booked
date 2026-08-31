@@ -49,6 +49,7 @@ Open `assets/js/data.js`.
 - Add `pages`, `pageSourceName`, and `pageSourceUrl` from a legitimate original-language/original-edition source when available.
 - Add `meetingDate: "YYYY-MM-DD"` to the current book when a club date is scheduled.
 - Change the WhatsApp invitation under `links.whatsapp`.
+- Change the Instagram page under `links.instagram`.
 - Change the Google Forms endpoint and field IDs under `googleForm` when needed.
 
 Each book follows this structure:
@@ -131,6 +132,7 @@ members: {
 Use `allowedEmailDomains` only if every member signs in with the same email domain. Otherwise leave it empty and manage membership through `booked_allowed_members`. Ratings are averaged for the public library cards; public comments are visible only to logged-in members; private notes are visible only to the person who wrote them; members can like public comments.
 
 Forgot-password and change-password flows are handled by Supabase Auth. Keep your GitHub Pages URL in the Auth redirect allow list. If Supabase requires custom SMTP before template editing, configure SMTP first, then use `docs/supabase-confirm-signup-email.html` for confirm signup and `docs/supabase-reset-password-email.html` for password recovery.
+For password reset, also allow the marked recovery redirect URL: `https://ujjwalyadav.github.io/Booked/?booked-reset=1`.
 
 ## Local testing
 

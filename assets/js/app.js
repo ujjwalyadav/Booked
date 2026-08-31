@@ -450,6 +450,21 @@
     return Boolean(config.enabled && config.supabaseUrl && config.supabaseAnonKey);
   }
 
+  function getAuthRedirectUrl(marker = "") {
+    const url = new URL(window.location.href);
+    url.hash = "";
+    url.searchParams.delete("booked-reset");
+    if (marker) url.searchParams.set(marker, "1");
+    return url.href;
+  }
+
+  function isPasswordRecoveryReturn() {
+    const url = new URL(window.location.href);
+    return url.searchParams.has("booked-reset")
+      || window.location.hash.includes("type=recovery")
+      || url.search.includes("type=recovery");
+  }
+
   function getCurrentUser() {
     return state.member.session?.user || null;
   }
@@ -475,8 +490,8 @@
     button.dataset.signedIn = user ? "true" : "false";
 
     if (user && userEmailAllowed(user)) {
-      const name = getUserFirstName(user);
-      label.textContent = t().memberLoggedInButton(name);
+      const name = window.matchMedia("(max-width: 640px)").matches ? "" : getUserFirstName(user);
+      label.textContent = name ? t().memberLoggedInButton(name) : t().memberSignOut;
       button.title = t().memberLoggedInTitle(getUserDisplayName(user));
     } else {
       label.textContent = t().memberSignInShort;
@@ -627,7 +642,7 @@
     try {
       if (state.member.authMode === "forgot") {
         const { error } = await client.auth.resetPasswordForEmail(email, {
-          redirectTo: window.location.href.split("#")[0]
+          redirectTo: getAuthRedirectUrl("booked-reset")
         });
         if (error) throw error;
         if (status) status.textContent = t().memberResetSent;
@@ -652,7 +667,7 @@
           email,
           password,
           options: {
-            emailRedirectTo: window.location.href.split("#")[0],
+            emailRedirectTo: getAuthRedirectUrl(),
             data: {
               first_name: firstName,
               last_name: lastName,
@@ -667,7 +682,7 @@
           await checkMemberAllowed();
           if (!state.member.allowed) {
             if (status) status.textContent = t().memberEmailNotAllowed;
-            await signOutMember();
+            await signOutMember({ keepStatus: true });
             return;
           }
           await upsertMemberProfile();
@@ -682,7 +697,7 @@
         await checkMemberAllowed();
         if (!state.member.allowed) {
           if (status) status.textContent = t().memberEmailNotAllowed;
-          await signOutMember();
+          await signOutMember({ keepStatus: true });
           return;
         }
         await upsertMemberProfile();
@@ -699,8 +714,10 @@
     }
   }
 
-  async function signOutMember() {
+  async function signOutMember(options = {}) {
     if (!state.member.client) return;
+    if (!options.keepStatus) closeMemberDialog();
+    if (!options.keepStatus) $("#memberAuthStatus").textContent = "";
     await state.member.client.auth.signOut();
     state.member.session = null;
     state.member.allowed = false;
@@ -709,6 +726,8 @@
     state.member.myComments = {};
     translateStaticInterface();
     renderLibrary();
+    renderStats();
+    renderMap();
     refreshOpenOverlayMemberData();
   }
 
@@ -944,8 +963,8 @@
     const comment = myComments[state.member.commentVisibility] || "";
 
     updateMemberHeader();
-    $("#overlayMemberAuthBtn")?.toggleAttribute("hidden", !configured);
-    $("#memberChangePasswordBtn")?.toggleAttribute("hidden", !signedIn);
+    $("#overlayMemberAuthBtn")?.toggleAttribute("hidden", true);
+    $("#memberChangePasswordBtn")?.toggleAttribute("hidden", true);
     $("#memberRatingGroup")?.toggleAttribute("hidden", !signedIn);
     $("#commentVisibilityGroup")?.toggleAttribute("hidden", !signedIn);
     $("#memberSaveBtn")?.toggleAttribute("hidden", !signedIn);
@@ -962,7 +981,6 @@
         ? t().memberCommentPlaceholder(state.member.commentVisibility)
         : t().overlayNotePlaceholder;
       $("#overlayNoteEditable").disabled = !signedIn;
-      $("#overlayMemberAuthBtn").textContent = user ? t().memberSignOut : t().memberSignIn;
       if (signedIn) $("#overlayNoteEditable").value = comment;
     } else {
       $("#overlayLocalHint").textContent = t().overlayLocalHint;
@@ -988,16 +1006,22 @@
 
     try {
       const client = await ensureMemberClient();
+      const recoveryReturn = isPasswordRecoveryReturn();
       const { data } = await client.auth.getSession();
       state.member.session = data?.session || null;
       await checkMemberAllowed();
       state.member.ready = true;
       await upsertMemberProfile();
       await Promise.all([loadMemberScores(), loadMyRatings()]);
+      if (recoveryReturn && state.member.session) {
+        openMemberDialog("change");
+        window.history.replaceState(null, "", getAuthRedirectUrl());
+      }
       client.auth.onAuthStateChange(async (event, session) => {
         state.member.session = session;
         if (event === "PASSWORD_RECOVERY") {
           openMemberDialog("change");
+          window.history.replaceState(null, "", getAuthRedirectUrl());
         }
         if (!session) {
           state.member.allowed = false;
@@ -1006,6 +1030,8 @@
           state.member.myComments = {};
           translateStaticInterface();
           renderLibrary();
+          renderStats();
+          renderMap();
           refreshOpenOverlayMemberData();
           return;
         }
@@ -1078,6 +1104,22 @@
     } catch (error) {
       console.warn("Analytics script was not loaded.", error);
     }
+  }
+
+  function setExternalLink(element, url) {
+    if (!element) return;
+    const hasUrl = Boolean(url);
+    element.toggleAttribute("hidden", !hasUrl);
+    if (hasUrl) element.href = url;
+  }
+
+  function updateSocialLinks() {
+    const whatsapp = source.links?.whatsapp || "";
+    const instagram = source.links?.instagram || "";
+    setExternalLink($("#joinBtn"), whatsapp);
+    setExternalLink($("#mobileDockWhatsapp"), whatsapp);
+    setExternalLink($("#instagramBtn"), instagram);
+    setExternalLink($("#mobileDockInstagram"), instagram);
   }
 
   /* ---------------- Theme ---------------- */
@@ -1800,6 +1842,11 @@
     $("#contactBtn").title = t().contactTitle;
     $("#joinText").textContent = t().joinWhatsapp;
     $("#joinBtn").title = t().joinWhatsappTitle;
+    $("#instagramText").textContent = t().instagram;
+    $("#instagramBtn").title = t().instagramTitle;
+    $("[data-dock-action='social']")?.setAttribute("aria-label", t().socialLinks);
+    $("#mobileDockWhatsapp")?.setAttribute("aria-label", t().joinWhatsapp);
+    $("#mobileDockInstagram")?.setAttribute("aria-label", t().instagramTitle);
 
     $("#overlayClose").setAttribute("aria-label", t().overlayClose);
     $("#overlayLocalHint").textContent = t().overlayLocalHint;
@@ -1808,7 +1855,7 @@
     $("#overlayRatingLabelText").textContent = t().overlayRatingLabel;
     $("#overlayRatingInput").placeholder = t().overlayRatingPlaceholder;
     updateMemberHeader();
-    $("#overlayMemberAuthBtn").textContent = getCurrentUser() ? t().memberSignOut : t().memberSignIn;
+    $("#overlayMemberAuthBtn").textContent = t().memberSignIn;
     $("#memberRatingLabel").textContent = t().memberRatingLabel;
     $("#commentVisibilityLabel").textContent = t().commentVisibilityLabel;
     $("[data-comment-visibility='public']").textContent = t().commentPublic;
@@ -3148,6 +3195,24 @@
       setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
     });
 
+    $("[data-dock-action='social']", dock)?.addEventListener("click", event => {
+      const menu = $("#mobileSocialMenu");
+      const button = event.currentTarget;
+      if (!menu) return;
+      const willOpen = menu.hidden;
+      menu.hidden = !willOpen;
+      button.setAttribute("aria-expanded", willOpen ? "true" : "false");
+    });
+
+    document.addEventListener("click", event => {
+      const social = $("#mobileSocial");
+      const menu = $("#mobileSocialMenu");
+      const button = $("[data-dock-action='social']", dock);
+      if (!social || !menu || menu.hidden || social.contains(event.target)) return;
+      menu.hidden = true;
+      button?.setAttribute("aria-expanded", "false");
+    });
+
     window.addEventListener("scroll", update, { passive: true });
     update();
   }
@@ -3235,9 +3300,7 @@
     const savedView = state.view;
     setLanguage(savedLang);
     setView(savedView, { updateHash: false, focus: false });
-
-    if (source.links?.whatsapp) $("#joinBtn").href = source.links.whatsapp;
-    if (source.links?.whatsapp) $("#mobileDockWhatsapp").href = source.links.whatsapp;
+    updateSocialLinks();
   }
 
   document.addEventListener("DOMContentLoaded", boot, { once: true });

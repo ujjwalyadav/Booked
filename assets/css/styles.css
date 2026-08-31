@@ -826,6 +826,18 @@ h1 {
   box-shadow: 0 14px 28px rgb(18 140 126 / .28);
 }
 
+.instagram-btn {
+  color: white;
+  background: linear-gradient(135deg, #f58529, #dd2a7b 52%, #515bd4);
+  border-color: rgb(255 255 255 / .16);
+  text-decoration: none;
+  box-shadow: 0 10px 22px rgb(221 42 123 / .20);
+}
+
+.instagram-btn:hover {
+  box-shadow: 0 14px 28px rgb(221 42 123 / .28);
+}
+
 .filter-menu {
   position: relative;
 }
@@ -2584,6 +2596,39 @@ button.timeline-item:focus-visible {
     stroke: none;
   }
 
+  .mobile-social {
+    position: relative;
+    display: grid;
+    min-width: 0;
+  }
+
+  .mobile-social-menu {
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + 9px);
+    display: grid;
+    grid-template-columns: repeat(2, 44px);
+    gap: 7px;
+    padding: 7px;
+    background: color-mix(in srgb, var(--card) 92%, transparent);
+    border: 1px solid var(--line-strong);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(18px);
+  }
+
+  .mobile-social-menu a {
+    min-height: 44px;
+  }
+
+  #mobileDockWhatsapp {
+    color: #25d366;
+  }
+
+  #mobileDockInstagram {
+    color: #dd2a7b;
+  }
+
   .shell {
     width: min(calc(100% - 32px), 760px);
   }
@@ -2979,7 +3024,7 @@ button.timeline-item:focus-visible {
 
   .site-actions {
     display: grid;
-    grid-template-columns: 38px minmax(70px, 78px) minmax(78px, 1fr) 38px 38px;
+    grid-template-columns: 36px minmax(66px, 74px) minmax(76px, 1fr) 36px 36px 36px;
     justify-content: center;
     width: 100%;
   }
@@ -2991,6 +3036,7 @@ button.timeline-item:focus-visible {
   }
 
   .contact-btn span,
+  .instagram-btn span,
   .join-btn span {
     position: absolute;
     width: 1px;
