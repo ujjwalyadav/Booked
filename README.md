@@ -115,7 +115,7 @@ Booked can work like a small member-only reading diary while keeping the public 
 
 1. Create a Supabase project.
 2. In Supabase Auth, enable email/password signups.
-3. Add your GitHub Pages URL to the Supabase Auth redirect URLs.
+3. Add your live site URL to the Supabase Auth redirect URLs.
 4. Run `docs/supabase-booked.sql` in the Supabase SQL editor.
 5. Optional but recommended: add club member emails to `booked_allowed_members`. If the table is empty, any email/password account can use member features.
 6. Fill `assets/js/data.js` under `members`:
@@ -131,8 +131,8 @@ members: {
 
 Use `allowedEmailDomains` only if every member signs in with the same email domain. Otherwise leave it empty and manage membership through `booked_allowed_members`. Ratings are averaged for the public library cards; public comments are visible only to logged-in members; private notes are visible only to the person who wrote them; members can like public comments.
 
-Forgot-password and change-password flows are handled by Supabase Auth. Keep your GitHub Pages URL in the Auth redirect allow list. If Supabase requires custom SMTP before template editing, configure SMTP first, then use `docs/supabase-confirm-signup-email.html` for confirm signup and `docs/supabase-reset-password-email.html` for password recovery.
-For password reset, also allow the marked recovery redirect URL: `https://ujjwalyadav.github.io/Booked/?booked-reset=1`.
+Forgot-password and change-password flows are handled by Supabase Auth. Keep your live site URL in the Auth redirect allow list. If Supabase requires custom SMTP before template editing, configure SMTP first, then use `docs/supabase-confirm-signup-email.html` for confirm signup and `docs/supabase-reset-password-email.html` for password recovery.
+For the custom domain, set the Supabase Site URL to `https://bookedhd.com/` and allow both `https://bookedhd.com/` and `https://bookedhd.com/?booked-reset=1` as redirect URLs. Keep `https://ujjwalyadav.github.io/Booked/` and `https://ujjwalyadav.github.io/Booked/?booked-reset=1` temporarily while DNS is propagating or while testing the old address.
 
 ## Local testing
 
