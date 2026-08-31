@@ -468,6 +468,11 @@ window.BOOKED_DATA = Object.freeze({
     instagram: "https://www.instagram.com/booked.hd/"
   },
 
+  nextMeeting: {
+    meetingDate: "2026-09-27",
+    meetingTime: "16:00"
+  },
+
   googleForm: {
     action: "https://docs.google.com/forms/u/0/d/e/1FAIpQLSdKp4Xl2Al2hFHI3EDnfhkC7705L2PJaasKCyXKrRlYOX-1cw/formResponse",
     fields: {

@@ -57,7 +57,8 @@
     mobileLibraryMode: getStored("booked_mobile_library_mode", "list"),
     mobileStatsIndex: 0,
     statsSelection: { type: "all", value: "" },
-    currentBookIndex: BOOKS.findIndex(book => book.current),
+    currentBookIndex: getCurrentBookIndex(),
+    currentMeetingArchived: null,
     currentMemory: null,
     member: {
       client: null,
@@ -127,6 +128,13 @@
 
   function bookDateValue(book) {
     return (book.year * 100) + (MONTH_ORDER[book.month] || 0);
+  }
+
+  function getCurrentBookIndex() {
+    for (let index = BOOKS.length - 1; index >= 0; index -= 1) {
+      if (BOOKS[index].current) return index;
+    }
+    return -1;
   }
 
   function debounce(callback, delay = 150) {
@@ -278,14 +286,56 @@
     return new Date(guess.getTime() - offset);
   }
 
-  function getMeetingWindow(value) {
-    const start = zonedTimeToDate(value, 18);
-    const end = zonedTimeToDate(value, 20);
+  function getMeetingTimeParts(book) {
+    const [hour = 18, minute = 0] = String(book?.meetingTime || "18:00").split(":").map(Number);
+    return {
+      hour: Number.isFinite(hour) ? hour : 18,
+      minute: Number.isFinite(minute) ? minute : 0
+    };
+  }
+
+  function getUpcomingMeeting() {
+    const meeting = source.nextMeeting;
+    if (!meeting?.meetingDate) return null;
+    return {
+      title: meeting.title || t().nextMeetingBookPending,
+      author: meeting.author || "",
+      meetingDate: meeting.meetingDate,
+      meetingTime: meeting.meetingTime || "18:00",
+      isStandaloneMeeting: true
+    };
+  }
+
+  function getFeaturedMeeting(current = BOOKS[state.currentBookIndex]) {
+    if (current?.meetingDate && !isBookMeetingOver(current)) return current;
+    const upcoming = getUpcomingMeeting();
+    return upcoming || current;
+  }
+
+  function getMeetingWindow(book) {
+    const { hour, minute } = getMeetingTimeParts(book);
+    const start = zonedTimeToDate(book?.meetingDate, hour, minute);
+    const end = start ? new Date(start.getTime() + (2 * 60 * 60 * 1000)) : null;
     return start && end ? { start, end } : null;
   }
 
-  function formatMeetingDateTime(value) {
-    const start = zonedTimeToDate(value, 18);
+  function isBookMeetingOver(book, now = new Date()) {
+    if (!book?.meetingDate) return false;
+    const meetingWindow = getMeetingWindow(book);
+    return Boolean(meetingWindow && now >= meetingWindow.end);
+  }
+
+  function isCurrentlyReadingBook(book) {
+    return Boolean(book && BOOKS[state.currentBookIndex] === book);
+  }
+
+  function isReadBook(book, now = new Date()) {
+    return Boolean(book && (!book.current || isBookMeetingOver(book, now)));
+  }
+
+  function formatMeetingDateTime(book) {
+    const { hour, minute } = getMeetingTimeParts(book);
+    const start = zonedTimeToDate(book?.meetingDate, hour, minute);
     if (!start) return "";
     const locale = state.lang === "de" ? "de-DE" : "en-GB";
     return `${new Intl.DateTimeFormat(locale, {
@@ -319,14 +369,16 @@
       .replace(/;/g, "\\;");
   }
 
-  function getCalendarInvite(current) {
-    if (!current?.meetingDate) return null;
-    const meetingWindow = getMeetingWindow(current.meetingDate);
+  function getCalendarInvite(meeting) {
+    if (!meeting?.meetingDate) return null;
+    const meetingWindow = getMeetingWindow(meeting);
     if (!meetingWindow) return null;
 
     const whatsapp = source.links?.whatsapp || "";
-    const title = `Booked: ${current.title}`;
-    const description = t().calendarDescription(current.title, current.author, whatsapp);
+    const eventTitle = meeting.isStandaloneMeeting ? "Booked meeting" : `Booked: ${meeting.title}`;
+    const description = meeting.isStandaloneMeeting
+      ? t().calendarDescriptionPending(whatsapp)
+      : t().calendarDescription(meeting.title, meeting.author, whatsapp);
     const lines = [
       "BEGIN:VCALENDAR",
       "VERSION:2.0",
@@ -334,17 +386,17 @@
       "CALSCALE:GREGORIAN",
       "METHOD:PUBLISH",
       "BEGIN:VEVENT",
-      `UID:${getBookId(current)}-${current.meetingDate}@booked`,
+      `UID:${getBookId(meeting)}-${meeting.meetingDate}@booked`,
       `DTSTAMP:${formatCalendarDate(new Date())}`,
       `DTSTART:${formatCalendarDate(meetingWindow.start)}`,
       `DTEND:${formatCalendarDate(meetingWindow.end)}`,
-      `SUMMARY:${escapeCalendarText(title)}`,
+      `SUMMARY:${escapeCalendarText(eventTitle)}`,
       `DESCRIPTION:${escapeCalendarText(description)}`,
       `LOCATION:${escapeCalendarText(t().calendarLocation)}`,
       "BEGIN:VALARM",
       "TRIGGER:-P1D",
       "ACTION:DISPLAY",
-      `DESCRIPTION:${escapeCalendarText(title)}`,
+      `DESCRIPTION:${escapeCalendarText(eventTitle)}`,
       "END:VALARM",
       "END:VEVENT",
       "END:VCALENDAR"
@@ -352,12 +404,12 @@
 
     return {
       content: `${lines.join("\r\n")}\r\n`,
-      fileName: `${t().calendarFileName(current.title) || "booked-meeting"}.ics`
+      fileName: `${t().calendarFileName(meeting.title || "meeting") || "booked-meeting"}.ics`
     };
   }
 
   function downloadCalendarInvite() {
-    const invite = getCalendarInvite(BOOKS[state.currentBookIndex]);
+    const invite = getCalendarInvite(getFeaturedMeeting());
     if (!invite) return;
 
     const blob = new Blob([invite.content], { type: "text/calendar;charset=utf-8" });
@@ -1313,7 +1365,7 @@
     card.dataset.bookId = getBookId(book);
     card.setAttribute("aria-label", t().cardOpen(book.title, book.author));
 
-    const currentRibbon = book.current
+    const currentRibbon = isCurrentlyReadingBook(book)
       ? `<span class="current-ribbon">${escapeHTML(t().currentlyReading)}</span>`
       : "";
     const openAccess = getOpenAccessLink(book);
@@ -1565,26 +1617,39 @@
 
   function updateMeetingCountdown() {
     const current = BOOKS[state.currentBookIndex];
+    const meeting = getFeaturedMeeting(current);
     const panel = $("#currentNextPanel");
-    if (!current?.meetingDate || !panel) {
+    if (!meeting?.meetingDate || !panel) {
       if (panel) panel.hidden = true;
       return;
     }
 
-    const meetingWindow = getMeetingWindow(current.meetingDate);
+    const meetingWindow = getMeetingWindow(meeting);
     if (!meetingWindow) {
       panel.hidden = true;
       return;
     }
 
     const now = new Date();
-    const dateTime = formatMeetingDateTime(current.meetingDate);
+    const dateTime = formatMeetingDateTime(meeting);
+    const archived = current?.meetingDate ? isBookMeetingOver(current, now) : false;
     panel.hidden = false;
+
+    if (state.currentMeetingArchived !== archived) {
+      const hadPreviousState = state.currentMeetingArchived !== null;
+      state.currentMeetingArchived = archived;
+      if (hadPreviousState) {
+        renderLibrary();
+        if (state.view === "stats") renderStats();
+      }
+    }
 
     if (now < meetingWindow.start) {
       $("#currentNextLabel").textContent = t().nextMeeting;
       $("#currentMeeting").textContent = dateTime;
-      $("#currentNextDetail").textContent = formatCountdown(meetingWindow.start.getTime() - now.getTime());
+      $("#currentNextDetail").textContent = meeting.isStandaloneMeeting
+        ? `${formatCountdown(meetingWindow.start.getTime() - now.getTime())} · ${t().nextMeetingBookPending}`
+        : formatCountdown(meetingWindow.start.getTime() - now.getTime());
       return;
     }
 
@@ -1649,7 +1714,7 @@
       });
     }
 
-    const yearBooks = BOOKS.filter(book => book.year === current.year && !book.current);
+    const yearBooks = BOOKS.filter(book => book.year === current.year && isReadBook(book));
     const longestThisYear = yearBooks
       .filter(getBookPages)
       .slice()
@@ -1779,11 +1844,12 @@
     updateMeetingCountdown();
     meetingTimerId = window.setInterval(updateMeetingCountdown, 1000);
     renderCurrentMemory(current);
-    setCurrentResponseButtons(current);
+    const featuredMeeting = getFeaturedMeeting(current);
+    setCurrentResponseButtons(featuredMeeting);
 
     const calendarButton = $("#currentCalendarBtn");
     if (calendarButton) {
-      calendarButton.hidden = !current.meetingDate;
+      calendarButton.hidden = !featuredMeeting?.meetingDate;
       calendarButton.textContent = t().addToCalendar;
       calendarButton.title = t().addToCalendarTitle;
     }
@@ -2399,7 +2465,7 @@
 
   function renderPageRankingLegacy(maxItems = Infinity) {
     const books = BOOKS
-      .filter(book => getBookPages(book) && !book.current)
+      .filter(book => getBookPages(book) && isReadBook(book))
       .slice()
       .sort((a, b) => getBookPages(b) - getBookPages(a) || a.title.localeCompare(b.title))
       .slice(0, maxItems);
@@ -2446,7 +2512,7 @@
 
   function getBooksByPages() {
     return BOOKS
-      .filter(book => getBookPages(book) && !book.current)
+      .filter(book => getBookPages(book) && isReadBook(book))
       .slice()
       .sort((a, b) => getBookPages(b) - getBookPages(a) || a.title.localeCompare(b.title));
   }
@@ -2495,11 +2561,13 @@
         return BOOKS.filter(book => getPublicationPeriod(book.published) === value);
       case "pages":
         return BOOKS
-          .filter(book => getBookPages(book) && !book.current)
+          .filter(book => getBookPages(book) && isReadBook(book))
           .slice()
           .sort((a, b) => getBookPages(b) - getBookPages(a) || a.title.localeCompare(b.title));
-      case "current":
-        return BOOKS.filter(book => book.current);
+      case "current": {
+        const current = BOOKS[state.currentBookIndex];
+        return current ? [current] : [];
+      }
       case "years":
       case "authors":
       case "countries":
@@ -2545,8 +2613,11 @@
 
   function getStatsFacts(selection, books) {
     const booksWithPages = books.filter(book => getBookPages(book));
-    const totalPages = booksWithPages.reduce((sum, book) => sum + getBookPages(book), 0);
-    const averagePages = booksWithPages.length ? Math.round(totalPages / booksWithPages.length) : null;
+    const pageFactBooks = ["book", "current"].includes(selection?.type)
+      ? booksWithPages
+      : booksWithPages.filter(book => isReadBook(book));
+    const totalPages = pageFactBooks.reduce((sum, book) => sum + getBookPages(book), 0);
+    const averagePages = pageFactBooks.length ? Math.round(totalPages / pageFactBooks.length) : null;
     const oldest = books.filter(book => Number.isFinite(book.published)).sort((a, b) => a.published - b.published)[0];
     const newest = books.filter(book => Number.isFinite(book.published)).sort((a, b) => b.published - a.published)[0];
     const years = [...new Set(BOOKS.map(book => book.year))].sort((a, b) => a - b);
@@ -2554,14 +2625,14 @@
     const authorEntries = sortedEntriesFromCount(countBy(BOOKS, book => book.author));
     const countryEntries = sortedEntriesFromCount(countBy(BOOKS, book => book.country));
     const repeatingAuthors = authorEntries.filter(([, count]) => count > 1);
-    const longest = BOOKS.filter(book => getBookPages(book) && !book.current)
+    const longest = BOOKS.filter(book => getBookPages(book) && isReadBook(book))
       .slice()
       .sort((a, b) => getBookPages(b) - getBookPages(a))[0];
 
     switch (selection?.type) {
       case "pages":
         return [
-          t().statsPagesKnown(booksWithPages.length, totalPages),
+          t().statsPagesKnown(pageFactBooks.length, totalPages),
           averagePages ? t().statsAveragePages(averagePages) : "",
           longest ? t().statsLongestFact(longest.title, getBookPages(longest)) : ""
         ].filter(Boolean);
@@ -2587,7 +2658,7 @@
       default:
         return [
           t().statsBookCount(books.length),
-          t().statsPagesKnown(booksWithPages.length, totalPages),
+          t().statsPagesKnown(pageFactBooks.length, totalPages),
           averagePages ? t().statsAveragePages(averagePages) : "",
           oldest ? t().statsOldest(oldest.title, oldest.published) : "",
           newest && newest !== oldest ? t().statsNewest(newest.title, newest.published) : ""
@@ -2927,9 +2998,10 @@
     const years = [...new Set(BOOKS.map(book => book.year))].sort((a, b) => a - b);
     const authors = new Set(BOOKS.map(book => book.author));
     const countries = new Set(BOOKS.map(book => book.country));
-    const current = BOOKS.find(book => book.current);
+    const now = new Date();
+    const current = BOOKS[state.currentBookIndex];
     const booksWithPages = BOOKS.filter(book => getBookPages(book));
-    const readBooksWithPages = booksWithPages.filter(book => !book.current);
+    const readBooksWithPages = booksWithPages.filter(book => isReadBook(book, now));
     const totalPages = readBooksWithPages.reduce((sum, book) => sum + getBookPages(book), 0);
 
     const yearCounts = countBy(BOOKS, book => String(book.year));

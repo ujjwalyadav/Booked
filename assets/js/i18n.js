@@ -40,6 +40,10 @@ window.BOOKED_I18N = Object.freeze({
         `Booked meeting to discuss ${title} by ${author}.`,
         link ? `Join WhatsApp for meeting details: ${link}` : "Join WhatsApp for meeting details."
       ].join("\n"),
+      calendarDescriptionPending: link => [
+        "Booked meeting. The book will be chosen soon.",
+        link ? `Join WhatsApp for meeting details: ${link}` : "Join WhatsApp for meeting details."
+      ].join("\n"),
       calendarFileName: title => `booked-${title}`.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, ""),
       readOpenAccess: "Read open access ↗",
       openAccessBadge: "Open access",
@@ -48,6 +52,7 @@ window.BOOKED_I18N = Object.freeze({
       meetingDate: date => `Meeting: ${date}`,
       nextMeeting: "Next meeting",
       nextMeetingDetail: title => `Discussing ${title}. Join WhatsApp for polls and meeting details.`,
+      nextMeetingBookPending: "Book to be chosen",
       germanyTime: "CET",
       countdownLeft: (days, hours, minutes, seconds) => [
         days ? `${days}d` : "",
@@ -57,7 +62,7 @@ window.BOOKED_I18N = Object.freeze({
       ].filter(Boolean).join(" "),
       meetingStatusLabel: "Meeting",
       meetingNow: "Meeting is now",
-      meetingNowDetail: "This stays live until 20:00 CET.",
+      meetingNowDetail: "This stays live for the two-hour meeting window.",
       lastMeeting: "Last meeting",
       meetingPastDetail: "This meeting is now in the archive.",
       bookedMemory: "Booked memory",
@@ -317,6 +322,10 @@ window.BOOKED_I18N = Object.freeze({
         `Booked-Treffen zu ${title} von ${author}.`,
         link ? `WhatsApp für Treffen-Infos: ${link}` : "WhatsApp für Treffen-Infos."
       ].join("\n"),
+      calendarDescriptionPending: link => [
+        "Booked-Treffen. Das Buch wird bald ausgewählt.",
+        link ? `WhatsApp für Treffen-Infos: ${link}` : "WhatsApp für Treffen-Infos."
+      ].join("\n"),
       calendarFileName: title => `booked-${title}`.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, ""),
       readOpenAccess: "Open Access lesen ↗",
       openAccessBadge: "Open Access",
@@ -325,6 +334,7 @@ window.BOOKED_I18N = Object.freeze({
       meetingDate: date => `Treffen: ${date}`,
       nextMeeting: "Nächstes Treffen",
       nextMeetingDetail: title => `Diskussion zu ${title}. Tritt WhatsApp für Abstimmungen und Treffen-Infos bei.`,
+      nextMeetingBookPending: "Buch wird noch ausgewählt",
       germanyTime: "CET",
       countdownLeft: (days, hours, minutes, seconds) => [
         days ? `${days}T` : "",
@@ -334,7 +344,7 @@ window.BOOKED_I18N = Object.freeze({
       ].filter(Boolean).join(" "),
       meetingStatusLabel: "Treffen",
       meetingNow: "Das Treffen ist jetzt",
-      meetingNowDetail: "Diese Anzeige bleibt bis 20:00 Uhr CET aktiv.",
+      meetingNowDetail: "Diese Anzeige bleibt während des zweistündigen Treffens aktiv.",
       lastMeeting: "Letztes Treffen",
       meetingPastDetail: "Dieses Treffen liegt jetzt im Archiv.",
       bookedMemory: "Booked-Erinnerung",
