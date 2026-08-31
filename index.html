@@ -73,6 +73,14 @@
         <button class="lang-chip" type="button" data-lang="de" data-active="false" aria-pressed="false">DE</button>
       </div>
 
+      <button class="pill member-btn" id="memberAuthBtn" type="button" title="Member sign in" hidden>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M20 21a8 8 0 10-16 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+          <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.8"></circle>
+        </svg>
+        <span id="memberAuthText">Members</span>
+      </button>
+
       <a class="pill contact-btn" id="contactBtn" href="#feedback" title="Contact us">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M4 5h16v14H4z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"></path>
@@ -276,17 +284,54 @@
       </div>
 
       <div class="overlay-personal">
-        <p class="overlay-local-hint" id="overlayLocalHint">Your note and rating are saved only in this browser (not shared publicly).</p>
+        <div class="member-panel-head">
+          <div>
+            <p class="overlay-local-hint" id="overlayLocalHint">Your note and rating are saved only in this browser (not shared publicly).</p>
+            <p class="member-status" id="memberStatus" role="status" aria-live="polite"></p>
+          </div>
+          <button class="button button-secondary member-inline-auth" id="overlayMemberAuthBtn" type="button" hidden>Sign in with Google</button>
+        </div>
+
+        <div class="club-rating-summary" id="clubRatingSummary" hidden>
+          <strong id="clubAverageRating">--</strong>
+          <span id="clubRatingCount">No ratings yet</span>
+        </div>
+
+        <div class="member-rating" id="memberRatingGroup" hidden>
+          <span id="memberRatingLabel">Your rating</span>
+          <div class="rating-buttons" id="ratingButtons" role="group" aria-label="Your rating">
+            <button type="button" data-rating="1" aria-label="1 star">★</button>
+            <button type="button" data-rating="2" aria-label="2 stars">★</button>
+            <button type="button" data-rating="3" aria-label="3 stars">★</button>
+            <button type="button" data-rating="4" aria-label="4 stars">★</button>
+            <button type="button" data-rating="5" aria-label="5 stars">★</button>
+          </div>
+        </div>
+
+        <div class="comment-visibility" id="commentVisibilityGroup" hidden>
+          <span id="commentVisibilityLabel">Comment visibility</span>
+          <div class="pill lang-switch">
+            <button class="lang-chip" type="button" data-comment-visibility="public" data-active="true" aria-pressed="true">Public</button>
+            <button class="lang-chip" type="button" data-comment-visibility="private" data-active="false" aria-pressed="false">Private</button>
+          </div>
+        </div>
 
         <label class="overlay-label" for="overlayNoteEditable">
           <span id="overlayNoteLabelText">Club thoughts (editable)</span>
           <textarea id="overlayNoteEditable" class="overlay-textarea" maxlength="4000" placeholder="Write what your group thought, favorite scenes, quotes…"></textarea>
         </label>
 
-        <label class="overlay-label" for="overlayRatingInput">
+        <label class="overlay-label" id="overlayLocalRatingLabel" for="overlayRatingInput">
           <span id="overlayRatingLabelText">Your rating / emoji (optional)</span>
           <input id="overlayRatingInput" class="overlay-input" maxlength="100" placeholder="e.g. ★★★★☆ or 😭❤️">
         </label>
+
+        <button class="button button-primary member-save" id="memberSaveBtn" type="button" hidden>Save member note</button>
+
+        <section class="public-comments" id="publicCommentsPanel" hidden>
+          <h3 id="publicCommentsTitle">Member comments</h3>
+          <div id="publicCommentsList"></div>
+        </section>
       </div>
 
       <div class="overlay-footer">
@@ -302,6 +347,48 @@
   </dialog>
 
   <a class="top" href="#top" id="toTop" title="Back to top" hidden>↑ Top</a>
+
+  <dialog id="memberDialog" class="member-dialog" aria-labelledby="memberDialogTitle">
+    <article class="member-dialog-panel">
+      <button class="overlay-close" id="memberDialogClose" type="button" aria-label="Close member login">×</button>
+      <div class="member-dialog-head">
+        <span class="eyebrow" id="memberDialogBadge">Booked members</span>
+        <h2 id="memberDialogTitle">Sign in to Booked</h2>
+        <p id="memberDialogSubtitle">Rate books, write private notes, and join the member conversation.</p>
+      </div>
+
+      <div class="member-auth-tabs" role="group" aria-label="Member authentication mode">
+        <button class="chip" id="memberLoginTab" type="button" data-member-auth-mode="login" data-active="true" aria-pressed="true">Log in</button>
+        <button class="chip" id="memberSignupTab" type="button" data-member-auth-mode="signup" data-active="false" aria-pressed="false">Sign up</button>
+      </div>
+
+      <form id="memberAuthForm" class="member-auth-form">
+        <div class="member-name-grid" id="memberNameFields" hidden>
+          <label for="memberFirstName">
+            <span id="memberFirstNameLabel">First name</span>
+            <input id="memberFirstName" type="text" autocomplete="given-name" maxlength="80">
+          </label>
+          <label for="memberLastName">
+            <span id="memberLastNameLabel">Last name</span>
+            <input id="memberLastName" type="text" autocomplete="family-name" maxlength="80">
+          </label>
+        </div>
+
+        <label for="memberEmail">
+          <span id="memberEmailLabel">Email</span>
+          <input id="memberEmail" type="email" autocomplete="email" required>
+        </label>
+
+        <label for="memberPassword">
+          <span id="memberPasswordLabel">Password</span>
+          <input id="memberPassword" type="password" autocomplete="current-password" minlength="8" required>
+        </label>
+
+        <button class="button button-primary" id="memberSubmitBtn" type="submit">Log in</button>
+        <p class="member-auth-status" id="memberAuthStatus" role="status" aria-live="polite"></p>
+      </form>
+    </article>
+  </dialog>
 
   <footer class="shell site-footer">
     <div>

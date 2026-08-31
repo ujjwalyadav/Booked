@@ -475,6 +475,13 @@ window.BOOKED_DATA = Object.freeze({
     }
   },
 
+  members: {
+    enabled: true,
+    supabaseUrl: "https://vlsotmfdcbilcrwvlzqy.supabase.co",
+    supabaseAnonKey: "sb_publishable_tXQScIoYgGIJsM10AQA2_A_Rcxh3bK2",
+    allowedEmailDomains: []
+  },
+
   analytics: {
     enabled: true,
     provider: "umami",

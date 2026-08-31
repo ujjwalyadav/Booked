@@ -108,6 +108,28 @@ For a hosted service such as Plausible, use `provider: "plausible"`, set its scr
 
 Do not place private API keys, passwords, or secrets in these files. GitHub Pages exposes all frontend code to visitors.
 
+## Optional member ratings and comments
+
+Booked can work like a small member-only reading diary while keeping the public site unchanged for signed-out visitors.
+
+1. Create a Supabase project.
+2. In Supabase Auth, enable email/password signups.
+3. Add your GitHub Pages URL to the Supabase Auth redirect URLs.
+4. Run `docs/supabase-booked.sql` in the Supabase SQL editor.
+5. Optional but recommended: add club member emails to `booked_allowed_members`. If the table is empty, any email/password account can use member features.
+6. Fill `assets/js/data.js` under `members`:
+
+```js
+members: {
+  enabled: true,
+  supabaseUrl: "https://your-project.supabase.co",
+  supabaseAnonKey: "your-public-anon-key",
+  allowedEmailDomains: []
+}
+```
+
+Use `allowedEmailDomains` only if every member signs in with the same email domain. Otherwise leave it empty and manage membership through `booked_allowed_members`. Ratings are averaged for the public library cards; public comments are visible only to logged-in members; private notes are visible only to the person who wrote them; members can like public comments.
+
 ## Local testing
 
 Opening `index.html` directly works for most features. A small local web server gives a closer match to GitHub Pages:

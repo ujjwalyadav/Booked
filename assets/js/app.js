@@ -59,6 +59,18 @@
     statsSelection: { type: "all", value: "" },
     currentBookIndex: BOOKS.findIndex(book => book.current),
     currentMemory: null,
+    member: {
+      client: null,
+      session: null,
+      scores: {},
+      myRatings: {},
+      comments: {},
+      myComments: {},
+      commentVisibility: "public",
+      authMode: "login",
+      allowed: false,
+      ready: false
+    },
     selectedMapCountry: null,
     lastFocusedElement: null
   };
@@ -68,6 +80,7 @@
   let worldMapDataPromise = null;
   let renderGeneration = 0;
   let meetingTimerId = null;
+  let supabaseLoadPromise = null;
 
   const $ = (selector, context = document) => context.querySelector(selector);
   const $$ = (selector, context = document) => Array.from(context.querySelectorAll(selector));
@@ -426,6 +439,533 @@
     }
   }
 
+  /* ---------------- Members, ratings, and comments ---------------- */
+
+  function getMemberConfig() {
+    return source.members || {};
+  }
+
+  function membersConfigured() {
+    const config = getMemberConfig();
+    return Boolean(config.enabled && config.supabaseUrl && config.supabaseAnonKey);
+  }
+
+  function getCurrentUser() {
+    return state.member.session?.user || null;
+  }
+
+  function getUserDisplayName(user = getCurrentUser()) {
+    if (!user) return "";
+    return user.user_metadata?.full_name || user.user_metadata?.name || user.email || t().memberAnonymous;
+  }
+
+  function getBookScore(book) {
+    return state.member.scores[getBookId(book)] || null;
+  }
+
+  function formatRating(score) {
+    return Number.isFinite(Number(score)) ? Number(score).toFixed(1) : "--";
+  }
+
+  function loadSupabaseScript() {
+    if (window.supabase?.createClient) return Promise.resolve();
+    if (supabaseLoadPromise) return supabaseLoadPromise;
+
+    supabaseLoadPromise = new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+      script.async = true;
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error("Supabase library failed to load."));
+      document.head.appendChild(script);
+    });
+
+    return supabaseLoadPromise;
+  }
+
+  function userEmailAllowed(user) {
+    const domains = getMemberConfig().allowedEmailDomains || [];
+    if (!state.member.allowed) return false;
+    if (!domains.length) return true;
+    const email = String(user?.email || "").toLowerCase();
+    return domains.some(domain => email.endsWith(`@${String(domain).toLowerCase()}`));
+  }
+
+  async function checkMemberAllowed() {
+    const user = getCurrentUser();
+    state.member.allowed = false;
+    if (!state.member.client || !user) return false;
+
+    const domains = getMemberConfig().allowedEmailDomains || [];
+    const email = String(user.email || "").toLowerCase();
+    if (domains.length && !domains.some(domain => email.endsWith(`@${String(domain).toLowerCase()}`))) {
+      return false;
+    }
+
+    const { data, error } = await state.member.client.rpc("booked_is_member");
+    if (error) {
+      console.warn("Booked membership could not be checked.", error);
+      return false;
+    }
+
+    state.member.allowed = data !== false;
+    return state.member.allowed;
+  }
+
+  async function ensureMemberClient() {
+    if (!membersConfigured()) return null;
+    if (state.member.client) return state.member.client;
+
+    await loadSupabaseScript();
+    const config = getMemberConfig();
+    state.member.client = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
+    return state.member.client;
+  }
+
+  function setMemberAuthMode(mode) {
+    state.member.authMode = mode === "signup" ? "signup" : "login";
+    const signingUp = state.member.authMode === "signup";
+    $("#memberNameFields")?.toggleAttribute("hidden", !signingUp);
+    $("#memberPassword")?.setAttribute("autocomplete", signingUp ? "new-password" : "current-password");
+    $("#memberSubmitBtn").textContent = signingUp ? t().memberSignupSubmit : t().memberLoginSubmit;
+    $("#memberDialogTitle").textContent = signingUp ? t().memberSignupTitle : t().memberLoginTitle;
+    $("#memberDialogSubtitle").textContent = signingUp ? t().memberSignupSubtitle : t().memberLoginSubtitle;
+    setPressed($$("[data-member-auth-mode]"), button => button.dataset.memberAuthMode === state.member.authMode);
+  }
+
+  function openMemberDialog(mode = "login") {
+    const dialog = $("#memberDialog");
+    if (!dialog || !membersConfigured()) return;
+    setMemberAuthMode(mode);
+    $("#memberAuthStatus").textContent = "";
+    if (typeof dialog.showModal === "function" && !dialog.open) {
+      dialog.showModal();
+    } else {
+      dialog.setAttribute("open", "");
+    }
+    $("#memberEmail")?.focus();
+  }
+
+  function closeMemberDialog() {
+    const dialog = $("#memberDialog");
+    if (!dialog) return;
+    if (typeof dialog.close === "function" && dialog.open) {
+      dialog.close();
+    } else {
+      dialog.removeAttribute("open");
+    }
+  }
+
+  async function handleMemberAuthSubmit(event) {
+    event.preventDefault();
+    const client = await ensureMemberClient();
+    if (!client) return;
+
+    const status = $("#memberAuthStatus");
+    const email = $("#memberEmail").value.trim();
+    const password = $("#memberPassword").value;
+    const firstName = $("#memberFirstName").value.trim();
+    const lastName = $("#memberLastName").value.trim();
+
+    if (status) status.textContent = t().memberAuthWorking;
+
+    try {
+      if (state.member.authMode === "signup") {
+        if (!firstName || !lastName) {
+          if (status) status.textContent = t().memberNameRequired;
+          return;
+        }
+
+        const { data, error } = await client.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: window.location.href.split("#")[0],
+            data: {
+              first_name: firstName,
+              last_name: lastName,
+              full_name: `${firstName} ${lastName}`.trim()
+            }
+          }
+        });
+        if (error) throw error;
+
+        if (data.session) {
+          state.member.session = data.session;
+          await checkMemberAllowed();
+          if (!state.member.allowed) {
+            if (status) status.textContent = t().memberEmailNotAllowed;
+            await signOutMember();
+            return;
+          }
+          await upsertMemberProfile();
+          closeMemberDialog();
+        } else if (status) {
+          status.textContent = t().memberCheckEmail;
+        }
+      } else {
+        const { data, error } = await client.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        state.member.session = data.session;
+        await checkMemberAllowed();
+        if (!state.member.allowed) {
+          if (status) status.textContent = t().memberEmailNotAllowed;
+          await signOutMember();
+          return;
+        }
+        await upsertMemberProfile();
+        closeMemberDialog();
+      }
+
+      await Promise.all([loadMemberScores(), loadMyRatings()]);
+      translateStaticInterface();
+      renderLibrary();
+      refreshOpenOverlayMemberData();
+    } catch (error) {
+      console.warn("Booked member authentication failed.", error);
+      if (status) status.textContent = error?.message || t().memberAuthError;
+    }
+  }
+
+  async function signOutMember() {
+    if (!state.member.client) return;
+    await state.member.client.auth.signOut();
+    state.member.session = null;
+    state.member.allowed = false;
+    state.member.myRatings = {};
+    state.member.comments = {};
+    state.member.myComments = {};
+    translateStaticInterface();
+    renderLibrary();
+    refreshOpenOverlayMemberData();
+  }
+
+  async function upsertMemberProfile() {
+    const user = getCurrentUser();
+    if (!state.member.client || !user || !userEmailAllowed(user)) return;
+    const firstName = user.user_metadata?.first_name || "";
+    const lastName = user.user_metadata?.last_name || "";
+
+    await state.member.client.from("booked_profiles").upsert({
+      user_id: user.id,
+      email: user.email || "",
+      first_name: firstName,
+      last_name: lastName,
+      display_name: getUserDisplayName(user)
+    }, { onConflict: "user_id" });
+  }
+
+  async function loadMemberScores() {
+    if (!state.member.client) return;
+    const { data, error } = await state.member.client.rpc("booked_public_scores");
+    if (error) {
+      console.warn("Booked scores could not be loaded.", error);
+      return;
+    }
+
+    state.member.scores = Object.fromEntries((data || []).map(row => [row.book_id, {
+      average: Number(row.average_rating),
+      count: Number(row.rating_count)
+    }]));
+    renderBookRatingBadges();
+    refreshOpenOverlayMemberData();
+  }
+
+  async function loadMyRatings() {
+    const user = getCurrentUser();
+    if (!state.member.client || !user || !userEmailAllowed(user)) return;
+
+    const { data, error } = await state.member.client
+      .from("booked_ratings")
+      .select("book_id,rating")
+      .eq("user_id", user.id);
+
+    if (error) {
+      console.warn("Booked member ratings could not be loaded.", error);
+      return;
+    }
+
+    state.member.myRatings = Object.fromEntries((data || []).map(row => [row.book_id, Number(row.rating)]));
+  }
+
+  async function loadBookComments(book) {
+    const user = getCurrentUser();
+    const bookId = getBookId(book);
+    if (!state.member.client || !user || !userEmailAllowed(user)) return;
+
+    const { data, error } = await state.member.client
+      .from("booked_comments")
+      .select("id,book_id,user_id,display_name,visibility,comment,updated_at,created_at")
+      .eq("book_id", bookId)
+      .order("updated_at", { ascending: false });
+
+    if (error) {
+      console.warn("Booked comments could not be loaded.", error);
+      return;
+    }
+
+    const rows = data || [];
+    const publicComments = rows.filter(row => row.visibility === "public");
+    const commentIds = publicComments.map(row => row.id);
+    let likes = [];
+    if (commentIds.length) {
+      const { data: likeRows, error: likesError } = await state.member.client
+        .from("booked_comment_likes")
+        .select("comment_id,user_id")
+        .in("comment_id", commentIds);
+      if (likesError) {
+        console.warn("Booked comment likes could not be loaded.", likesError);
+      } else {
+        likes = likeRows || [];
+      }
+    }
+
+    state.member.comments[bookId] = publicComments.map(comment => {
+      const commentLikes = likes.filter(like => Number(like.comment_id) === Number(comment.id));
+      return {
+        ...comment,
+        likeCount: commentLikes.length,
+        likedByMe: commentLikes.some(like => like.user_id === user.id)
+      };
+    });
+    state.member.myComments[bookId] = {
+      public: rows.find(row => row.user_id === user.id && row.visibility === "public")?.comment || "",
+      private: rows.find(row => row.user_id === user.id && row.visibility === "private")?.comment || ""
+    };
+    refreshOpenOverlayMemberData();
+  }
+
+  async function toggleCommentLike(commentId, liked) {
+    const user = getCurrentUser();
+    const overlay = $("#overlay");
+    const book = BOOKS[Number(overlay?.dataset.index)];
+    if (!state.member.client || !user || !book || !userEmailAllowed(user)) return;
+
+    try {
+      if (liked) {
+        const { error } = await state.member.client
+          .from("booked_comment_likes")
+          .delete()
+          .eq("comment_id", commentId)
+          .eq("user_id", user.id);
+        if (error) throw error;
+      } else {
+        const { error } = await state.member.client.from("booked_comment_likes").insert({
+          comment_id: Number(commentId),
+          user_id: user.id
+        });
+        if (error) throw error;
+      }
+      await loadBookComments(book);
+    } catch (error) {
+      console.warn("Booked comment like could not be changed.", error);
+      $("#memberStatus").textContent = t().commentLikeError;
+    }
+  }
+
+  async function saveMemberEntry() {
+    const overlay = $("#overlay");
+    const user = getCurrentUser();
+    const book = BOOKS[Number(overlay?.dataset.index)];
+    const status = $("#memberStatus");
+    if (!state.member.client || !user || !book) return;
+
+    if (!userEmailAllowed(user)) {
+      if (status) status.textContent = t().memberEmailNotAllowed;
+      return;
+    }
+
+    const bookId = getBookId(book);
+    const rating = Number($("[data-rating][data-active='true']", $("#ratingButtons"))?.dataset.rating || 0);
+    const comment = $("#overlayNoteEditable").value.trim();
+    const visibility = state.member.commentVisibility === "private" ? "private" : "public";
+    if (status) status.textContent = t().memberSaving;
+
+    try {
+      if (rating > 0) {
+        const { error } = await state.member.client.from("booked_ratings").upsert({
+          book_id: bookId,
+          user_id: user.id,
+          rating
+        }, { onConflict: "book_id,user_id" });
+        if (error) throw error;
+        state.member.myRatings[bookId] = rating;
+      }
+
+      const { error: commentError } = await state.member.client.from("booked_comments").upsert({
+        book_id: bookId,
+        user_id: user.id,
+        display_name: getUserDisplayName(user),
+        visibility,
+        comment
+      }, { onConflict: "book_id,user_id,visibility" });
+      if (commentError) throw commentError;
+
+      await Promise.all([loadMemberScores(), loadBookComments(book)]);
+      if (status) status.textContent = t().memberSaved;
+    } catch (error) {
+      console.warn("Booked member entry could not be saved.", error);
+      if (status) status.textContent = t().memberSaveError;
+    }
+  }
+
+  function renderBookRatingBadges() {
+    $$(".book").forEach(card => {
+      const score = state.member.scores[card.dataset.bookId];
+      const badge = $(".rating-meta", card);
+      if (!badge) return;
+      badge.hidden = !score?.count;
+      if (score?.count) {
+        badge.textContent = t().ratingBadge(formatRating(score.average), score.count);
+        badge.title = t().ratingBadgeTitle(score.count);
+      }
+    });
+  }
+
+  function renderPublicComments(book) {
+    const panel = $("#publicCommentsPanel");
+    const list = $("#publicCommentsList");
+    if (!panel || !list || !book) return;
+
+    const comments = (state.member.comments[getBookId(book)] || [])
+      .filter(comment => String(comment.comment || "").trim());
+    panel.hidden = !membersConfigured() || !getCurrentUser();
+    list.innerHTML = comments.length
+      ? comments.map(comment => `
+        <article class="public-comment" data-comment-id="${escapeHTML(comment.id)}">
+          <div class="public-comment-head">
+            <strong>${escapeHTML(comment.display_name || t().memberAnonymous)}</strong>
+            <button class="comment-like" type="button" data-comment-like="${escapeHTML(comment.id)}" data-liked="${comment.likedByMe ? "true" : "false"}">
+              <span aria-hidden="true">♥</span>
+              <span>${escapeHTML(t().commentLikeCount(comment.likeCount || 0))}</span>
+            </button>
+          </div>
+          <p>${escapeHTML(comment.comment || "")}</p>
+        </article>
+      `).join("")
+      : `<p class="public-comments-empty">${escapeHTML(t().noPublicComments)}</p>`;
+  }
+
+  function setRatingButtons(value) {
+    $$("[data-rating]", $("#ratingButtons")).forEach(button => {
+      const active = Number(button.dataset.rating) <= Number(value || 0);
+      button.dataset.active = active ? "true" : "false";
+      button.setAttribute("aria-pressed", active ? "true" : "false");
+    });
+  }
+
+  function refreshOpenOverlayMemberData() {
+    const overlay = $("#overlay");
+    if (!overlay?.open && !overlay?.hasAttribute("open")) return;
+    const book = BOOKS[Number(overlay.dataset.index)];
+    if (!book) return;
+    refreshOverlayMemberUI(book);
+  }
+
+  function refreshOverlayMemberUI(book) {
+    const configured = membersConfigured();
+    const user = getCurrentUser();
+    const signedIn = Boolean(configured && user && userEmailAllowed(user));
+    const bookId = getBookId(book);
+    const score = getBookScore(book);
+    const myComments = state.member.myComments[bookId] || {};
+    const comment = myComments[state.member.commentVisibility] || "";
+
+    $("#memberAuthBtn")?.toggleAttribute("hidden", !configured);
+    $("#overlayMemberAuthBtn")?.toggleAttribute("hidden", !configured);
+    $("#memberRatingGroup")?.toggleAttribute("hidden", !signedIn);
+    $("#commentVisibilityGroup")?.toggleAttribute("hidden", !signedIn);
+    $("#memberSaveBtn")?.toggleAttribute("hidden", !signedIn);
+    $("#overlayLocalRatingLabel")?.toggleAttribute("hidden", configured);
+
+    if (configured) {
+      $("#overlayLocalHint").textContent = signedIn
+        ? t().memberSignedInAs(getUserDisplayName(user))
+        : t().memberSignedOutHint;
+      $("#overlayNoteLabelText").textContent = signedIn
+        ? t().memberCommentLabel(state.member.commentVisibility)
+        : t().overlayNoteLabel;
+      $("#overlayNoteEditable").placeholder = signedIn
+        ? t().memberCommentPlaceholder(state.member.commentVisibility)
+        : t().overlayNotePlaceholder;
+      $("#overlayNoteEditable").disabled = !signedIn;
+      $("#overlayMemberAuthBtn").textContent = user ? t().memberSignOut : t().memberSignIn;
+      $("#memberAuthText").textContent = user ? t().memberAccount : t().memberSignInShort;
+      $("#memberAuthBtn").title = user ? t().memberSignOut : t().memberSignIn;
+      if (signedIn) $("#overlayNoteEditable").value = comment;
+    } else {
+      $("#overlayLocalHint").textContent = t().overlayLocalHint;
+      $("#overlayNoteLabelText").textContent = t().overlayNoteLabel;
+      $("#overlayNoteEditable").placeholder = t().overlayNotePlaceholder;
+      $("#overlayNoteEditable").disabled = false;
+    }
+
+    $("#memberStatus").textContent = configured && user && !signedIn ? t().memberEmailNotAllowed : "";
+    $("#clubRatingSummary")?.toggleAttribute("hidden", !configured || !score?.count);
+    if (score?.count) {
+      $("#clubAverageRating").textContent = t().ratingAverage(formatRating(score.average));
+      $("#clubRatingCount").textContent = t().ratingCount(score.count);
+    }
+    setRatingButtons(state.member.myRatings[bookId] || 0);
+    renderPublicComments(book);
+  }
+
+  async function initializeMembers() {
+    const configured = membersConfigured();
+    $("#memberAuthBtn")?.toggleAttribute("hidden", !configured);
+    if (!configured) return;
+
+    try {
+      const client = await ensureMemberClient();
+      const { data } = await client.auth.getSession();
+      state.member.session = data?.session || null;
+      await checkMemberAllowed();
+      state.member.ready = true;
+      await upsertMemberProfile();
+      await Promise.all([loadMemberScores(), loadMyRatings()]);
+      client.auth.onAuthStateChange(async (_event, session) => {
+        state.member.session = session;
+        if (!session) {
+          state.member.allowed = false;
+          state.member.myRatings = {};
+          state.member.comments = {};
+          state.member.myComments = {};
+          translateStaticInterface();
+          renderLibrary();
+          refreshOpenOverlayMemberData();
+          return;
+        }
+        await checkMemberAllowed();
+        await upsertMemberProfile();
+        await Promise.all([loadMemberScores(), loadMyRatings()]);
+        translateStaticInterface();
+        renderLibrary();
+        refreshOpenOverlayMemberData();
+      });
+    } catch (error) {
+      console.warn("Booked member features could not start.", error);
+      $("#memberAuthText").textContent = t().memberUnavailable;
+    }
+  }
+
+  function initializeMemberDialog() {
+    const dialog = $("#memberDialog");
+    if (!dialog) return;
+
+    $("#memberDialogClose")?.addEventListener("click", closeMemberDialog);
+    dialog.addEventListener("click", event => {
+      if (event.target === dialog) closeMemberDialog();
+    });
+    dialog.addEventListener("cancel", event => {
+      event.preventDefault();
+      closeMemberDialog();
+    });
+    $("#memberAuthForm")?.addEventListener("submit", handleMemberAuthSubmit);
+    $$("[data-member-auth-mode]").forEach(button => {
+      button.addEventListener("click", () => setMemberAuthMode(button.dataset.memberAuthMode));
+    });
+  }
+
   function updateDocumentMetadata() {
     document.title = t().pageTitle;
     const description = $('meta[name="description"]');
@@ -656,6 +1196,7 @@
           <span class="tag" title="${escapeHTML(t().tagMonthTitle)}">${escapeHTML(getMonthName(book.month))}</span>
           <span class="tag" title="${escapeHTML(t().tagIndexTitle)}">#${index + 1}</span>
           ${pageTag}
+          <span class="tag rating-meta" hidden></span>
           ${openAccess ? `<span class="tag open-access-meta" title="${escapeHTML(openAccess.verifiedOn ? t().openAccessVerified(openAccess.verifiedOn) : t().openAccessTitle)}">${escapeHTML(t().openAccessBadge)}</span>` : ""}
         </div>
       </div>
@@ -705,6 +1246,7 @@
     }
 
     applyFilters();
+    renderBookRatingBadges();
     hydrateCovers(generation);
   }
 
@@ -1190,6 +1732,23 @@
     $("#overlayNoteEditable").placeholder = t().overlayNotePlaceholder;
     $("#overlayRatingLabelText").textContent = t().overlayRatingLabel;
     $("#overlayRatingInput").placeholder = t().overlayRatingPlaceholder;
+    $("#memberAuthText").textContent = getCurrentUser() ? t().memberAccount : t().memberSignInShort;
+    $("#memberAuthBtn").title = getCurrentUser() ? t().memberSignOut : t().memberSignIn;
+    $("#overlayMemberAuthBtn").textContent = getCurrentUser() ? t().memberSignOut : t().memberSignIn;
+    $("#memberRatingLabel").textContent = t().memberRatingLabel;
+    $("#commentVisibilityLabel").textContent = t().commentVisibilityLabel;
+    $("[data-comment-visibility='public']").textContent = t().commentPublic;
+    $("[data-comment-visibility='private']").textContent = t().commentPrivate;
+    $("#memberSaveBtn").textContent = t().memberSaveButton;
+    $("#publicCommentsTitle").textContent = t().publicCommentsTitle;
+    $("#memberDialogBadge").textContent = t().memberDialogBadge;
+    $("#memberLoginTab").textContent = t().memberLoginTab;
+    $("#memberSignupTab").textContent = t().memberSignupTab;
+    $("#memberFirstNameLabel").textContent = t().memberFirstName;
+    $("#memberLastNameLabel").textContent = t().memberLastName;
+    $("#memberEmailLabel").textContent = t().memberEmail;
+    $("#memberPasswordLabel").textContent = t().memberPassword;
+    setMemberAuthMode(state.member.authMode);
     $("#overlayOpenLibText").textContent = t().overlayOpenLib;
     $("#overlayMapText").textContent = t().overlayMap;
 
@@ -1223,7 +1782,7 @@
     $("#footerContactLink").textContent = t().contact;
     $("#mobileDockLang").textContent = state.lang.toUpperCase();
 
-    setPressed($$(".lang-chip"), button => button.dataset.lang === state.lang);
+    setPressed($$(".lang-chip[data-lang]"), button => button.dataset.lang === state.lang);
   }
 
   function setLanguage(lang) {
@@ -1370,7 +1929,7 @@
     });
 
     const meta = loadBookMeta(book);
-    $("#overlayNoteEditable").value = meta.note || "";
+    $("#overlayNoteEditable").value = membersConfigured() ? "" : (meta.note || "");
     $("#overlayRatingInput").value = meta.rating || "";
     const openAccess = getOpenAccessLink(book);
     const overlayLink = $("#overlayLink");
@@ -1397,6 +1956,8 @@
     }
 
     $("#overlayClose").focus();
+    refreshOverlayMemberUI(book);
+    if (membersConfigured() && getCurrentUser()) loadBookComments(book);
     populateOverlayCover(book);
   }
 
@@ -1426,6 +1987,11 @@
     });
 
     overlay.addEventListener("click", event => {
+      const likeButton = event.target.closest("[data-comment-like]");
+      if (likeButton && overlay.contains(likeButton)) {
+        toggleCommentLike(likeButton.dataset.commentLike, likeButton.dataset.liked === "true");
+        return;
+      }
       if (event.target === overlay) closeOverlay();
     });
 
@@ -1435,6 +2001,7 @@
     });
 
     const persist = () => {
+      if (membersConfigured()) return;
       const index = Number(overlay.dataset.index);
       const book = BOOKS[index];
       if (!book) return;
@@ -1446,6 +2013,21 @@
 
     $("#overlayNoteEditable").addEventListener("input", debounce(persist, 120));
     $("#overlayRatingInput").addEventListener("input", debounce(persist, 120));
+    $("#overlayMemberAuthBtn")?.addEventListener("click", () => {
+      if (getCurrentUser()) signOutMember();
+      else openMemberDialog("login");
+    });
+    $("#memberSaveBtn")?.addEventListener("click", saveMemberEntry);
+    $$("[data-rating]", $("#ratingButtons")).forEach(button => {
+      button.addEventListener("click", () => setRatingButtons(Number(button.dataset.rating)));
+    });
+    $$("[data-comment-visibility]").forEach(button => {
+      button.addEventListener("click", () => {
+        state.member.commentVisibility = button.dataset.commentVisibility === "private" ? "private" : "public";
+        setPressed($$("[data-comment-visibility]"), candidate => candidate.dataset.commentVisibility === state.member.commentVisibility);
+        refreshOpenOverlayMemberData();
+      });
+    });
   }
 
   /* ---------------- Feedback form ---------------- */
@@ -2532,7 +3114,12 @@
       setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
     });
 
-    $$(".lang-chip").forEach(button => {
+    $("#memberAuthBtn")?.addEventListener("click", () => {
+      if (getCurrentUser()) signOutMember();
+      else openMemberDialog("login");
+    });
+
+    $$(".lang-chip[data-lang]").forEach(button => {
       button.addEventListener("click", () => setLanguage(button.dataset.lang));
     });
 
@@ -2561,8 +3148,10 @@
     initializeTagMenu();
     initializeCurrentBook();
     initializeOverlay();
+    initializeMemberDialog();
     initializeFeedbackForm();
     bindPrimaryControls();
+    initializeMembers();
     setMobileLibraryMode(state.mobileLibraryMode);
 
     const savedLang = getStored("booked_lang", "en");
