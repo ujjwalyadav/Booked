@@ -63,6 +63,7 @@
       client: null,
       session: null,
       scores: {},
+      community: { commented: [], liked: [] },
       myRatings: {},
       comments: {},
       myComments: {},
@@ -704,7 +705,7 @@
         closeMemberDialog();
       }
 
-      await Promise.all([loadMemberScores(), loadMyRatings()]);
+      await Promise.all([loadMemberScores(), loadMyRatings(), loadMemberCommunityStats()]);
       translateStaticInterface();
       renderLibrary();
       refreshOpenOverlayMemberData();
@@ -722,6 +723,7 @@
     state.member.session = null;
     state.member.allowed = false;
     state.member.myRatings = {};
+    state.member.community = { commented: [], liked: [] };
     state.member.comments = {};
     state.member.myComments = {};
     translateStaticInterface();
@@ -760,6 +762,29 @@
     }]));
     renderBookRatingBadges();
     refreshOpenOverlayMemberData();
+  }
+
+  async function loadMemberCommunityStats() {
+    const user = getCurrentUser();
+    if (!state.member.client || !user || !userEmailAllowed(user)) return;
+
+    const { data, error } = await state.member.client.rpc("booked_member_comment_stats");
+    if (error) {
+      console.warn("Booked community stats could not be loaded.", error);
+      return;
+    }
+
+    state.member.community = {
+      commented: (data || [])
+        .filter(row => Number(row.public_comment_count) > 0)
+        .sort((a, b) => Number(b.public_comment_count) - Number(a.public_comment_count))
+        .slice(0, 8),
+      liked: (data || [])
+        .filter(row => Number(row.like_count) > 0)
+        .sort((a, b) => Number(b.like_count) - Number(a.like_count))
+        .slice(0, 8)
+    };
+    if (state.view === "stats") renderStats();
   }
 
   async function loadMyRatings() {
@@ -892,7 +917,7 @@
       }, { onConflict: "book_id,user_id,visibility" });
       if (commentError) throw commentError;
 
-      await Promise.all([loadMemberScores(), loadBookComments(book)]);
+      await Promise.all([loadMemberScores(), loadMemberCommunityStats(), loadBookComments(book)]);
       if (status) status.textContent = t().memberSaved;
     } catch (error) {
       console.warn("Booked member entry could not be saved.", error);
@@ -1012,7 +1037,7 @@
       await checkMemberAllowed();
       state.member.ready = true;
       await upsertMemberProfile();
-      await Promise.all([loadMemberScores(), loadMyRatings()]);
+      await Promise.all([loadMemberScores(), loadMyRatings(), loadMemberCommunityStats()]);
       if (recoveryReturn && state.member.session) {
         openMemberDialog("change");
         window.history.replaceState(null, "", getAuthRedirectUrl());
@@ -1026,6 +1051,7 @@
         if (!session) {
           state.member.allowed = false;
           state.member.myRatings = {};
+          state.member.community = { commented: [], liked: [] };
           state.member.comments = {};
           state.member.myComments = {};
           translateStaticInterface();
@@ -1037,7 +1063,7 @@
         }
         await checkMemberAllowed();
         await upsertMemberProfile();
-        await Promise.all([loadMemberScores(), loadMyRatings()]);
+        await Promise.all([loadMemberScores(), loadMyRatings(), loadMemberCommunityStats()]);
         translateStaticInterface();
         renderLibrary();
         refreshOpenOverlayMemberData();
@@ -2252,6 +2278,79 @@
     `;
   }
 
+  function findBookById(bookId) {
+    return BOOKS.find(book => getBookId(book) === bookId);
+  }
+
+  function renderMemberBookRows(rows, valueGetter, emptyText = "") {
+    const visibleRows = (rows || [])
+      .map(row => ({ row, book: findBookById(row.book_id) }))
+      .filter(item => item.book);
+
+    if (!visibleRows.length) return emptyText ? `<p class="author">${escapeHTML(emptyText)}</p>` : "";
+
+    return `
+      <div class="bar-list member-stat-list">
+        ${visibleRows.map(({ row, book }) => `
+          <button class="bar-row stats-pick" type="button" data-stats-book-index="${getBookIndex(book)}">
+            <span class="bar-name" title="${escapeHTML(book.title)}">${escapeHTML(book.title)}</span>
+            <span class="bar-count">${escapeHTML(valueGetter(row))}</span>
+          </button>
+        `).join("")}
+      </div>
+    `;
+  }
+
+  function getMemberStatsCardItems() {
+    const topRated = Object.entries(state.member.scores)
+      .map(([bookId, score]) => ({ book_id: bookId, ...score }))
+      .filter(row => row.count > 0)
+      .sort((a, b) => Number(b.average) - Number(a.average) || Number(b.count) - Number(a.count))
+      .slice(0, 8);
+    const commented = state.member.community.commented || [];
+    const liked = state.member.community.liked || [];
+    const cards = [];
+
+    if (topRated.length) {
+      cards.push({
+        title: t().topRatedBooks,
+        body: `
+        <article class="chart-card member-stat-card">
+          <h3>${escapeHTML(t().topRatedBooks)}</h3>
+          ${renderMemberBookRows(topRated, row => t().ratingBadge(formatRating(row.average), row.count))}
+        </article>
+      `});
+    }
+
+    if (getCurrentUser() && userEmailAllowed(getCurrentUser()) && commented.length) {
+      cards.push({
+        title: t().mostDiscussedBooks,
+        body: `
+        <article class="chart-card member-stat-card">
+          <h3>${escapeHTML(t().mostDiscussedBooks)}</h3>
+          ${renderMemberBookRows(commented, row => t().commentCount(Number(row.public_comment_count)))}
+        </article>
+      `});
+    }
+
+    if (getCurrentUser() && userEmailAllowed(getCurrentUser()) && liked.length) {
+      cards.push({
+        title: t().mostLikedComments,
+        body: `
+        <article class="chart-card member-stat-card">
+          <h3>${escapeHTML(t().mostLikedComments)}</h3>
+          ${renderMemberBookRows(liked, row => t().commentLikeSummary(Number(row.like_count)))}
+        </article>
+      `});
+    }
+
+    return cards;
+  }
+
+  function renderMemberStatsCards() {
+    return getMemberStatsCardItems().map(card => card.body).join("");
+  }
+
   function getPublicationPeriod(year) {
     if (!Number.isFinite(year)) return null;
     const start = Math.floor(year / 50) * 50;
@@ -2708,6 +2807,7 @@
         title: t().recurringAuthors,
         body: `<article class="chart-card"><h3>${escapeHTML(t().recurringAuthors)}</h3>${Object.keys(repeatingAuthors).length ? renderBarList(repeatingAuthors, 8, "author") : `<p class="author">${escapeHTML(t().noRepeatingAuthors)}</p>`}</article>`
       },
+      ...getMemberStatsCardItems(),
       {
         title: t().longestBooks,
         body: `<article class="chart-card chart-card-wide"><h3>${escapeHTML(t().longestBooks)}</h3>${renderPageRanking()}</article>`
@@ -2915,6 +3015,7 @@
           <h3>${escapeHTML(t().recurringAuthors)}</h3>
           ${Object.keys(repeatingAuthors).length ? renderBarList(repeatingAuthors, 8, "author") : `<p class="author">${escapeHTML(t().noRepeatingAuthors)}</p>`}
         </article>
+        ${renderMemberStatsCards()}
         <article class="chart-card chart-card-wide">
           <h3>${escapeHTML(t().longestBooks)}</h3>
           ${renderPageRanking()}

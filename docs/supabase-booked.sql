@@ -226,3 +226,30 @@ $$;
 
 revoke all on function public.booked_public_scores() from public;
 grant execute on function public.booked_public_scores() to anon, authenticated;
+
+create or replace function public.booked_member_comment_stats()
+returns table (
+  book_id text,
+  public_comment_count bigint,
+  like_count bigint
+)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select
+    booked_comments.book_id,
+    count(distinct booked_comments.id)::bigint as public_comment_count,
+    count(booked_comment_likes.comment_id)::bigint as like_count
+  from public.booked_comments
+  left join public.booked_comment_likes
+    on booked_comment_likes.comment_id = booked_comments.id
+  where public.booked_is_member()
+    and booked_comments.visibility = 'public'
+    and length(trim(booked_comments.comment)) > 0
+  group by booked_comments.book_id;
+$$;
+
+revoke all on function public.booked_member_comment_stats() from public;
+grant execute on function public.booked_member_comment_stats() to authenticated;
