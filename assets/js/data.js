@@ -465,7 +465,7 @@ window.BOOKED_DATA = Object.freeze({
 
   links: {
     whatsapp: "https://chat.whatsapp.com/EStsFPtmF2PJy6HX54eLat",
-    instagram: "https://www.instagram.com/bookclub.hd/"
+    instagram: "https://www.instagram.com/booked.hd/"
   },
 
   googleForm: {
