@@ -477,7 +477,7 @@ window.BOOKED_DATA = Object.freeze({
   },
 
   members: {
-    enabled: true,
+    enabled: false,
     supabaseUrl: "https://vlsotmfdcbilcrwvlzqy.supabase.co",
     supabaseAnonKey: "sb_publishable_tXQScIoYgGIJsM10AQA2_A_Rcxh3bK2",
     allowedEmailDomains: []
