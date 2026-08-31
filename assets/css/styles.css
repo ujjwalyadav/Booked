@@ -3053,15 +3053,31 @@ button.timeline-item:focus-visible {
 
   .site-actions {
     display: grid;
-    grid-template-columns: 36px minmax(66px, 74px) minmax(76px, 1fr) 36px 36px 36px;
+    grid-template-columns: repeat(5, minmax(36px, 1fr));
     justify-content: center;
     width: 100%;
+    gap: 6px;
   }
 
   .site-actions > * {
-    width: auto;
+    width: 100%;
+    min-width: 0;
     min-height: 38px;
     padding: .42rem .48rem;
+  }
+
+  .site-actions .member-btn {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    justify-self: stretch;
+  }
+
+  .site-actions .theme-toggle,
+  .site-actions .lang-switch,
+  .site-actions .contact-btn,
+  .site-actions .join-btn,
+  .site-actions .instagram-btn {
+    grid-row: 2;
   }
 
   .contact-btn span,
@@ -3086,13 +3102,14 @@ button.timeline-item:focus-visible {
   }
 
   .member-btn {
+    gap: 6px;
     overflow: hidden;
   }
 
   .member-btn span {
-    max-width: 96px;
+    max-width: none;
     overflow: hidden;
-    font-size: .72rem;
+    font-size: .76rem;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
