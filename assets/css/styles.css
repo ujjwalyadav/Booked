@@ -1089,6 +1089,12 @@ main {
   border-color: hsl(42 82% 62% / .32);
 }
 
+.member-action-meta {
+  color: color-mix(in srgb, var(--accent) 82%, var(--fg));
+  background: color-mix(in srgb, var(--accent-soft) 72%, transparent);
+  border-color: var(--accent-border);
+}
+
 .info {
   padding: 15px 16px 17px;
 }
@@ -2293,8 +2299,16 @@ button.timeline-item:focus-visible {
   display: grid;
   gap: 12px;
   margin-top: 20px;
-  padding-top: 18px;
-  border-top: 1px solid var(--line);
+  padding: 16px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent-soft) 56%, transparent), transparent 62%),
+    color-mix(in srgb, var(--card-strong) 72%, transparent);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+}
+
+.overlay-personal[data-member-state="signed-out"] {
+  border-color: var(--accent-border);
 }
 
 .member-panel-head {
@@ -2321,6 +2335,20 @@ button.timeline-item:focus-visible {
 .member-save {
   flex: 0 0 auto;
   white-space: nowrap;
+}
+
+.member-inline-auth:not([hidden]) {
+  display: inline-flex;
+}
+
+.overlay-personal[data-member-state="signed-out"] .member-inline-auth {
+  color: var(--bg);
+  background: var(--fg);
+  border-color: transparent;
+}
+
+.overlay-personal[data-member-state="signed-out"] .overlay-label {
+  opacity: .88;
 }
 
 .club-rating-summary {
@@ -3289,6 +3317,36 @@ button.timeline-item:focus-visible {
     min-height: 22px;
     padding: .15rem .36rem;
     font-size: .62rem;
+  }
+
+  .overlay-personal {
+    padding: 13px;
+    border-radius: 15px;
+  }
+
+  .member-panel-head {
+    display: grid;
+    gap: 10px;
+  }
+
+  .member-inline-auth,
+  .member-save {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .member-rating,
+  .comment-visibility {
+    align-items: flex-start;
+  }
+
+  .rating-buttons {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .rating-buttons button {
+    width: min(40px, 17vw);
   }
 
   .stat-grid,

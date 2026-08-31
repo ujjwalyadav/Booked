@@ -1006,6 +1006,12 @@
     $$(".book").forEach(card => {
       const score = state.member.scores[card.dataset.bookId];
       const badge = $(".rating-meta", card);
+      const action = $(".member-action-meta", card);
+      if (action) {
+        action.hidden = !membersConfigured() || Boolean(score?.count);
+        action.textContent = t().memberActionBadge;
+        action.title = t().memberActionTitle;
+      }
       if (!badge) return;
       badge.hidden = !score?.count;
       if (score?.count) {
@@ -1065,7 +1071,9 @@
     const comment = myComments[state.member.commentVisibility] || "";
 
     updateMemberHeader();
-    $("#overlayMemberAuthBtn")?.toggleAttribute("hidden", true);
+    $("#overlayPersonal")?.setAttribute("data-member-state", signedIn ? "signed-in" : "signed-out");
+    $("#overlayMemberAuthBtn")?.toggleAttribute("hidden", !configured || signedIn);
+    if ($("#overlayMemberAuthBtn")) $("#overlayMemberAuthBtn").textContent = t().memberOverlayCta;
     $("#memberChangePasswordBtn")?.toggleAttribute("hidden", true);
     $("#memberRatingGroup")?.toggleAttribute("hidden", !signedIn);
     $("#commentVisibilityGroup")?.toggleAttribute("hidden", !signedIn);
@@ -1078,17 +1086,20 @@
         : t().memberSignedOutHint;
       $("#overlayNoteLabelText").textContent = signedIn
         ? t().memberCommentLabel(state.member.commentVisibility)
-        : t().overlayNoteLabel;
+        : t().memberPreviewLabel;
       $("#overlayNoteEditable").placeholder = signedIn
         ? t().memberCommentPlaceholder(state.member.commentVisibility)
-        : t().overlayNotePlaceholder;
-      $("#overlayNoteEditable").disabled = !signedIn;
+        : t().memberSignedOutPlaceholder;
+      $("#overlayNoteEditable").disabled = false;
+      $("#overlayNoteEditable").readOnly = !signedIn;
       if (signedIn) $("#overlayNoteEditable").value = comment;
+      if (!signedIn) $("#overlayNoteEditable").value = "";
     } else {
       $("#overlayLocalHint").textContent = t().overlayLocalHint;
       $("#overlayNoteLabelText").textContent = t().overlayNoteLabel;
       $("#overlayNoteEditable").placeholder = t().overlayNotePlaceholder;
       $("#overlayNoteEditable").disabled = false;
+      $("#overlayNoteEditable").readOnly = false;
     }
 
     $("#memberStatus").textContent = configured && user && !signedIn ? t().memberEmailNotAllowed : "";
@@ -1417,6 +1428,7 @@
           <span class="tag" title="${escapeHTML(t().tagIndexTitle)}">#${index + 1}</span>
           ${pageTag}
           <span class="tag rating-meta" hidden></span>
+          <span class="tag member-action-meta" hidden>${escapeHTML(t().memberActionBadge)}</span>
           ${openAccess ? `<span class="tag open-access-meta" title="${escapeHTML(openAccess.verifiedOn ? t().openAccessVerified(openAccess.verifiedOn) : t().openAccessTitle)}">${escapeHTML(t().openAccessBadge)}</span>` : ""}
         </div>
       </div>
