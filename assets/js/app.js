@@ -995,6 +995,7 @@
       if (commentError) throw commentError;
 
       await Promise.all([loadMemberScores(), loadMemberCommunityStats(), loadBookComments(book)]);
+      $("#memberWriteActions")?.removeAttribute("data-dirty");
       if (status) status.textContent = t().memberSaved;
     } catch (error) {
       console.warn("Booked member entry could not be saved.", error);
@@ -1117,6 +1118,15 @@
     });
   }
 
+  function markMemberDraftDirty() {
+    const overlay = $("#overlay");
+    const book = BOOKS[Number(overlay?.dataset.index)];
+    if (!book || !membersConfigured() || !getCurrentUser()) return;
+    $("#memberWriteActions")?.setAttribute("data-dirty", "true");
+    const status = $("#memberStatus");
+    if (status) status.textContent = t().memberUnsaved;
+  }
+
   function getSelectedRating() {
     return $$("[data-rating][data-active='true']", $("#ratingButtons"))
       .map(button => Number(button.dataset.rating))
@@ -1148,7 +1158,9 @@
     $("#memberChangePasswordBtn")?.toggleAttribute("hidden", true);
     $("#memberRatingGroup")?.toggleAttribute("hidden", !signedIn);
     $("#commentVisibilityGroup")?.toggleAttribute("hidden", !signedIn);
-    $("#memberWriteActions")?.toggleAttribute("hidden", !signedIn);
+    const writeActions = $("#memberWriteActions");
+    writeActions?.toggleAttribute("hidden", !signedIn);
+    if (writeActions && !signedIn) writeActions.removeAttribute("data-dirty");
     $("#overlayLocalRatingLabel")?.toggleAttribute("hidden", configured);
     $("#memberClearRatingBtn")?.toggleAttribute("hidden", !signedIn || !state.member.myRatings[bookId]);
     $("#memberRemoveCommentBtn")?.toggleAttribute("hidden", !signedIn || !comment.trim());
@@ -1175,7 +1187,10 @@
       $("#overlayNoteEditable").readOnly = false;
     }
 
-    $("#memberStatus").textContent = configured && user && !signedIn ? t().memberEmailNotAllowed : "";
+    const status = $("#memberStatus");
+    if (status && !writeActions?.hasAttribute("data-dirty")) {
+      status.textContent = configured && user && !signedIn ? t().memberEmailNotAllowed : "";
+    }
     $("#clubRatingSummary")?.toggleAttribute("hidden", !configured || !score?.count);
     if (score?.count) {
       $("#clubAverageRating").textContent = t().ratingAverage(formatRating(score.average));
@@ -2340,6 +2355,7 @@
     };
 
     $("#overlayNoteEditable").addEventListener("input", debounce(persist, 120));
+    $("#overlayNoteEditable").addEventListener("input", markMemberDraftDirty);
     $("#overlayNoteEditable").addEventListener("click", () => {
       if (membersConfigured() && !getCurrentUser()) openMemberDialog("login");
     });
@@ -2356,7 +2372,10 @@
     $("#memberClearRatingBtn")?.addEventListener("click", clearMemberRating);
     $("#memberRemoveCommentBtn")?.addEventListener("click", removeMemberComment);
     $$("[data-rating]", $("#ratingButtons")).forEach(button => {
-      button.addEventListener("click", () => setRatingButtons(Number(button.dataset.rating)));
+      button.addEventListener("click", () => {
+        setRatingButtons(Number(button.dataset.rating));
+        markMemberDraftDirty();
+      });
     });
     $$("[data-comment-visibility]").forEach(button => {
       button.addEventListener("click", () => {
