@@ -180,6 +180,7 @@ window.BOOKED_I18N = Object.freeze({
       memberRatingCleared: "Rating removed.",
       memberCommentRemoved: "Note removed.",
       memberRemoveError: "Could not remove it yet. Please try again.",
+      memberRemovePolicyError: "Supabase did not delete the rating yet. Rerun the Booked SQL setup so delete permissions are active.",
       memberSaveError: "Could not save yet. Please try again.",
       memberCommentLabel: visibility => visibility === "private" ? "Private note" : "Public member comment",
       memberCommentPlaceholder: visibility => visibility === "private"
@@ -475,6 +476,7 @@ window.BOOKED_I18N = Object.freeze({
       memberRatingCleared: "Bewertung gelöscht.",
       memberCommentRemoved: "Notiz gelöscht.",
       memberRemoveError: "Konnte noch nicht gelöscht werden. Bitte versuch es erneut.",
+      memberRemovePolicyError: "Supabase hat die Bewertung noch nicht gelöscht. Führe das Booked-SQL-Setup erneut aus, damit die Löschrechte aktiv sind.",
       memberSaveError: "Konnte noch nicht speichern. Bitte versuch es erneut.",
       memberCommentLabel: visibility => visibility === "private" ? "Private Notiz" : "\u00d6ffentlicher Mitgliederkommentar",
       memberCommentPlaceholder: visibility => visibility === "private"

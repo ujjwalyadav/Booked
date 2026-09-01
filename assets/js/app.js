@@ -676,7 +676,9 @@
     setMemberAuthMode(mode);
     $("#memberAuthStatus").textContent = "";
     $("#memberPassword").value = "";
-    if (typeof dialog.showModal === "function" && !dialog.open) {
+    const openedFromBookDialog = Boolean($("#overlay")?.open);
+    dialog.dataset.openedFromBook = openedFromBookDialog ? "true" : "false";
+    if (!openedFromBookDialog && typeof dialog.showModal === "function" && !dialog.open) {
       dialog.showModal();
     } else {
       dialog.setAttribute("open", "");
@@ -693,6 +695,7 @@
     } else {
       dialog.removeAttribute("open");
     }
+    dialog.dataset.openedFromBook = "false";
   }
 
   async function handleMemberAuthSubmit(event) {
@@ -956,6 +959,59 @@
     }
   }
 
+  async function deleteMemberRating(book, user) {
+    const bookId = getBookId(book);
+    const { data: removedRows, error } = await state.member.client
+      .from("booked_ratings")
+      .delete()
+      .eq("book_id", bookId)
+      .eq("user_id", user.id)
+      .select("book_id");
+    if (error) throw error;
+    if (!removedRows?.length) {
+      throw new Error("No rating row was deleted. Rerun docs/supabase-booked.sql so the delete policy is active.");
+    }
+
+    const { data: remaining, error: checkError } = await state.member.client
+      .from("booked_ratings")
+      .select("book_id")
+      .eq("book_id", bookId)
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (checkError) throw checkError;
+    if (remaining) {
+      throw new Error("Rating row is still present after delete. Check Supabase delete policy.");
+    }
+    delete state.member.myRatings[bookId];
+  }
+
+  async function deleteMemberComment(book, user, visibility) {
+    const bookId = getBookId(book);
+    const { error } = await state.member.client
+      .from("booked_comments")
+      .delete()
+      .eq("book_id", bookId)
+      .eq("user_id", user.id)
+      .eq("visibility", visibility);
+    if (error) throw error;
+
+    const { data: remaining, error: checkError } = await state.member.client
+      .from("booked_comments")
+      .select("id")
+      .eq("book_id", bookId)
+      .eq("user_id", user.id)
+      .eq("visibility", visibility)
+      .maybeSingle();
+    if (checkError) throw checkError;
+    if (remaining) {
+      throw new Error("Comment row is still present after delete. Check Supabase delete policy.");
+    }
+    state.member.myComments[bookId] = {
+      ...(state.member.myComments[bookId] || {}),
+      [visibility]: ""
+    };
+  }
+
   async function saveMemberEntry() {
     const overlay = $("#overlay");
     const user = getCurrentUser();
@@ -983,18 +1039,24 @@
         }, { onConflict: "book_id,user_id" });
         if (error) throw error;
         state.member.myRatings[bookId] = rating;
+      } else if (state.member.myRatings[bookId]) {
+        await deleteMemberRating(book, user);
       }
 
-      const { error: commentError } = await state.member.client.from("booked_comments").upsert({
-        book_id: bookId,
-        user_id: user.id,
-        display_name: getUserDisplayName(user),
-        visibility,
-        comment
-      }, { onConflict: "book_id,user_id,visibility" });
-      if (commentError) throw commentError;
+      if (comment) {
+        const { error: commentError } = await state.member.client.from("booked_comments").upsert({
+          book_id: bookId,
+          user_id: user.id,
+          display_name: getUserDisplayName(user),
+          visibility,
+          comment
+        }, { onConflict: "book_id,user_id,visibility" });
+        if (commentError) throw commentError;
+      } else if ((state.member.myComments[bookId] || {})[visibility]) {
+        await deleteMemberComment(book, user, visibility);
+      }
 
-      await Promise.all([loadMemberScores(), loadMemberCommunityStats(), loadBookComments(book)]);
+      await Promise.all([loadMemberScores(), loadMyRatings(), loadMemberCommunityStats(), loadBookComments(book)]);
       $("#memberWriteActions")?.removeAttribute("data-dirty");
       if (status) status.textContent = t().memberSaved;
     } catch (error) {
@@ -1014,22 +1076,21 @@
     if (status) status.textContent = t().memberRemoving;
 
     try {
-      const { error } = await state.member.client
-        .from("booked_ratings")
-        .delete()
-        .eq("book_id", bookId)
-        .eq("user_id", user.id);
-      if (error) throw error;
-      delete state.member.myRatings[bookId];
+      await deleteMemberRating(book, user);
       setRatingButtons(0);
-      await loadMemberScores();
+      await Promise.all([loadMemberScores(), loadMyRatings(), loadMemberCommunityStats()]);
+      delete state.member.myRatings[bookId];
       refreshOverlayMemberUI(book);
       renderBookRatingBadges();
       if (state.view === "stats") renderStats();
       if (status) status.textContent = t().memberRatingCleared;
     } catch (error) {
       console.warn("Booked rating could not be removed.", error);
-      if (status) status.textContent = t().memberRemoveError;
+      if (status) {
+        status.textContent = /delete policy|No rating row/i.test(error?.message || "")
+          ? t().memberRemovePolicyError
+          : t().memberRemoveError;
+      }
     }
   }
 
@@ -1045,17 +1106,7 @@
     if (status) status.textContent = t().memberRemoving;
 
     try {
-      const { error } = await state.member.client
-        .from("booked_comments")
-        .delete()
-        .eq("book_id", bookId)
-        .eq("user_id", user.id)
-        .eq("visibility", visibility);
-      if (error) throw error;
-      state.member.myComments[bookId] = {
-        ...(state.member.myComments[bookId] || {}),
-        [visibility]: ""
-      };
+      await deleteMemberComment(book, user, visibility);
       $("#overlayNoteEditable").value = "";
       await Promise.all([loadMemberCommunityStats(), loadBookComments(book)]);
       refreshOverlayMemberUI(book);

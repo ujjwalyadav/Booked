@@ -2090,6 +2090,14 @@ button.timeline-item:focus-visible {
   place-items: center;
 }
 
+.member-dialog[open][data-opened-from-book="true"] {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgb(0 0 0 / .58);
+  backdrop-filter: blur(10px);
+}
+
 .overlay-dialog::backdrop,
 .member-dialog::backdrop {
   background: rgb(0 0 0 / .64);
