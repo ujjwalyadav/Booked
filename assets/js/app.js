@@ -681,7 +681,7 @@
     $("#memberPassword").value = "";
     const openedFromBookDialog = Boolean($("#overlay")?.open);
     dialog.dataset.openedFromBook = openedFromBookDialog ? "true" : "false";
-    if (!openedFromBookDialog && typeof dialog.showModal === "function" && !dialog.open) {
+    if (typeof dialog.showModal === "function" && !dialog.open) {
       dialog.showModal();
     } else {
       dialog.setAttribute("open", "");
@@ -953,7 +953,11 @@
     const user = getCurrentUser();
     const book = BOOKS[Number(overlay?.dataset.index)];
     const status = $("#memberStatus");
-    if (!state.member.client || !user || !book || !userEmailAllowed(user)) return;
+    if (!state.member.client || !user || !book) {
+      if (membersConfigured()) openMemberDialog("login");
+      return;
+    }
+    if (!userEmailAllowed(user)) return;
 
     const bookId = getBookId(book);
     const hasRead = Boolean(state.member.myReads[bookId]);
@@ -1146,7 +1150,10 @@
     const user = getCurrentUser();
     const book = BOOKS[Number(overlay?.dataset.index)];
     const status = $("#memberStatus");
-    if (!state.member.client || !user || !book) return;
+    if (!state.member.client || !user || !book) {
+      if (membersConfigured()) openMemberDialog("login");
+      return;
+    }
 
     if (!userEmailAllowed(user)) {
       if (status) status.textContent = t().memberEmailNotAllowed;
@@ -1340,16 +1347,16 @@
     $("#overlayMemberAuthBtn")?.toggleAttribute("hidden", !configured || signedIn);
     if ($("#overlayMemberAuthBtn")) $("#overlayMemberAuthBtn").textContent = t().memberOverlayCta;
     $("#memberChangePasswordBtn")?.toggleAttribute("hidden", true);
-    $("#memberRatingGroup")?.toggleAttribute("hidden", !signedIn);
-    $("#commentVisibilityGroup")?.toggleAttribute("hidden", !signedIn);
+    $("#memberRatingGroup")?.toggleAttribute("hidden", !configured);
+    $("#commentVisibilityGroup")?.toggleAttribute("hidden", !configured);
     const writeActions = $("#memberWriteActions");
-    writeActions?.toggleAttribute("hidden", !signedIn);
+    writeActions?.toggleAttribute("hidden", !configured);
     if (writeActions && !signedIn) writeActions.removeAttribute("data-dirty");
     $("#overlayLocalRatingLabel")?.toggleAttribute("hidden", configured);
     $("#memberClearRatingBtn")?.toggleAttribute("hidden", !signedIn || !state.member.myRatings[bookId]);
     $("#memberRemoveCommentBtn")?.toggleAttribute("hidden", !signedIn || !comment.trim());
     const readToggle = $("#memberReadToggle");
-    readToggle?.toggleAttribute("hidden", !signedIn);
+    readToggle?.toggleAttribute("hidden", !configured);
     if (readToggle) {
       const hasRead = Boolean(state.member.myReads[bookId]);
       readToggle.textContent = hasRead ? t().memberReadOn : t().memberReadOff;
@@ -2650,12 +2657,20 @@
     $("#memberReadToggle")?.addEventListener("click", toggleMemberRead);
     $$("[data-rating]", $("#ratingButtons")).forEach(button => {
       button.addEventListener("click", () => {
+        if (membersConfigured() && !getCurrentUser()) {
+          openMemberDialog("login");
+          return;
+        }
         setRatingButtons(Number(button.dataset.rating));
         markMemberDraftDirty();
       });
     });
     $$("[data-comment-visibility]").forEach(button => {
       button.addEventListener("click", () => {
+        if (membersConfigured() && !getCurrentUser()) {
+          openMemberDialog("login");
+          return;
+        }
         state.member.commentVisibility = button.dataset.commentVisibility === "private" ? "private" : "public";
         setPressed($$("[data-comment-visibility]"), candidate => candidate.dataset.commentVisibility === state.member.commentVisibility);
         refreshOpenOverlayMemberData();
