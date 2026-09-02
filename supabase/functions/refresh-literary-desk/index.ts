@@ -19,6 +19,8 @@ type DeskItem = {
   published_at: string;
 };
 
+type RankedDeskItem = DeskItem & { relevance: number };
+
 const SOURCES: Source[] = [
   { name: "The Guardian Books", region: "United Kingdom", kind: "Reviews & news", feed: "https://www.theguardian.com/books/rss" },
   { name: "London Review of Books", region: "United Kingdom", kind: "Essays", feed: "https://www.lrb.co.uk/feeds/rss" },
@@ -71,12 +73,38 @@ function getImage(entry: Record<string, unknown>): string | null {
   return match?.[1]?.startsWith("https://") ? match[1] : null;
 }
 
+async function getArticleImage(url: string): Promise<string | null> {
+  try {
+    const response = await fetch(url, {
+      headers: { "User-Agent": "Booked literary desk/1.0" }
+    });
+    if (!response.ok) return null;
+    const html = await response.text();
+    const openGraphMatch = html.match(/<meta[^>]+(?:property|name)=["'](?:og:image|twitter:image)["'][^>]+content=["']([^"']+)["']/i)
+      || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|name)=["'](?:og:image|twitter:image)["']/i);
+    const image = openGraphMatch?.[1]?.replace(/&amp;/g, "&") || "";
+    return image.startsWith("https://") ? image : null;
+  } catch {
+    return null;
+  }
+}
+
 function parseDate(value: unknown): string {
   const parsed = new Date(text(value));
   return Number.isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
 }
 
-async function readSource(source: Source): Promise<DeskItem[]> {
+function relevanceScore(title: string, excerpt: string | null, source: Source): number {
+  const content = `${title} ${excerpt || ""}`.toLowerCase();
+  const directBookTerms = /\b(book|books|bookish|novel|novels|fiction|poetry|poem|poems|literature|literary|author|authors|writer|writers|reading|reader|translation|translated|publisher|publishing|bookshop|bookshops|library|libraries)\b/g;
+  const discoveryTerms = /\b(best|anticipated|recommend|recommendation|reading list|summer reads|new releases|prize|prizes|award|awards|review|reviews|interview|excerpt)\b/g;
+  const directMatches = content.match(directBookTerms)?.length || 0;
+  const discoveryMatches = content.match(discoveryTerms)?.length || 0;
+  const sourceBoost = source.kind.includes("Recommendations") || source.kind.includes("translation") ? 2 : 0;
+  return directMatches * 2 + discoveryMatches * 3 + sourceBoost;
+}
+
+async function readSource(source: Source): Promise<RankedDeskItem[]> {
   const response = await fetch(source.feed, { headers: { "User-Agent": "Booked literary desk/1.0" } });
   if (!response.ok) throw new Error(`${source.name} returned ${response.status}`);
   const feed = parser.parse(await response.text()) as Record<string, unknown>;
@@ -89,17 +117,38 @@ async function readSource(source: Source): Promise<DeskItem[]> {
     const url = getLink(entry);
     const title = cleanText(entry.title, 180);
     if (!url || !title) return [];
+    const excerpt = cleanText(entry.description || entry.encoded || entry.summary);
+    const relevance = relevanceScore(title, excerpt, source);
+    if (relevance < 2) return [];
     return [{
       url,
       title,
       source: source.name,
       region: source.region,
       kind: source.kind,
-      excerpt: cleanText(entry.description || entry.encoded || entry.summary),
+      excerpt,
       image_url: getImage(entry),
-      published_at: parseDate(entry.pubDate || entry.published || entry.updated)
+      published_at: parseDate(entry.pubDate || entry.published || entry.updated),
+      relevance
     }];
   });
+}
+
+function selectDeskItems(items: RankedDeskItem[]): DeskItem[] {
+  const sorted = items
+    .sort((a, b) => b.relevance - a.relevance || Date.parse(b.published_at) - Date.parse(a.published_at));
+  const selected: RankedDeskItem[] = [];
+  const perSource = new Map<string, number>();
+
+  for (const item of sorted) {
+    if ((perSource.get(item.source) || 0) >= 2) continue;
+    if (selected.some(selectedItem => selectedItem.url === item.url)) continue;
+    selected.push(item);
+    perSource.set(item.source, (perSource.get(item.source) || 0) + 1);
+    if (selected.length === 9) break;
+  }
+
+  return selected.map(({ relevance: _relevance, ...item }) => item);
 }
 
 Deno.serve(async request => {
@@ -113,8 +162,14 @@ Deno.serve(async request => {
   if (!supabaseUrl || !serviceRoleKey) return Response.json({ error: "Missing Supabase configuration" }, { status: 500 });
 
   const results = await Promise.allSettled(SOURCES.map(readSource));
-  const articles = results.flatMap(result => result.status === "fulfilled" ? result.value : []);
+  const articles = await Promise.all(selectDeskItems(
+    results.flatMap(result => result.status === "fulfilled" ? result.value : [])
+  ).map(async article => ({
+    ...article,
+    image_url: article.image_url || await getArticleImage(article.url)
+  })));
   const supabase = createClient(supabaseUrl, serviceRoleKey);
+  await supabase.from("booked_literary_desk").delete().in("source", SOURCES.map(source => source.name));
   const { error } = await supabase.from("booked_literary_desk").upsert(articles, { onConflict: "url" });
   if (error) return Response.json({ error: error.message }, { status: 500 });
 
