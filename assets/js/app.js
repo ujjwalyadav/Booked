@@ -2259,6 +2259,52 @@
     if (["library", "stats", "map"].includes(hash)) state.view = hash;
   }
 
+  function getDeepLink() {
+    const match = window.location.hash.replace(/^#/, "").match(/^(book|rate|comment|rsvp)=(.+)$/);
+    if (!match) return null;
+    return {
+      action: match[1],
+      bookId: decodeURIComponent(match[2])
+    };
+  }
+
+  function openDeepLinkedBook(action, bookId) {
+    const index = BOOKS.findIndex(book => getBookId(book) === bookId);
+    if (index < 0) return;
+
+    if (action === "rsvp" && index === state.currentBookIndex) {
+      setView("library", { updateHash: false });
+      window.requestAnimationFrame(() => {
+        $("#current")?.scrollIntoView({ behavior: "smooth", block: "center" });
+        $("#rsvpYesBtn")?.focus({ preventScroll: true });
+      });
+      return;
+    }
+
+    setView("library", { updateHash: false });
+    resetLibraryFilters();
+    window.requestAnimationFrame(() => {
+      const card = $(`.book[data-idx="${index}"]`);
+      if (!card) return;
+      openOverlay(index, card);
+
+      if (action === "book") return;
+      window.requestAnimationFrame(() => {
+        const signedIn = Boolean(getCurrentUser() && userEmailAllowed(getCurrentUser()));
+        const target = action === "rate"
+          ? (signedIn ? $("[data-rating='1']", $("#ratingButtons")) : $("#overlayMemberAuthBtn"))
+          : (signedIn ? $("#overlayNoteEditable") : $("#overlayMemberAuthBtn"));
+        target?.scrollIntoView({ behavior: "smooth", block: "center" });
+        target?.focus({ preventScroll: true });
+      });
+    });
+  }
+
+  function handleDeepLink() {
+    const deepLink = getDeepLink();
+    if (deepLink) openDeepLinkedBook(deepLink.action, deepLink.bookId);
+  }
+
   /* ---------------- Current book ---------------- */
 
   function initializeCurrentBook() {
@@ -3677,6 +3723,7 @@
     window.addEventListener("hashchange", () => {
       const hash = window.location.hash.replace(/^#/, "");
       if (["library", "stats", "map"].includes(hash)) setView(hash, { updateHash: false });
+      else handleDeepLink();
     });
 
     window.addEventListener("resize", debounce(() => {
@@ -3706,6 +3753,7 @@
     setLanguage(savedLang);
     setView(savedView, { updateHash: false, focus: false });
     updateSocialLinks();
+    handleDeepLink();
   }
 
   document.addEventListener("DOMContentLoaded", boot, { once: true });
