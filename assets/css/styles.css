@@ -2213,7 +2213,7 @@ button.timeline-item:focus-visible {
 .member-dialog[open][data-opened-from-book="true"] {
   position: fixed;
   inset: 0;
-  z-index: 40;
+  z-index: 100;
   background: rgb(0 0 0 / .58);
   backdrop-filter: blur(10px);
 }

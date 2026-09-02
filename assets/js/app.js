@@ -683,7 +683,7 @@
     const openedFromBookDialog = Boolean(bookDialog?.open);
     dialog.dataset.openedFromBook = openedFromBookDialog ? "true" : "false";
     if (openedFromBookDialog) {
-      bookDialog.appendChild(dialog);
+      if (dialog.parentElement !== bookDialog) bookDialog.appendChild(dialog);
       dialog.setAttribute("open", "");
     } else if (typeof dialog.showModal === "function" && !dialog.open) {
       dialog.showModal();
@@ -697,12 +697,15 @@
   function closeMemberDialog() {
     const dialog = $("#memberDialog");
     if (!dialog) return;
-    if (typeof dialog.close === "function" && dialog.open) {
+    const returnToPage = dialog.dataset.openedFromBook === "true";
+    if (returnToPage) {
+      dialog.removeAttribute("open");
+      document.body.appendChild(dialog);
+    } else if (typeof dialog.close === "function" && dialog.open) {
       dialog.close();
     } else {
       dialog.removeAttribute("open");
     }
-    if (dialog.dataset.openedFromBook === "true") document.body.appendChild(dialog);
     dialog.dataset.openedFromBook = "false";
   }
 
@@ -2652,11 +2655,16 @@
 
     $("#overlayNoteEditable").addEventListener("input", debounce(persist, 120));
     $("#overlayNoteEditable").addEventListener("input", markMemberDraftDirty);
-    $("#overlayNoteEditable").addEventListener("click", () => {
-      if (membersConfigured() && !getCurrentUser()) openMemberDialog("login");
-    });
-    $("#overlayNoteEditable").addEventListener("focus", () => {
-      if (membersConfigured() && !getCurrentUser()) openMemberDialog("login");
+    const promptForMemberComment = event => {
+      if (!membersConfigured() || getCurrentUser()) return;
+      event.preventDefault();
+      event.stopPropagation();
+      openMemberDialog("login");
+    };
+    $("#overlayNoteEditable").addEventListener("pointerdown", promptForMemberComment);
+    $("#overlayNoteEditable").addEventListener("focus", promptForMemberComment);
+    $("#overlayNoteEditable").addEventListener("keydown", event => {
+      if (["Enter", " "].includes(event.key)) promptForMemberComment(event);
     });
     $("#overlayRatingInput").addEventListener("input", debounce(persist, 120));
     $("#overlayMemberAuthBtn")?.addEventListener("click", () => {
