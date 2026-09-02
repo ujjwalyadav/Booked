@@ -222,6 +222,12 @@
           <button class="mode-chip" id="mobileModeCovers" type="button" data-mobile-library-mode="covers" data-active="false" aria-pressed="false">Covers</button>
         </div>
 
+        <div class="pill member-read-filter library-only" id="memberReadFilters" role="group" aria-label="Your reading status" hidden>
+          <button class="mode-chip" type="button" data-member-read-filter="all" data-active="true" aria-pressed="true">All</button>
+          <button class="mode-chip" type="button" data-member-read-filter="read" data-active="false" aria-pressed="false">Read</button>
+          <button class="mode-chip" type="button" data-member-read-filter="unread" data-active="false" aria-pressed="false">Not read</button>
+        </div>
+
         <p class="result-count library-only" id="resultCount" aria-live="polite"></p>
       </div>
     </div>
@@ -318,6 +324,8 @@
           <strong id="clubAverageRating">--</strong>
           <span id="clubRatingCount">No ratings yet</span>
         </div>
+
+        <button class="member-read-toggle" id="memberReadToggle" type="button" hidden aria-pressed="false"></button>
 
         <div class="member-rating" id="memberRatingGroup" hidden>
           <span id="memberRatingLabel">Your rating</span>

@@ -2234,13 +2234,59 @@ button.timeline-item:focus-visible {
 
 .overlay-cover {
   aspect-ratio: 2 / 3;
-  overflow: hidden;
+  position: relative;
+  overflow: visible;
   background:
     radial-gradient(circle at 25% 20%, hsl(var(--cover-h, 260) 85% 65% / .8), transparent 35%),
     linear-gradient(145deg, hsl(var(--cover-h, 260) 52% 24%), hsl(var(--cover-h, 260) 48% 8%));
   border: 1px solid var(--line);
   border-radius: 15px;
   box-shadow: var(--shadow-sm);
+  transform-origin: left center;
+  transform-style: preserve-3d;
+}
+
+.overlay-cover::after {
+  position: absolute;
+  z-index: -1;
+  top: 3px;
+  right: calc(-1 * var(--book-depth, 8px));
+  bottom: 3px;
+  width: var(--book-depth, 8px);
+  content: "";
+  background: repeating-linear-gradient(
+    to bottom,
+    hsl(42 26% 88%),
+    hsl(42 26% 88%) 1px,
+    hsl(35 12% 68%) 1px,
+    hsl(35 12% 68%) 2px
+  );
+  border: 1px solid rgb(0 0 0 / .11);
+  border-left: 0;
+  border-radius: 0 4px 4px 0;
+  opacity: 0;
+  transform: skewY(-2deg);
+}
+
+.overlay-cover.book-arrival {
+  animation: book-arrival 1.15s cubic-bezier(.2, .8, .2, 1) both;
+}
+
+.overlay-cover.book-arrival::after {
+  animation: book-pages-arrival 1.15s cubic-bezier(.2, .8, .2, 1) both;
+}
+
+@keyframes book-arrival {
+  0% { transform: translateY(0) rotateY(0) rotateZ(0); }
+  35% { transform: translateY(-10px) rotateY(-9deg) rotateZ(-1.5deg); }
+  72% { transform: translateY(-3px) rotateY(-3deg) rotateZ(-.4deg); }
+  100% { transform: translateY(0) rotateY(0) rotateZ(0); }
+}
+
+@keyframes book-pages-arrival {
+  0%, 15% { opacity: 0; transform: translateX(-3px) skewY(-2deg); }
+  35%, 72% { opacity: .96; transform: translateX(0) skewY(-2deg); }
+  100% { opacity: 0; transform: translateX(-2px) skewY(-2deg); }
 }
 
 .overlay-cover img {
@@ -2248,6 +2294,7 @@ button.timeline-item:focus-visible {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  border-radius: 14px;
 }
 
 .overlay-cover.has-img img {
@@ -2425,6 +2472,34 @@ button.timeline-item:focus-visible {
 .club-rating-summary span {
   color: var(--muted-strong);
   font-size: .78rem;
+}
+
+.member-read-toggle {
+  align-self: flex-start;
+  min-height: 34px;
+  padding: .38rem .7rem;
+  color: var(--muted-strong);
+  background: var(--glass);
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  font: inherit;
+  font-size: .76rem;
+  font-weight: 800;
+}
+
+.member-read-toggle::before {
+  margin-right: .4rem;
+  content: "○";
+}
+
+.member-read-toggle[aria-pressed="true"] {
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-color: var(--accent-border);
+}
+
+.member-read-toggle[aria-pressed="true"]::before {
+  content: "✓";
 }
 
 .member-rating,

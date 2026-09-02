@@ -52,6 +52,7 @@
     lang: "en",
     activeYear: "all",
     activeTag: "all",
+    memberReadFilter: "all",
     sort: "reading",
     view: "library",
     mobileLibraryMode: getStored("booked_mobile_library_mode", "list"),
@@ -66,6 +67,7 @@
       scores: {},
       community: { commented: [], liked: [] },
       myRatings: {},
+      myReads: {},
       comments: {},
       myComments: {},
       commentVisibility: "public",
@@ -785,7 +787,7 @@
         closeMemberDialog();
       }
 
-      await Promise.all([loadMemberScores(), loadMyRatings(), loadMemberCommunityStats()]);
+      await Promise.all([loadMemberScores(), loadMyRatings(), loadMyReads(), loadMemberCommunityStats()]);
       translateStaticInterface();
       renderLibrary();
       refreshOpenOverlayMemberData();
@@ -882,6 +884,61 @@
     }
 
     state.member.myRatings = Object.fromEntries((data || []).map(row => [row.book_id, Number(row.rating)]));
+  }
+
+  async function loadMyReads() {
+    const user = getCurrentUser();
+    if (!state.member.client || !user || !userEmailAllowed(user)) return;
+
+    const { data, error } = await state.member.client
+      .from("booked_member_reads")
+      .select("book_id")
+      .eq("user_id", user.id);
+    if (error) {
+      console.warn("Booked member reads could not be loaded.", error);
+      return;
+    }
+    state.member.myReads = Object.fromEntries((data || []).map(row => [row.book_id, true]));
+    refreshMemberReadFilters();
+  }
+
+  async function toggleMemberRead() {
+    const overlay = $("#overlay");
+    const user = getCurrentUser();
+    const book = BOOKS[Number(overlay?.dataset.index)];
+    const status = $("#memberStatus");
+    if (!state.member.client || !user || !book || !userEmailAllowed(user)) return;
+
+    const bookId = getBookId(book);
+    const hasRead = Boolean(state.member.myReads[bookId]);
+    try {
+      if (hasRead) {
+        const { data, error } = await state.member.client
+          .from("booked_member_reads")
+          .delete()
+          .eq("book_id", bookId)
+          .eq("user_id", user.id)
+          .select("book_id");
+        if (error) throw error;
+        if (!data?.length) throw new Error("No read row was deleted. Run the Booked read-status SQL setup.");
+        delete state.member.myReads[bookId];
+        if (status) status.textContent = t().memberReadRemoved;
+      } else {
+        const { error } = await state.member.client.from("booked_member_reads").insert({
+          book_id: bookId,
+          user_id: user.id
+        });
+        if (error) throw error;
+        state.member.myReads[bookId] = true;
+        if (status) status.textContent = t().memberReadSaved;
+      }
+      refreshMemberReadFilters();
+      applyFilters();
+      refreshOverlayMemberUI(book);
+    } catch (error) {
+      console.warn("Booked read status could not be changed.", error);
+      if (status) status.textContent = t().memberReadError;
+    }
   }
 
   async function loadBookComments(book) {
@@ -1245,6 +1302,14 @@
     $("#overlayLocalRatingLabel")?.toggleAttribute("hidden", configured);
     $("#memberClearRatingBtn")?.toggleAttribute("hidden", !signedIn || !state.member.myRatings[bookId]);
     $("#memberRemoveCommentBtn")?.toggleAttribute("hidden", !signedIn || !comment.trim());
+    const readToggle = $("#memberReadToggle");
+    readToggle?.toggleAttribute("hidden", !signedIn);
+    if (readToggle) {
+      const hasRead = Boolean(state.member.myReads[bookId]);
+      readToggle.textContent = hasRead ? t().memberReadOn : t().memberReadOff;
+      readToggle.setAttribute("aria-pressed", hasRead ? "true" : "false");
+      readToggle.title = hasRead ? t().memberReadOnTitle : t().memberReadOffTitle;
+    }
 
     if (configured) {
       $("#overlayLocalHint").textContent = signedIn
@@ -1294,7 +1359,7 @@
       await checkMemberAllowed();
       state.member.ready = true;
       await upsertMemberProfile();
-      await Promise.all([loadMemberScores(), loadMyRatings(), loadMemberCommunityStats()]);
+      await Promise.all([loadMemberScores(), loadMyRatings(), loadMyReads(), loadMemberCommunityStats()]);
       if (recoveryReturn && state.member.session) {
         openMemberDialog("change");
         window.history.replaceState(null, "", getAuthRedirectUrl());
@@ -1308,6 +1373,7 @@
         if (!session) {
           state.member.allowed = false;
           state.member.myRatings = {};
+          state.member.myReads = {};
           state.member.community = { commented: [], liked: [] };
           state.member.comments = {};
           state.member.myComments = {};
@@ -1320,7 +1386,7 @@
         }
         await checkMemberAllowed();
         await upsertMemberProfile();
-        await Promise.all([loadMemberScores(), loadMyRatings(), loadMemberCommunityStats()]);
+        await Promise.all([loadMemberScores(), loadMyRatings(), loadMyReads(), loadMemberCommunityStats()]);
         translateStaticInterface();
         renderLibrary();
         refreshOpenOverlayMemberData();
@@ -1675,7 +1741,11 @@
       const textMatches = !query || (card.dataset.search || "").includes(query);
       const tags = card.dataset.tags ? card.dataset.tags.split("|") : [];
       const tagMatches = state.activeTag === "all" || tags.includes(state.activeTag);
-      const shouldShow = yearMatches && textMatches && tagMatches;
+      const hasRead = Boolean(state.member.myReads[card.dataset.bookId]);
+      const readMatches = state.memberReadFilter === "all"
+        || (state.memberReadFilter === "read" && hasRead)
+        || (state.memberReadFilter === "unread" && !hasRead);
+      const shouldShow = yearMatches && textMatches && tagMatches && readMatches;
 
       card.hidden = !shouldShow;
       if (shouldShow) visible += 1;
@@ -1694,7 +1764,7 @@
     const resultCount = $("#resultCount");
     $("#searchClear").hidden = !$("#search").value;
 
-    if (visible === total && !query && state.activeYear === "all" && state.activeTag === "all") {
+    if (visible === total && !query && state.activeYear === "all" && state.activeTag === "all" && state.memberReadFilter === "all") {
       resultCount.textContent = t().resultAll(total);
       emptyState.hidden = true;
     } else if (visible === 0) {
@@ -1710,10 +1780,29 @@
   function resetLibraryFilters() {
     state.activeYear = "all";
     state.activeTag = "all";
+    state.memberReadFilter = "all";
     $("#search").value = "";
     renderYearFilters();
     renderTagFilters();
+    refreshMemberReadFilters();
     applyFilters();
+  }
+
+  function refreshMemberReadFilters() {
+    const container = $("#memberReadFilters");
+    const signedIn = Boolean(membersConfigured() && getCurrentUser() && userEmailAllowed(getCurrentUser()));
+    if (!container) return;
+    container.hidden = !signedIn;
+    if (!signedIn) {
+      state.memberReadFilter = "all";
+      return;
+    }
+    $$("[data-member-read-filter]", container).forEach(button => {
+      const filter = button.dataset.memberReadFilter;
+      button.dataset.active = filter === state.memberReadFilter ? "true" : "false";
+      button.setAttribute("aria-pressed", filter === state.memberReadFilter ? "true" : "false");
+      button.textContent = t()[`memberReadFilter${filter[0].toUpperCase()}${filter.slice(1)}`];
+    });
   }
 
   /* ---------------- Open Library covers ---------------- */
@@ -2133,6 +2222,8 @@
     $("#mobileLibraryMode")?.setAttribute("aria-label", t().mobileLibraryMode);
     $("#mobileModeList").textContent = t().mobileLibraryList;
     $("#mobileModeCovers").textContent = t().mobileLibraryCovers;
+    $("#memberReadFilters")?.setAttribute("aria-label", t().memberReadFilterLabel);
+    refreshMemberReadFilters();
     $("#themeLabel").textContent = t().themeTitle;
     $("#themeBtn").title = t().themeTitle;
     $("#langSwitch").title = t().langSwitchTitle;
@@ -2374,6 +2465,13 @@
     state.lastFocusedElement = trigger instanceof HTMLElement ? trigger : null;
     overlay.dataset.id = getBookId(book);
     overlay.dataset.index = String(index);
+    const cover = $("#overlayCover");
+    const pagesForDepth = getBookPages(book) || 180;
+    const depth = Math.max(6, Math.min(18, Math.round(5 + (pagesForDepth / 72))));
+    cover?.style.setProperty("--book-depth", `${depth}px`);
+    cover?.classList.remove("book-arrival");
+    void cover?.offsetWidth;
+    cover?.classList.add("book-arrival");
 
     $("#overlayMonth").textContent = `${getMonthName(book.month)} ${book.year}`;
     $("#overlayTitle").textContent = book.title;
@@ -2498,6 +2596,7 @@
     $("#memberSaveBtn")?.addEventListener("click", saveMemberEntry);
     $("#memberClearRatingBtn")?.addEventListener("click", clearMemberRating);
     $("#memberRemoveCommentBtn")?.addEventListener("click", removeMemberComment);
+    $("#memberReadToggle")?.addEventListener("click", toggleMemberRead);
     $$("[data-rating]", $("#ratingButtons")).forEach(button => {
       button.addEventListener("click", () => {
         setRatingButtons(Number(button.dataset.rating));
@@ -3718,6 +3817,14 @@
 
     $$("[data-mobile-library-mode]").forEach(button => {
       button.addEventListener("click", () => setMobileLibraryMode(button.dataset.mobileLibraryMode));
+    });
+
+    $$("[data-member-read-filter]").forEach(button => {
+      button.addEventListener("click", () => {
+        state.memberReadFilter = button.dataset.memberReadFilter;
+        refreshMemberReadFilters();
+        applyFilters();
+      });
     });
 
     window.addEventListener("hashchange", () => {

@@ -29,6 +29,13 @@ create table if not exists public.booked_ratings (
   primary key (book_id, user_id)
 );
 
+create table if not exists public.booked_member_reads (
+  book_id text not null,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (book_id, user_id)
+);
+
 create table if not exists public.booked_comments (
   id bigint generated always as identity primary key,
   book_id text not null,
@@ -76,17 +83,20 @@ for each row execute function public.booked_touch_updated_at();
 alter table public.booked_profiles enable row level security;
 alter table public.booked_allowed_members enable row level security;
 alter table public.booked_ratings enable row level security;
+alter table public.booked_member_reads enable row level security;
 alter table public.booked_comments enable row level security;
 alter table public.booked_comment_likes enable row level security;
 
 revoke all on public.booked_profiles from anon;
 revoke all on public.booked_allowed_members from anon, authenticated;
 revoke all on public.booked_ratings from anon;
+revoke all on public.booked_member_reads from anon;
 revoke all on public.booked_comments from anon;
 revoke all on public.booked_comment_likes from anon;
 
 grant select, insert, update on public.booked_profiles to authenticated;
 grant select, insert, update, delete on public.booked_ratings to authenticated;
+grant select, insert, delete on public.booked_member_reads to authenticated;
 grant select, insert, update, delete on public.booked_comments to authenticated;
 grant select, insert, delete on public.booked_comment_likes to authenticated;
 grant usage, select on sequence public.booked_comments_id_seq to authenticated;
@@ -154,6 +164,24 @@ with check (public.booked_is_member() and (select auth.uid()) = user_id);
 drop policy if exists "Members can delete their own ratings" on public.booked_ratings;
 create policy "Members can delete their own ratings"
 on public.booked_ratings for delete
+to authenticated
+using (public.booked_is_member() and (select auth.uid()) = user_id);
+
+drop policy if exists "Members can read their own reading status" on public.booked_member_reads;
+create policy "Members can read their own reading status"
+on public.booked_member_reads for select
+to authenticated
+using (public.booked_is_member() and (select auth.uid()) = user_id);
+
+drop policy if exists "Members can mark books as read for themselves" on public.booked_member_reads;
+create policy "Members can mark books as read for themselves"
+on public.booked_member_reads for insert
+to authenticated
+with check (public.booked_is_member() and (select auth.uid()) = user_id);
+
+drop policy if exists "Members can remove their own reading status" on public.booked_member_reads;
+create policy "Members can remove their own reading status"
+on public.booked_member_reads for delete
 to authenticated
 using (public.booked_is_member() and (select auth.uid()) = user_id);
 
