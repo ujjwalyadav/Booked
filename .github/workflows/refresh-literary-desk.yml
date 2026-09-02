@@ -1,0 +1,16 @@
+name: Refresh Literary Desk
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "15 8 * * 1"
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Refresh recent literature links
+        run: |
+          curl --fail --silent --show-error --request POST \
+            --header "x-booked-cron-secret: ${{ secrets.BOOKED_DESK_CRON_SECRET }}" \
+            "${{ secrets.BOOKED_DESK_FUNCTION_URL }}"

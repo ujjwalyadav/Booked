@@ -61,6 +61,7 @@
     currentBookIndex: getCurrentBookIndex(),
     currentMeetingArchived: null,
     currentMemory: null,
+    literaryDesk: [],
     member: {
       client: null,
       session: null,
@@ -846,6 +847,51 @@
     refreshOpenOverlayMemberData();
   }
 
+  function formatLiteraryDeskDate(value) {
+    if (!value) return "";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "";
+    return new Intl.DateTimeFormat(state.lang === "de" ? "de-DE" : "en-GB", {
+      day: "numeric",
+      month: "short"
+    }).format(date);
+  }
+
+  function renderLiteraryDesk() {
+    const section = $("#literaryDesk");
+    const grid = $("#literaryDeskGrid");
+    if (!section || !grid) return;
+    const articles = state.literaryDesk || [];
+    section.hidden = !articles.length;
+    grid.innerHTML = articles.map(article => `
+      <a class="literary-card" href="${escapeHTML(article.url)}" target="_blank" rel="noopener noreferrer">
+        <div class="literary-card-art">
+          ${article.image_url ? `<img src="${escapeHTML(article.image_url)}" alt="" loading="lazy" decoding="async">` : ""}
+        </div>
+        <div class="literary-card-copy">
+          <p class="literary-card-meta">${escapeHTML([article.source, article.region, formatLiteraryDeskDate(article.published_at)].filter(Boolean).join(" · "))}</p>
+          <h3>${escapeHTML(article.title)}</h3>
+          ${article.excerpt ? `<p>${escapeHTML(article.excerpt)}</p>` : ""}
+        </div>
+      </a>
+    `).join("");
+  }
+
+  async function loadLiteraryDesk() {
+    if (!state.member.client) return;
+    const { data, error } = await state.member.client
+      .from("booked_literary_desk")
+      .select("title,url,source,region,excerpt,image_url,published_at")
+      .order("published_at", { ascending: false })
+      .limit(6);
+    if (error) {
+      console.warn("Booked literary desk could not be loaded.", error);
+      return;
+    }
+    state.literaryDesk = data || [];
+    renderLiteraryDesk();
+  }
+
   async function loadMemberCommunityStats() {
     const user = getCurrentUser();
     if (!state.member.client || !user || !userEmailAllowed(user)) return;
@@ -1353,6 +1399,7 @@
 
     try {
       const client = await ensureMemberClient();
+      await loadLiteraryDesk();
       const recoveryReturn = isPasswordRecoveryReturn();
       const { data } = await client.auth.getSession();
       state.member.session = data?.session || null;
@@ -2208,6 +2255,10 @@
     $("#currentCalendarBtn").title = t().addToCalendarTitle;
     $("#currentOpenLink").textContent = t().readOpenAccess;
     $("#currentNextLabel").textContent = t().nextMeeting;
+    $("#literaryDeskEyebrow").textContent = t().literaryDeskEyebrow;
+    $("#literaryDeskTitle").textContent = t().literaryDeskTitle;
+    $("#literaryDeskIntro").textContent = t().literaryDeskIntro;
+    renderLiteraryDesk();
 
     $("#viewTabs").setAttribute("aria-label", t().viewsAria);
     $("#controlsGroup").setAttribute("aria-label", t().controlsAria);
