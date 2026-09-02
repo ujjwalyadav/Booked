@@ -567,7 +567,7 @@ h1 {
 
 .toolbox {
   position: relative;
-  z-index: 40;
+  z-index: 90;
   margin-top: -20px;
 }
 
@@ -1040,7 +1040,8 @@ main {
 
 .corner,
 .current-ribbon,
-.open-access-badge {
+.open-access-badge,
+.member-read-badge {
   position: absolute;
   z-index: 4;
   display: inline-flex;
@@ -1075,6 +1076,21 @@ main {
   color: #111;
   background: linear-gradient(135deg, hsl(42 88% 74%), hsl(156 58% 68%));
   border: 1px solid rgb(255 255 255 / .32);
+}
+
+.member-read-badge {
+  bottom: 11px;
+  left: 11px;
+  width: 28px;
+  min-width: 28px;
+  padding: 0;
+  color: #092b19;
+  background: hsl(148 62% 70% / .96);
+  border: 1px solid rgb(255 255 255 / .4);
+  border-radius: 50%;
+  font-size: .92rem;
+  font-weight: 950;
+  justify-content: center;
 }
 
 .open-access-meta {

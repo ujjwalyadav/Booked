@@ -675,13 +675,17 @@
 
   function openMemberDialog(mode = "login") {
     const dialog = $("#memberDialog");
+    const bookDialog = $("#overlay");
     if (!dialog || !membersConfigured()) return;
     setMemberAuthMode(mode);
     $("#memberAuthStatus").textContent = "";
     $("#memberPassword").value = "";
-    const openedFromBookDialog = Boolean($("#overlay")?.open);
+    const openedFromBookDialog = Boolean(bookDialog?.open);
     dialog.dataset.openedFromBook = openedFromBookDialog ? "true" : "false";
-    if (typeof dialog.showModal === "function" && !dialog.open) {
+    if (openedFromBookDialog) {
+      bookDialog.appendChild(dialog);
+      dialog.setAttribute("open", "");
+    } else if (typeof dialog.showModal === "function" && !dialog.open) {
       dialog.showModal();
     } else {
       dialog.setAttribute("open", "");
@@ -698,6 +702,7 @@
     } else {
       dialog.removeAttribute("open");
     }
+    if (dialog.dataset.openedFromBook === "true") document.body.appendChild(dialog);
     dialog.dataset.openedFromBook = "false";
   }
 
@@ -984,6 +989,7 @@
       }
       refreshMemberReadFilters();
       applyFilters();
+      renderBookRatingBadges();
       refreshOverlayMemberUI(book);
     } catch (error) {
       console.warn("Booked read status could not be changed.", error);
@@ -1269,6 +1275,12 @@
       if (score?.count) {
         badge.textContent = t().ratingBadge(formatRating(score.average), score.count);
         badge.title = t().ratingBadgeTitle(score.count);
+      }
+      const readBadge = $(".member-read-badge", card);
+      if (readBadge) {
+        const hasRead = Boolean(state.member.myReads[card.dataset.bookId]);
+        readBadge.hidden = !hasRead;
+        readBadge.title = t().memberReadBadgeTitle;
       }
     });
   }
@@ -1706,6 +1718,7 @@
       <div class="cover skeleton" style="--h:${hue}">
         <img class="cover-img" alt="${escapeHTML(t().coverAlt(book.title, book.author))}" loading="lazy" decoding="async">
         <span class="corner">${escapeHTML(book.year)}</span>
+        <span class="member-read-badge" hidden aria-hidden="true">✓</span>
         ${currentRibbon}
         ${openAccessBadge}
       </div>
