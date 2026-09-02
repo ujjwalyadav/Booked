@@ -887,7 +887,29 @@
   async function loadBookComments(book) {
     const user = getCurrentUser();
     const bookId = getBookId(book);
-    if (!state.member.client || !user || !userEmailAllowed(user)) return;
+    const signedIn = Boolean(user && userEmailAllowed(user));
+    if (!state.member.client) return;
+
+    if (!signedIn) {
+      const { data, error } = await state.member.client.rpc("booked_public_comments", {
+        requested_book_id: bookId
+      });
+
+      if (error) {
+        console.warn("Booked public comments could not be loaded.", error);
+        return;
+      }
+
+      state.member.comments[bookId] = (data || []).map(comment => ({
+        ...comment,
+        display_name: "",
+        likeCount: Number(comment.like_count || 0),
+        likedByMe: false
+      }));
+      state.member.myComments[bookId] = { public: "", private: "" };
+      refreshOpenOverlayMemberData();
+      return;
+    }
 
     const { data, error } = await state.member.client
       .from("booked_comments")
@@ -987,13 +1009,17 @@
 
   async function deleteMemberComment(book, user, visibility) {
     const bookId = getBookId(book);
-    const { error } = await state.member.client
+    const { data: removedRows, error } = await state.member.client
       .from("booked_comments")
       .delete()
       .eq("book_id", bookId)
       .eq("user_id", user.id)
-      .eq("visibility", visibility);
+      .eq("visibility", visibility)
+      .select("id");
     if (error) throw error;
+    if (!removedRows?.length) {
+      throw new Error("No comment row was deleted. Rerun docs/supabase-delete-and-public-comments.sql so the delete policy is active.");
+    }
 
     const { data: remaining, error: checkError } = await state.member.client
       .from("booked_comments")
@@ -1144,16 +1170,20 @@
 
     const comments = (state.member.comments[getBookId(book)] || [])
       .filter(comment => String(comment.comment || "").trim());
-    panel.hidden = !membersConfigured() || !getCurrentUser();
+    const signedIn = Boolean(getCurrentUser() && userEmailAllowed(getCurrentUser()));
+    panel.hidden = !membersConfigured();
     list.innerHTML = comments.length
       ? comments.map(comment => `
         <article class="public-comment" data-comment-id="${escapeHTML(comment.id)}">
           <div class="public-comment-head">
-            <strong>${escapeHTML(comment.display_name || t().memberAnonymous)}</strong>
-            <button class="comment-like" type="button" data-comment-like="${escapeHTML(comment.id)}" data-liked="${comment.likedByMe ? "true" : "false"}">
+            <strong>${escapeHTML(signedIn ? (comment.display_name || t().memberAnonymous) : t().memberAnonymous)}</strong>
+            ${signedIn ? `<button class="comment-like" type="button" data-comment-like="${escapeHTML(comment.id)}" data-liked="${comment.likedByMe ? "true" : "false"}">
               <span aria-hidden="true">♥</span>
               <span>${escapeHTML(t().commentLikeCount(comment.likeCount || 0))}</span>
-            </button>
+            </button>` : `<span class="comment-like" aria-label="${escapeHTML(t().commentLikeCount(comment.likeCount || 0))}">
+              <span aria-hidden="true">♥</span>
+              <span>${escapeHTML(t().commentLikeCount(comment.likeCount || 0))}</span>
+            </span>`}
           </div>
           <p>${escapeHTML(comment.comment || "")}</p>
         </article>
@@ -2351,7 +2381,7 @@
 
     $("#overlayClose").focus();
     refreshOverlayMemberUI(book);
-    if (membersConfigured() && getCurrentUser()) loadBookComments(book);
+    if (membersConfigured()) loadBookComments(book);
     populateOverlayCover(book);
   }
 
