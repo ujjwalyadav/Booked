@@ -3,7 +3,7 @@ name: Refresh Literary Desk
 on:
   workflow_dispatch:
   schedule:
-    - cron: "15 8 * * *"
+    - cron: "27 8 * * *"
 
 jobs:
   refresh:
