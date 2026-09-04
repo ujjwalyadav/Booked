@@ -453,24 +453,34 @@ window.BOOKED_DATA = Object.freeze({
   author: "John Steinbeck",
   country: "United States",
   published: 1952,
-  current: true,
   meetingDate: "2026-08-30",
   pages: 602,
   pageSourceName: "Open Library, Viking Press 1952 edition",
   pageSourceUrl: "https://openlibrary.org/works/OL23166W/East_of_Eden?edition=ia%3Aeastofeden0000john",
   tags: ["Family Saga", "Historical Fiction", "Biblical Retelling"],
   note: "A sweeping multigenerational novel set in California’s Salinas Valley, exploring family conflict, love, guilt, free will, and the struggle between good and evil through a modern retelling of Cain and Abel."
+},
+{
+  year: 2026,
+  month: "September",
+  title: "In Cold Blood",
+  author: "Truman Capote",
+  country: "United States",
+  published: 1966,
+  current: true,
+  meetingDate: "2026-09-27",
+  meetingTime: "16:00",
+  pages: 343,
+  pageSourceName: "The Morgan Library & Museum, Random House first printing (1965)",
+  pageSourceUrl: "https://www.themorgan.org/printed-books/110502",
+  tags: ["True Crime", "Nonfiction Novel", "American Literature"],
+  note: "Capote's landmark reconstruction of the 1959 Clutter family murders and their aftermath in rural Kansas."
 }
   ],
 
   links: {
     whatsapp: "https://chat.whatsapp.com/EStsFPtmF2PJy6HX54eLat",
     instagram: "https://www.instagram.com/booked.hd/"
-  },
-
-  nextMeeting: {
-    meetingDate: "2026-09-27",
-    meetingTime: "16:00"
   },
 
   googleForm: {
