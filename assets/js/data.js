@@ -479,7 +479,7 @@ window.BOOKED_DATA = Object.freeze({
   ],
 
   links: {
-    whatsapp: "https://chat.whatsapp.com/EStsFPtmF2PJy6HX54eLat",
+    whatsapp: "https://chat.whatsapp.com/E95nhYN4A2lFxKNzVSRKaY",
     instagram: "https://www.instagram.com/booked.hd/"
   },
 
