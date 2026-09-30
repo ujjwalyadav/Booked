@@ -1200,6 +1200,14 @@ main {
   gap: 14px;
 }
 
+.literary-desk-updated {
+  display: block;
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: .76rem;
+  text-align: right;
+}
+
 .literary-card {
   display: grid;
   grid-template-columns: 74px minmax(0, 1fr);

@@ -865,12 +865,34 @@
     }).format(date);
   }
 
+  function formatLiteraryDeskUpdatedDate(value) {
+    if (!value) return "";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "";
+    return new Intl.DateTimeFormat(state.lang === "de" ? "de-DE" : "en-GB", {
+      day: "numeric",
+      month: "short",
+      year: "numeric"
+    }).format(date);
+  }
+
   function renderLiteraryDesk() {
     const section = $("#literaryDesk");
     const grid = $("#literaryDeskGrid");
-    if (!section || !grid) return;
+    const updated = $("#literaryDeskUpdated");
+    if (!section || !grid || !updated) return;
     const articles = state.literaryDesk || [];
     section.hidden = !articles.length;
+    const lastFetchedAt = articles.reduce((latest, article) => {
+      const timestamp = Date.parse(article.fetched_at || "");
+      return Number.isFinite(timestamp) && timestamp > latest ? timestamp : latest;
+    }, 0);
+    const updatedDate = formatLiteraryDeskUpdatedDate(lastFetchedAt || null);
+    updated.hidden = !updatedDate;
+    updated.dateTime = lastFetchedAt ? new Date(lastFetchedAt).toISOString() : "";
+    updated.textContent = updatedDate
+      ? (state.lang === "de" ? `Aktualisiert am ${updatedDate}` : `Updated ${updatedDate}`)
+      : "";
     grid.innerHTML = articles.map(article => `
       <a class="literary-card" href="${escapeHTML(article.url)}" target="_blank" rel="noopener noreferrer">
         <div class="literary-card-art">
@@ -889,7 +911,7 @@
     if (!state.member.client) return;
     const { data, error } = await state.member.client
       .from("booked_literary_desk")
-      .select("title,url,source,region,excerpt,image_url,published_at")
+      .select("title,url,source,region,excerpt,image_url,published_at,fetched_at")
       .order("published_at", { ascending: false })
       .limit(6);
     if (error) {
