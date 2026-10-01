@@ -467,7 +467,6 @@ window.BOOKED_DATA = Object.freeze({
   author: "Truman Capote",
   country: "United States",
   published: 1966,
-  current: true,
   meetingDate: "2026-09-27",
   meetingTime: "16:00",
   pages: 343,
@@ -475,6 +474,22 @@ window.BOOKED_DATA = Object.freeze({
   pageSourceUrl: "https://www.themorgan.org/printed-books/110502",
   tags: ["True Crime", "Nonfiction Novel", "American Literature"],
   note: "Capote's landmark reconstruction of the 1959 Clutter family murders and their aftermath in rural Kansas."
+},
+{
+  year: 2026,
+  month: "October",
+  title: "If We Were Villains",
+  author: "M. L. Rio",
+  country: "United States",
+  published: 2017,
+  current: true,
+  meetingDate: "2026-10-25",
+  meetingTime: "16:00",
+  pages: 368,
+  pageSourceName: "Macmillan, Flatiron Books first edition",
+  pageSourceUrl: "https://us.macmillan.com/books/9781250095300/ifwewerevillains",
+  tags: ["Dark Academia", "Mystery", "Literary Fiction"],
+  note: "At an elite conservatory, seven Shakespeare students are drawn into a murder that leaves one of them to tell the story a decade later."
 }
   ],
 
